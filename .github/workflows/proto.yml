@@ -1,0 +1,46 @@
+# Proto-Dateien kompilieren + Lint
+name: Proto CI
+
+on:
+  push:
+    paths:
+      - "proto/**"
+  pull_request:
+    paths:
+      - "proto/**"
+
+jobs:
+  lint-and-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Buf
+        uses: bufbuild/buf-setup-action@v1
+
+      - name: Buf Lint
+        run: cd proto && buf lint
+
+      - name: Buf Breaking Change Detection
+        run: cd proto && buf breaking --against '.git#branch=main'
+        continue-on-error: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install grpcio-tools
+        run: pip install grpcio-tools
+
+      - name: Compile Proto Files
+        run: |
+          mkdir -p packages/shared/generated/python
+          python -m grpc_tools.protoc \
+            --proto_path=proto \
+            --python_out=packages/shared/generated/python \
+            --grpc_python_out=packages/shared/generated/python \
+            --pyi_out=packages/shared/generated/python \
+            proto/*.proto
+          echo "Generated files:"
+          ls -la packages/shared/generated/python/

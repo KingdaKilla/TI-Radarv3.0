@@ -1,0 +1,28 @@
+# Docker Compose Build — nur bei Dockerfile-Aenderungen
+name: Docker Build
+
+on:
+  push:
+    paths:
+      - "deploy/docker-compose.yml"
+      - "services/**/Dockerfile"
+      - "frontend/Dockerfile"
+      - "services/uc-service.Dockerfile"
+  pull_request:
+    paths:
+      - "deploy/docker-compose.yml"
+      - "services/**/Dockerfile"
+      - "frontend/Dockerfile"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build all services
+        run: docker compose -f deploy/docker-compose.yml build
+        continue-on-error: true

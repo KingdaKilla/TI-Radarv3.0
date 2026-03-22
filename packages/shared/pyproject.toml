@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ti-radar-shared"
+version = "2.0.0"
+description = "Shared domain logic fuer TI-Radar v2 — deterministische Metriken, Modelle, Textgenerierung"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [{name = "Benjamin Schaefer"}]
+
+dependencies = [
+    "pydantic>=2.5",
+    "numpy>=1.26",
+    "scipy>=1.12",
+]
+
+[project.optional-dependencies]
+grpc = [
+    "grpcio>=1.60",
+    "grpcio-tools>=1.60",
+    "protobuf>=6.31",
+]
+entity = [
+    "rapidfuzz>=3.6",
+    "scikit-learn>=1.4",
+]
+batch = [
+    "asyncpg>=0.29",
+    "structlog>=24.1",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    "ruff>=0.3",
+    "mypy>=1.8",
+    "rapidfuzz>=3.6",
+    "scikit-learn>=1.4",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["domain", "generated"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 99
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "TCH"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true

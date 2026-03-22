@@ -6,7 +6,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 echo "=== TI-Radar Setup ==="
 
-# 1. Docker pruefen
+# 1. Docker prüfen
 if ! command -v docker &>/dev/null; then
     echo "FEHLER: Docker ist nicht installiert."
     echo "Download: https://www.docker.com/products/docker-desktop"
@@ -25,17 +25,17 @@ if [ ! -f "$PROJECT_ROOT/.env" ]; then
     cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
     echo "[INFO] .env aus .env.example erstellt. Bitte Werte eintragen!"
     echo ""
-    echo "Mindestens folgende Werte muessen gesetzt werden:"
+    echo "Mindestens folgende Werte müssen gesetzt werden:"
     echo "  - POSTGRES_PASSWORD"
     echo "  - TI_RADAR_DB_PATH (z.B. D:/ti-radar-db)"
     echo ""
-    read -p "Moechten Sie die .env jetzt bearbeiten? [j/N] " answer
+    read -p "Möchten Sie die .env jetzt bearbeiten? [j/N] " answer
     if [[ "$answer" =~ ^[jJyY]$ ]]; then
         ${EDITOR:-nano} "$PROJECT_ROOT/.env"
     fi
 fi
 
-# 3. TI_RADAR_DB_PATH pruefen
+# 3. TI_RADAR_DB_PATH prüfen
 source "$PROJECT_ROOT/.env"
 if [ -z "${TI_RADAR_DB_PATH:-}" ]; then
     echo "FEHLER: TI_RADAR_DB_PATH ist nicht gesetzt in .env"

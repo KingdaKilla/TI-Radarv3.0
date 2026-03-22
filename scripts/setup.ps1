@@ -6,7 +6,7 @@ $ProjectRoot = Split-Path -Parent $ScriptDir
 
 Write-Host "=== TI-Radar Setup ===" -ForegroundColor Cyan
 
-# 1. Docker pruefen
+# 1. Docker prüfen
 try {
     $dockerVersion = docker --version
     Write-Host "[OK] Docker gefunden: $dockerVersion" -ForegroundColor Green
@@ -31,19 +31,19 @@ if (-not (Test-Path $envFile)) {
     Copy-Item $envExample $envFile
     Write-Host "[INFO] .env aus .env.example erstellt. Bitte Werte eintragen!" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "Mindestens folgende Werte muessen gesetzt werden:"
+    Write-Host "Mindestens folgende Werte müssen gesetzt werden:"
     Write-Host "  - POSTGRES_PASSWORD"
     Write-Host "  - TI_RADAR_DB_PATH (z.B. D:/ti-radar-db)"
     Write-Host ""
-    $answer = Read-Host "Moechten Sie die .env jetzt bearbeiten? [j/N]"
+    $answer = Read-Host "Möchten Sie die .env jetzt bearbeiten? [j/N]"
     if ($answer -match "^[jJyY]$") {
         notepad $envFile
-        Write-Host "Bitte nach dem Bearbeiten Enter druecken..."
+        Write-Host "Bitte nach dem Bearbeiten Enter drücken..."
         Read-Host
     }
 }
 
-# 3. TI_RADAR_DB_PATH pruefen
+# 3. TI_RADAR_DB_PATH prüfen
 $envContent = Get-Content $envFile | Where-Object { $_ -notmatch "^\s*#" -and $_ -match "=" }
 $envVars = @{}
 foreach ($line in $envContent) {

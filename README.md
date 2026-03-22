@@ -1,6 +1,6 @@
 # TI-Radar -- Technology Intelligence Radar
 
-Webbasierte Analyseplattform fuer Technologie-Intelligence auf Basis von Patent- und Forschungsdaten. Das System aggregiert Daten aus dem Europaeischen Patentamt (EPO, 154.8M Patente), CORDIS (80.5K EU-Forschungsprojekte) und OpenAIRE (Publikationen) und stellt diese ueber 12 analytische Use Cases als interaktives Dashboard bereit.
+Webbasierte Analyseplattform für Technologie-Intelligence auf Basis von Patent- und Forschungsdaten. Das System aggregiert Daten aus dem Europäischen Patentamt (EPO, 154.8M Patente), CORDIS (80.5K EU-Forschungsprojekte) und OpenAIRE (Publikationen) und stellt diese über 12 analytische Use Cases als interaktives Dashboard bereit.
 
 Entstanden im Rahmen einer Bachelorarbeit an der HWR Berlin.
 
@@ -46,8 +46,8 @@ graph TD
 | Komponente | Version | Hinweis |
 |---|---|---|
 | Docker Desktop | >= 4.x | inkl. Docker Compose Plugin |
-| Externes Laufwerk | >= 600 GB | fuer PostgreSQL-Datenverzeichnis |
-| EPO API Key | optional | fuer Live-Patent-Abfragen (kostenlose Registrierung) |
+| Externes Laufwerk | >= 600 GB | für PostgreSQL-Datenverzeichnis |
+| EPO API Key | optional | für Live-Patent-Abfragen (kostenlose Registrierung) |
 
 ## Schnellstart
 
@@ -60,16 +60,16 @@ cd ti-radar
 cp .env.example .env
 
 # 3. Pflicht-Werte in .env eintragen:
-#    - POSTGRES_PASSWORD (sicheres Passwort waehlen)
+#    - POSTGRES_PASSWORD (sicheres Passwort wählen)
 #    - TI_RADAR_DB_PATH  (z.B. D:/ti-radar-db oder /mnt/external/ti-radar-db)
 
-# 4. Setup ausfuehren (Docker-Images bauen, Proto-Stubs generieren)
+# 4. Setup ausführen (Docker-Images bauen, Proto-Stubs generieren)
 bash scripts/setup.sh
 
 # 5. Stack starten
 bash scripts/start.sh
 
-# 6. Im Browser oeffnen
+# 6. Im Browser öffnen
 #    Frontend:  http://localhost:3000
 #    API Docs:  http://localhost:8000/docs
 ```
@@ -81,7 +81,7 @@ bash scripts/start.sh
 | `frontend/` | Next.js 14 Frontend (TypeScript, Recharts, D3, Tailwind) |
 | `services/` | 16 Python-Microservices (12 UC-Services + Orchestrator + Import + Export + Publication) |
 | `packages/shared/` | Geteilter Python-Code (Domain-Ports, Protobuf-Stubs) |
-| `proto/` | Protobuf-Definitionen fuer gRPC-Kommunikation |
+| `proto/` | Protobuf-Definitionen für gRPC-Kommunikation |
 | `database/` | SQL-Schema-Migrationen, Mock-Daten |
 | `deploy/` | Docker Compose, Makefile, Monitoring-Infrastruktur (Prometheus, Grafana) |
 | `scripts/` | Setup-, Start- und Proto-Generierungsskripte |
@@ -90,7 +90,7 @@ bash scripts/start.sh
 
 ## Entwicklung
 
-Alle Build-Befehle werden aus dem `deploy/`-Verzeichnis via Make ausgefuehrt:
+Alle Build-Befehle werden aus dem `deploy/`-Verzeichnis via Make ausgeführt:
 
 ```bash
 cd deploy
@@ -98,10 +98,10 @@ cd deploy
 # gRPC Python-Stubs aus proto/ generieren
 make proto
 
-# Ruff + Mypy auf alle Services ausfuehren
+# Ruff + Mypy auf alle Services ausführen
 make lint
 
-# Pytest auf alle Services ausfuehren
+# Pytest auf alle Services ausführen
 make test
 
 # Docker-Images bauen
@@ -117,9 +117,9 @@ make logs
 
 ## Dokumentation
 
-- [Architektur](docs/ARCHITEKTUR.md) -- Systemuebersicht, Clean Architecture, Service-Kommunikation
+- [Architektur](docs/ARCHITEKTUR.md) -- Systemübersicht, Clean Architecture, Service-Kommunikation
 - [Datenmodell](docs/DATENMODELL.md) -- Datenbankschemas, Datenquellen, ER-Diagramm
-- [Deployment](docs/DEPLOYMENT.md) -- Vollstaendige Setup-Anleitung, externes Laufwerk, Monitoring
+- [Deployment](docs/DEPLOYMENT.md) -- Vollständige Setup-Anleitung, externes Laufwerk, Monitoring
 - [API](docs/API.md) -- REST-Endpunkte, Request/Response-Beispiele, Fehlerbehandlung
 
 ## Lizenz

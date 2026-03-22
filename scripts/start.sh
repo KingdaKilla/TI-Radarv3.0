@@ -6,15 +6,15 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 echo "=== TI-Radar Start ==="
 
-# .env pruefen
+# .env prüfen
 if [ ! -f "$PROJECT_ROOT/.env" ]; then
-    echo "FEHLER: .env nicht gefunden. Bitte zuerst setup.sh ausfuehren."
+    echo "FEHLER: .env nicht gefunden. Bitte zuerst setup.sh ausführen."
     exit 1
 fi
 
 source "$PROJECT_ROOT/.env"
 
-# DB-Pfad pruefen
+# DB-Pfad prüfen
 if [ -z "${TI_RADAR_DB_PATH:-}" ]; then
     echo "FEHLER: TI_RADAR_DB_PATH nicht gesetzt in .env"
     exit 1

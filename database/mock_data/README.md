@@ -1,11 +1,11 @@
 # Mock-Datenbank: Quantum Computing
 
-Abgespeckte Datenbank mit allen Datensaetzen fuer die Technologie "quantum computing".
-Dient als Demo-/Entwicklungsdatenbank ohne die vollstaendige 590 GB PostgreSQL.
+Abgespeckte Datenbank mit allen Datensätzen für die Technologie "quantum computing".
+Dient als Demo-/Entwicklungsdatenbank ohne die vollständige 590 GB PostgreSQL.
 
 ## Inhalt
 
-| Datei | Entitaet | Zeilen | Groesse |
+| Datei | Entität | Zeilen | Größe |
 |-------|----------|--------|---------|
 | patents.csv | EPO-Patente | 6.019 | 1,7 MB |
 | projects.csv | CORDIS-Projekte | 4.814 | 2,7 MB |

@@ -7,7 +7,7 @@ Der Orchestrator stellt eine REST/JSON-API auf Port 8000 bereit. Alle Analyse-En
 | Methode | Pfad | Beschreibung |
 |---|---|---|
 | `POST` | `/api/v1/radar` | Komplette Radar-Analyse (alle 13 UC-Services parallel) |
-| `GET` | `/api/v1/suggestions` | Autocomplete-Vorschlaege fuer das Suchfeld |
+| `GET` | `/api/v1/suggestions` | Autocomplete-Vorschläge für das Suchfeld |
 | `GET` | `/health` | Health Check (shallow oder deep) |
 | `GET` | `/metrics` | Prometheus-Metriken (OpenMetrics-Format) |
 
@@ -15,7 +15,7 @@ Der Orchestrator stellt eine REST/JSON-API auf Port 8000 bereit. Alle Analyse-En
 
 ## POST /api/v1/radar
 
-Fuehrt eine Technology-Radar-Analyse durch. Der Orchestrator verteilt die Anfrage parallel via gRPC an alle 13 UC-Services und aggregiert die Ergebnisse.
+Führt eine Technology-Radar-Analyse durch. Der Orchestrator verteilt die Anfrage parallel via gRPC an alle 13 UC-Services und aggregiert die Ergebnisse.
 
 ### Request
 
@@ -38,11 +38,11 @@ curl -X POST http://localhost:8000/api/v1/radar \
 | Feld | Typ | Pflicht | Default | Beschreibung |
 |---|---|---|---|---|
 | `technology` | `string` | ja | -- | Technologie-Suchbegriff (1-200 Zeichen) |
-| `years` | `int` | nein | `10` | Analysezeitraum in Jahren (3-30, rueckblickend ab heute) |
-| `european_only` | `bool` | nein | `false` | Nur EU-27 + assoziierte Laender |
-| `cpc_codes` | `string[]` | nein | `[]` | CPC-Codes zur Einschraenkung (max. 50, Format: `[A-H]\d+`) |
-| `top_n` | `int` | nein | `0` | Max. Top-N-Eintraege pro Panel (0 = Service-Default) |
-| `use_cases` | `string[]` | nein | `[]` | Selektive UC-Ausfuehrung (leer = alle 13 UCs) |
+| `years` | `int` | nein | `10` | Analysezeitraum in Jahren (3-30, rückblickend ab heute) |
+| `european_only` | `bool` | nein | `false` | Nur EU-27 + assoziierte Länder |
+| `cpc_codes` | `string[]` | nein | `[]` | CPC-Codes zur Einschränkung (max. 50, Format: `[A-H]\d+`) |
+| `top_n` | `int` | nein | `0` | Max. Top-N-Einträge pro Panel (0 = Service-Default) |
+| `use_cases` | `string[]` | nein | `[]` | Selektive UC-Ausführung (leer = alle 13 UCs) |
 
 **Erlaubte `use_cases`-Werte:**
 `landscape`, `maturity`, `competitive`, `funding`, `cpc_flow`, `geographic`, `research_impact`, `temporal`, `tech_cluster`, `actor_type`, `patent_grant`, `euroscivoc`, `publication`
@@ -88,11 +88,11 @@ curl -X POST http://localhost:8000/api/v1/radar \
 }
 ```
 
-Jedes UC-Panel (`landscape`, `maturity`, etc.) enthaelt die service-spezifische Analyse als JSON-Objekt. Die genaue Struktur wird durch die jeweilige Protobuf-Definition bestimmt (siehe `proto/uc*.proto`).
+Jedes UC-Panel (`landscape`, `maturity`, etc.) enthält die service-spezifische Analyse als JSON-Objekt. Die genaue Struktur wird durch die jeweilige Protobuf-Definition bestimmt (siehe `proto/uc*.proto`).
 
 ### Graceful Degradation
 
-Wenn ein UC-Service fehlschlaegt (Timeout, Unavailable, etc.), liefert das betroffene Panel ein leeres Objekt `{}`. Der Fehler wird in `uc_errors` gemeldet:
+Wenn ein UC-Service fehlschlägt (Timeout, Unavailable, etc.), liefert das betroffene Panel ein leeres Objekt `{}`. Der Fehler wird in `uc_errors` gemeldet:
 
 ```json
 {
@@ -117,15 +117,15 @@ Wenn ein UC-Service fehlschlaegt (Timeout, Unavailable, etc.), liefert das betro
 |---|---|---|
 | `TIMEOUT` | Service hat nicht innerhalb des Timeouts geantwortet | ja |
 | `UNAVAILABLE` | Service nicht erreichbar | ja |
-| `RESOURCE_EXHAUSTED` | Service ueberlastet | ja |
+| `RESOURCE_EXHAUSTED` | Service überlastet | ja |
 | `INTERNAL` | Interner Serverfehler | nein |
 | `NOT_FOUND` | Keine Daten gefunden | nein |
 | `UNIMPLEMENTED` | RPC nicht implementiert | nein |
 | `STUBS_UNAVAILABLE` | gRPC-Stubs nicht generiert | nein |
 
-### Selektive UC-Ausfuehrung
+### Selektive UC-Ausführung
 
-Ueber das `use_cases`-Feld koennen einzelne UCs angefordert werden:
+Über das `use_cases`-Feld können einzelne UCs angefordert werden:
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/radar \
@@ -137,18 +137,18 @@ curl -X POST http://localhost:8000/api/v1/radar \
   }'
 ```
 
-Nicht angeforderte Panels werden in der Response als leere Objekte `{}` zurueckgegeben.
+Nicht angeforderte Panels werden in der Response als leere Objekte `{}` zurückgegeben.
 
 ---
 
 ## GET /api/v1/suggestions
 
-Liefert Autocomplete-Vorschlaege basierend auf Patent- und Projekt-Titeln aus der Datenbank.
+Liefert Autocomplete-Vorschläge basierend auf Patent- und Projekt-Titeln aus der Datenbank.
 
 ### Request
 
 ```bash
-# Kuratierte Default-Vorschlaege (leerer Query)
+# Kuratierte Default-Vorschläge (leerer Query)
 curl "http://localhost:8000/api/v1/suggestions"
 
 # Suche nach Prefix
@@ -159,8 +159,8 @@ curl "http://localhost:8000/api/v1/suggestions?q=quantum&limit=5"
 
 | Parameter | Typ | Default | Beschreibung |
 |---|---|---|---|
-| `q` | `string` | `null` | Suchbegriff (min. 2 Zeichen fuer DB-Suche) |
-| `limit` | `int` | `8` | Max. Anzahl Vorschlaege (1-20) |
+| `q` | `string` | `null` | Suchbegriff (min. 2 Zeichen für DB-Suche) |
+| `limit` | `int` | `8` | Max. Anzahl Vorschläge (1-20) |
 
 ### Response (200)
 
@@ -168,13 +168,13 @@ curl "http://localhost:8000/api/v1/suggestions?q=quantum&limit=5"
 ["Quantum Computing", "Quantum Dots", "Quantum Sensing", "Quantum Cryptography"]
 ```
 
-Bei leerem oder kurzem Suchbegriff werden kuratierte Default-Vorschlaege zurueckgegeben (z.B. "Artificial Intelligence", "Battery Technology", "CRISPR", etc.).
+Bei leerem oder kurzem Suchbegriff werden kuratierte Default-Vorschläge zurückgegeben (z.B. "Artificial Intelligence", "Battery Technology", "CRISPR", etc.).
 
 ---
 
 ## GET /health
 
-Aggregierter Health Check ueber den Orchestrator und optional alle UC-Services.
+Aggregierter Health Check über den Orchestrator und optional alle UC-Services.
 
 ### Request
 
@@ -182,7 +182,7 @@ Aggregierter Health Check ueber den Orchestrator und optional alle UC-Services.
 # Shallow (nur Orchestrator)
 curl http://localhost:8000/health
 
-# Deep (alle UC-Services pruefen)
+# Deep (alle UC-Services prüfen)
 curl "http://localhost:8000/health?deep=true"
 ```
 
@@ -190,7 +190,7 @@ curl "http://localhost:8000/health?deep=true"
 
 | Parameter | Typ | Default | Beschreibung |
 |---|---|---|---|
-| `deep` | `bool` | `false` | Deep Check: Konnektivitaet zu allen UC-Services pruefen |
+| `deep` | `bool` | `false` | Deep Check: Konnektivität zu allen UC-Services prüfen |
 
 ### Response -- Shallow (200)
 
@@ -262,10 +262,10 @@ ti_radar_grpc_calls_total{uc="landscape",status="timeout"} 1.0
 | Code | Beschreibung |
 |---|---|
 | `200` | Erfolg |
-| `400` | Ungueltige Anfrage (Validierungsfehler: ungueltige CPC-Codes, unbekannte use_cases, etc.) |
-| `401` | Fehlender oder ungueltiger API-Key |
-| `422` | Pydantic-Validierungsfehler (z.B. `technology` zu lang, `years` ausserhalb 3-30) |
-| `429` | Rate Limit ueberschritten (100 Requests/Minute) |
+| `400` | Ungültige Anfrage (Validierungsfehler: ungültige CPC-Codes, unbekannte use_cases, etc.) |
+| `401` | Fehlender oder ungültiger API-Key |
+| `422` | Pydantic-Validierungsfehler (z.B. `technology` zu lang, `years` außerhalb 3-30) |
+| `429` | Rate Limit überschritten (100 Requests/Minute) |
 | `500` | Interner Serverfehler |
 
 ### Fehler-Response (422)

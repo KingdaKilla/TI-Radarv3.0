@@ -2,14 +2,14 @@
 
 ## Voraussetzungen
 
-| Komponente | Version | Pruefung |
+| Komponente | Version | Prüfung |
 |---|---|---|
 | Docker Desktop | >= 4.x | `docker --version` |
 | Docker Compose Plugin | >= 2.x | `docker compose version` |
-| Externes Laufwerk | >= 600 GB | fuer PostgreSQL-Datenverzeichnis |
-| RAM | >= 16 GB empfohlen | PostgreSQL benoetigt 8 GB (konfiguriert) |
+| Externes Laufwerk | >= 600 GB | für PostgreSQL-Datenverzeichnis |
+| RAM | >= 16 GB empfohlen | PostgreSQL benötigt 8 GB (konfiguriert) |
 
-## Schritt-fuer-Schritt-Setup
+## Schritt-für-Schritt-Setup
 
 ### 1. Repository klonen
 
@@ -24,26 +24,26 @@ cd ti-radar
 cp .env.example .env
 ```
 
-Folgende Werte muessen in `.env` eingetragen werden:
+Folgende Werte müssen in `.env` eingetragen werden:
 
 | Variable | Pflicht | Beschreibung | Beispiel |
 |---|---|---|---|
 | `POSTGRES_PASSWORD` | ja | Datenbank-Passwort | `mein_sicheres_pw` |
 | `TI_RADAR_DB_PATH` | ja | Pfad zum DB-Verzeichnis (externes Laufwerk) | `D:/ti-radar-db` |
-| `EPO_OPS_CONSUMER_KEY` | nein | EPO API Key (fuer Live-Abfragen) | |
+| `EPO_OPS_CONSUMER_KEY` | nein | EPO API Key (für Live-Abfragen) | |
 | `EPO_OPS_CONSUMER_SECRET` | nein | EPO API Secret | |
 | `GRAFANA_ADMIN_PASSWORD` | nein | Grafana-Passwort (nur mit Monitoring-Profil) | `admin` |
 
-### 3. Setup-Skript ausfuehren
+### 3. Setup-Skript ausführen
 
 ```bash
 bash scripts/setup.sh
 ```
 
 Das Skript:
-1. Prueft Docker-Installation
+1. Prüft Docker-Installation
 2. Erstellt `.env` falls nicht vorhanden
-3. Prueft `TI_RADAR_DB_PATH`
+3. Prüft `TI_RADAR_DB_PATH`
 4. Generiert Protobuf-Stubs (falls grpcio-tools installiert)
 5. Baut alle Docker-Images
 
@@ -53,9 +53,9 @@ Das Skript:
 bash scripts/start.sh
 ```
 
-Das Skript prueft, ob das externe Laufwerk angeschlossen ist, und startet alle 18 Services.
+Das Skript prüft, ob das externe Laufwerk angeschlossen ist, und startet alle 18 Services.
 
-### 5. Erreichbarkeit pruefen
+### 5. Erreichbarkeit prüfen
 
 | Service | URL |
 |---|---|
@@ -66,13 +66,13 @@ Das Skript prueft, ob das externe Laufwerk angeschlossen ist, und startet alle 1
 
 ## Datenbank auf externem Laufwerk
 
-Die PostgreSQL-Daten liegen standardmaessig auf einem externen Laufwerk. Der Pfad wird ueber `TI_RADAR_DB_PATH` in `.env` konfiguriert.
+Die PostgreSQL-Daten liegen standardmäßig auf einem externen Laufwerk. Der Pfad wird über `TI_RADAR_DB_PATH` in `.env` konfiguriert.
 
 **Wichtig:**
 - Das Verzeichnis wird beim ersten Start automatisch erstellt
 - Beim Starten muss das externe Laufwerk angeschlossen sein
 - Bei Wechsel des Laufwerksbuchstabens (Windows) muss `TI_RADAR_DB_PATH` angepasst werden
-- Das Datenverzeichnis enthaelt die komplette PostgreSQL-Instanz (~590 GB)
+- Das Datenverzeichnis enthält die komplette PostgreSQL-Instanz (~590 GB)
 
 ```bash
 # Beispiel Windows
@@ -84,7 +84,7 @@ TI_RADAR_DB_PATH=/mnt/external/ti-radar-db
 
 ## Bulk-Daten-Import (optional)
 
-Fuer den Erst-Import der Patent- und CORDIS-Daten stehen Bulk-Import-Pfade zur Verfuegung.
+Für den Erst-Import der Patent- und CORDIS-Daten stehen Bulk-Import-Pfade zur Verfügung.
 
 ### EPO DOCDB
 
@@ -150,7 +150,7 @@ docker compose --env-file .env -f deploy/docker-compose.yml --profile monitoring
 
 Prometheus scraped automatisch den `/metrics`-Endpunkt des Orchestrators (OpenMetrics-Format). Grafana-Dashboards und Provisioning-Dateien liegen in `deploy/infra/grafana/`.
 
-## Service-Uebersicht
+## Service-Übersicht
 
 | Container | Port | Beschreibung |
 |---|---|---|
@@ -176,7 +176,7 @@ Prometheus scraped automatisch den `/metrics`-Endpunkt des Orchestrators (OpenMe
 
 ### Docker Desktop startet nicht (Windows)
 
-Docker Desktop unter Windows kann instabil werden. Loesung:
+Docker Desktop unter Windows kann instabil werden. Lösung:
 
 1. Alle Docker-Prozesse im Task-Manager beenden
 2. WSL herunterfahren: `wsl --shutdown`
@@ -185,13 +185,13 @@ Docker Desktop unter Windows kann instabil werden. Loesung:
 ### Datenbank-Verbindung fehlgeschlagen
 
 ```bash
-# Pruefen ob DB-Container laeuft
+# Prüfen ob DB-Container läuft
 docker ps | grep ti-radar-db
 
 # Manuell testen
 docker exec -i ti-radar-db psql -U tip_admin -d ti_radar -c "SELECT 1"
 
-# Logs pruefen
+# Logs prüfen
 docker logs ti-radar-db --tail 50
 ```
 
@@ -200,22 +200,22 @@ docker logs ti-radar-db --tail 50
 Falls Port 5432 bereits belegt ist (lokale PostgreSQL-Installation):
 
 ```bash
-# Pruefen welcher Prozess den Port belegt
+# Prüfen welcher Prozess den Port belegt
 # Windows:
 netstat -ano | findstr :5432
 # Linux:
 ss -tlnp | grep 5432
 ```
 
-Die Datenbank ist nur auf `127.0.0.1:5432` gebunden. Bei Konflikten kann der Port in `docker-compose.yml` geaendert werden.
+Die Datenbank ist nur auf `127.0.0.1:5432` gebunden. Bei Konflikten kann der Port in `docker-compose.yml` geändert werden.
 
 ### UC-Service antwortet nicht
 
 ```bash
-# Deep Health Check: alle Services pruefen
+# Deep Health Check: alle Services prüfen
 curl http://localhost:8000/health?deep=true | python -m json.tool
 
-# Logs eines bestimmten Service pruefen
+# Logs eines bestimmten Service prüfen
 docker logs ti-radar-uc1 --tail 50
 ```
 
@@ -226,4 +226,4 @@ FEHLER: Datenbank-Verzeichnis nicht gefunden: D:/ti-radar-db
 Ist das externe Laufwerk angeschlossen?
 ```
 
-Pruefen, ob das externe Laufwerk gemountet ist und der in `TI_RADAR_DB_PATH` konfigurierte Pfad existiert.
+Prüfen, ob das externe Laufwerk gemountet ist und der in `TI_RADAR_DB_PATH` konfigurierte Pfad existiert.

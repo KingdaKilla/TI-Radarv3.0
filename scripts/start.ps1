@@ -6,14 +6,14 @@ $ProjectRoot = Split-Path -Parent $ScriptDir
 
 Write-Host "=== TI-Radar Start ===" -ForegroundColor Cyan
 
-# .env pruefen
+# .env prüfen
 $envFile = Join-Path $ProjectRoot ".env"
 if (-not (Test-Path $envFile)) {
-    Write-Host "FEHLER: .env nicht gefunden. Bitte zuerst setup.ps1 ausfuehren." -ForegroundColor Red
+    Write-Host "FEHLER: .env nicht gefunden. Bitte zuerst setup.ps1 ausführen." -ForegroundColor Red
     exit 1
 }
 
-# TI_RADAR_DB_PATH pruefen
+# TI_RADAR_DB_PATH prüfen
 $envContent = Get-Content $envFile | Where-Object { $_ -notmatch "^\s*#" -and $_ -match "=" }
 $envVars = @{}
 foreach ($line in $envContent) {

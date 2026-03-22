@@ -318,7 +318,7 @@ services:
       - orchestrator-svc
     environment:
       # NEXT_PUBLIC_* wird zur Build-Zeit gebacken (Dockerfile ARG).
-      # Runtime-Wert hier fuer SSR Server-Side Calls:
+      # Runtime-Wert hier für SSR Server-Side Calls:
       INTERNAL_API_URL: http://orchestrator-svc:8000
     restart: unless-stopped
     deploy:

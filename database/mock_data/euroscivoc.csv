@@ -1,0 +1,1063 @@
+id,code,label_en,label_de,parent_code,level
+1,/29,social sciences,,,0
+2,/23,natural sciences,,,0
+3,/27,agricultural sciences,,,0
+4,/31,humanities,,,0
+5,/21,medical and health sciences,,,0
+6,/25,engineering and technology,,,0
+7,/29/97,political sciences,,/29,1
+8,/29/101,sociology,,/29,1
+9,/23/49,biological sciences,,/23,1
+10,/29/91,economics and business,,/29,1
+11,/27/81,"agriculture, forestry, and fisheries",,/27,1
+12,/31/113,history and archaeology,,/31,1
+13,/21/35,basic medicine,,/21,1
+14,/31/111,"philosophy, ethics and religion",,/31,1
+15,/21/39,clinical medicine,,/21,1
+16,/29/95,other social sciences,,/29,1
+17,/23/43,physical sciences,,/23,1
+18,/23/47,computer and information sciences,,/23,1
+19,/25/67,environmental engineering,,/25,1
+20,/23/45,earth and related environmental sciences,,/23,1
+21,/21/33,health sciences,,/21,1
+22,/29/89,law,,/29,1
+23,/23/53,chemical sciences,,/23,1
+24,/25/73,"electrical engineering, electronic engineering, information engineering",,/25,1
+25,/29/99,social geography,,/29,1
+26,/25/61,industrial biotechnology,,/25,1
+27,/27/87,veterinary sciences,,/27,1
+28,/27/83,animal and dairy science,,/27,1
+29,/25/75,mechanical engineering,,/25,1
+30,/25/63,materials engineering,,/25,1
+31,/31/109,arts,,/31,1
+32,/23/51,mathematics,,/23,1
+33,/25/59,other engineering and technologies,,/25,1
+34,/29/93,psychology,,/29,1
+35,/21/37,medical biotechnology,,/21,1
+36,/25/69,nanotechnology,,/25,1
+37,/25/77,civil engineering,,/25,1
+38,/25/71,environmental biotechnology,,/25,1
+39,/29/105,educational sciences,,/29,1
+40,/31/107,languages and literature,,/31,1
+41,/25/57,medical engineering,,/25,1
+42,/27/79,agricultural biotechnology,,/27,1
+43,/31/115,other humanities,,/31,1
+44,/25/65,chemical engineering,,/25,1
+45,/21/41,other medical sciences,,/21,1
+46,/29/103,media and communications,,/29,1
+47,/27/85,other agricultural sciences,,/27,1
+48,/29/97/67681549,political transitions,,/29/97,2
+49,/29/101/553,demography,,/29/101,2
+50,/23/49/315,biochemistry,,/23/49,2
+51,/29/91/521,economics,,/29/91,2
+52,/27/81/30021,agriculture,,/27/81,2
+53,/23/49/311,botany,,/23/49,2
+54,/31/113/613,history,,/31/113,2
+55,/21/35/161,physiology,,/21/35,2
+56,/31/111/609,philosophy,,/31/111,2
+57,/23/49/341,microbiology,,/23/49,2
+58,/23/49/337,genetics,,/23/49,2
+59,/23/49/335,ecology,,/23/49,2
+60,/29/101/559,governance,,/29/101,2
+61,/29/97/543,government systems,,/29/97,2
+62,/21/39/695,gynaecology,,/21/39,2
+63,/29/95/92131787,development studies,,/29/95,2
+64,/21/39/697,obstetrics,,/21/39,2
+65,/21/39/203,embryology,,/21/39,2
+66,/23/49/313,cell biology,,/23/49,2
+67,/23/49/349,developmental biology,,/23/49,2
+68,/23/43/251,optics,,/23/43,2
+69,/23/47/307,software,,/23/47,2
+70,/29/101/555,industrial relations,,/29/101,2
+71,/25/67/429,waste management,,/25/67,2
+72,/23/43/257,astronomy,,/23/43,2
+73,/23/45/291,geology,,/23/45,2
+74,/21/35/151,anatomy and morphology,,/21/35,2
+75,/21/35/145,pathology,,/21/35,2
+76,/21/33/137,public health,,/21/33,2
+77,/23/45/277,environmental sciences,,/23/45,2
+78,/29/91/523,business and management,,/29/91,2
+79,/25/67/425,energy and fuels,,/25/67,2
+80,/29/101/1367,social issues,,/29/101,2
+81,/21/39/225,oncology,,/21/39,2
+82,/23/53/369,polymer sciences,,/23/53,2
+83,/23/43/259,electromagnetism and electronics,,/23/43,2
+84,/25/73/453,electronic engineering,,/25/73,2
+85,/21/33/117,nutrition,,/21/33,2
+86,/29/99/547,transport,,/29/99,2
+87,/23/47/301,computational science,,/23/47,2
+88,/23/47/299,data science,,/23/47,2
+89,/23/49/317,marine biology,,/23/49,2
+90,/27/81/489,fisheries,,/27/81,2
+91,/25/61/385,bioprocessing technologies,,/25/61,2
+92,/23/47/15962364,knowledge engineering,,/23/47,2
+93,/27/83/501,domestic animals,,/27/83,2
+94,/25/61/383,biomaterials,,/25/61,2
+95,/25/75/471,thermodynamic engineering,,/25/75,2
+96,/23/53/365,inorganic chemistry,,/23/53,2
+97,/25/63/397,ceramics,,/25/63,2
+98,/23/47/303,databases,,/23/47,2
+99,/25/67/11936537,ecosystem-based management,,/25/67,2
+100,/23/49/345,zoology,,/23/49,2
+101,/21/39/217,pneumology,,/21/39,2
+102,/21/35/159,pharmacology and pharmacy,,/21/35,2
+103,/21/35/155,immunology,,/21/35,2
+104,/27/81/495,forestry,,/27/81,2
+105,/25/67/419,remote sensing,,/25/67,2
+106,/23/49/323,biodiversity conservation,,/23/49,2
+107,/25/73/30020,information engineering,,/25/73,2
+108,/23/43/269,classical mechanics,,/23/43,2
+109,/23/53/373,electrochemistry,,/23/53,2
+110,/23/43/267,atomic physics,,/23/43,2
+111,/23/43/793,quantum physics,,/23/43,2
+112,/25/75/461,vehicle engineering,,/25/75,2
+113,/23/43/263,condensed matter physics,,/23/43,2
+114,/23/43/271,plasma physics,,/23/43,2
+115,/23/43/261,theoretical physics,,/23/43,2
+116,/23/51/355,applied mathematics,,/23/51,2
+117,/23/45/289,oceanography,,/23/45,2
+118,/23/47/297,artificial intelligence,,/23/47,2
+119,/23/43/265,thermodynamics,,/23/43,2
+120,/21/35/153,neurology,,/21/35,2
+121,/21/39/179,endocrinology,,/21/39,2
+122,/29/97/87917856,political policies,,/29/97,2
+123,/21/39/221,cardiology,,/21/39,2
+124,/23/49/327,neurobiology,,/23/49,2
+125,/21/39/175,gerontology,,/21/39,2
+126,/23/49/329,biophysics,,/23/49,2
+127,/23/47/295,computer security,,/23/47,2
+128,/21/39/213,ophthalmology,,/21/39,2
+129,/21/35/147,toxicology,,/21/35,2
+130,/29/101/561,anthropology,,/29/101,2
+131,/23/53/69669548,catalysis,,/23/53,2
+132,/21/39/227,physiotherapy,,/21/39,2
+133,/21/37/677,implants,,/21/37,2
+134,/25/73/451,electrical engineering,,/25/73,2
+135,/23/51/359,pure mathematics,,/23/51,2
+136,/25/69/435,nano-materials,,/25/69,2
+137,/23/45/285,geochemistry,,/23/45,2
+138,/25/77/477,construction engineering,,/25/77,2
+139,/23/43/273,acoustics,,/23/43,2
+140,/31/109/1403,musicology,,/31/109,2
+141,/23/53/367,physical chemistry,,/23/53,2
+142,/25/77/479,architecture engineering,,/25/77,2
+143,/23/47/305,internet,,/23/47,2
+144,/23/49/321,biological behavioural sciences,,/23/49,2
+145,/25/63/387,composites,,/25/63,2
+146,/23/53/363,organic chemistry,,/23/53,2
+147,/21/33/121,infectious diseases,,/21/33,2
+148,/25/63/409,colors,,/25/63,2
+149,/23/49/343,evolutionary biology,,/23/49,2
+150,/21/39/223,surgery,,/21/39,2
+151,/21/35/149,medical genetics,,/21/35,2
+152,/21/37/165,genetic engineering,,/21/37,2
+153,/25/59/379,microtechnology,,/25/59,2
+154,/21/37/163,cells technologies,,/21/37,2
+155,/25/71/443,bioremediation,,/25/71,2
+156,/25/63/399,textiles,,/25/63,2
+157,/29/105/573,didactics,,/29/105,2
+158,/21/37/171,nanomedicine,,/21/37,2
+159,/23/45/293,physical geography,,/23/45,2
+160,/29/97/541,political communication,,/29/97,2
+161,/31/107/583,general language studies,,/31/107,2
+162,/25/67/89023697,water treatment processes,,/25/67,2
+163,/23/45/30018,atmospheric sciences,,/23/45,2
+164,/23/45/30019,geophysics,,/23/45,2
+165,/31/113/611,archaeology,,/31/113,2
+166,/25/63/391,coating and films,,/25/63,2
+167,/25/59/377,food technology,,/25/59,2
+168,/25/57/90532773,wearable medical technology,,/25/57,2
+169,/25/59/81020971,nuclear engineering,,/25/59,2
+170,/23/43/253,nuclear physics,,/23/43,2
+171,/27/83/503,dairy,,/27/83,2
+172,/25/77/473,structural engineering,,/25/77,2
+173,/21/39/215,rheumatology,,/21/39,2
+174,/29/93/47293307,ergonomics,,/29/93,2
+175,/25/63/19232965,amorphous solids,,/25/63,2
+176,/25/63/393,fibers,,/25/63,2
+177,/25/75/469,manufacturing engineering,,/25/75,2
+178,/21/37/167,tissue engineering,,/21/37,2
+179,/23/49/309,molecular biology,,/23/49,2
+180,/25/57/375,medical laboratory technology,,/25/57,2
+181,/21/39/237,transplantation,,/21/39,2
+182,/27/79/483,agricultural genetics,,/27/79,2
+183,/21/33/125,dietetics,,/21/33,2
+184,/21/39/177,gastroenterology,,/21/39,2
+185,/21/39/243,angiology,,/21/39,2
+186,/25/63/395,woodworking,,/25/63,2
+187,/29/101/551,ideologies,,/29/101,2
+188,/25/67/417,mining and mineral processing,,/25/67,2
+189,/31/109/593,performing arts,,/31/109,2
+190,/31/107/577,literature studies,,/31/107,2
+191,/31/115/563,library sciences,,/31/115,2
+192,/31/109/603,visual arts,,/31/109,2
+193,/31/111/607,religions,,/31/111,2
+194,/21/33/30011,health care services,,/21/33,2
+195,/25/71/447,biosensing,,/25/71,2
+196,/25/69/437,nanophotonics,,/25/69,2
+197,/29/99/549,urban studies,,/29/99,2
+198,/25/63/401,crystals,,/25/63,2
+199,/21/39/183,allergology,,/21/39,2
+200,/23/45/287,hydrology,,/23/45,2
+201,/25/67/423,natural resources management,,/25/67,2
+202,/25/65/81684188,separation technologies,,/25/65,2
+203,/21/39/235,psychiatry,,/21/39,2
+204,/23/53/361,analytical chemistry,,/23/53,2
+205,/25/57/693,diagnostic imaging,,/25/57,2
+206,/23/53/371,nuclear chemistry,,/23/53,2
+207,/29/105/571,pedagogy,,/29/105,2
+208,/23/45/283,soil sciences,,/23/45,2
+209,/25/77/84897392,water engineering,,/25/77,2
+210,/21/39/201,radiology,,/21/39,2
+211,/29/89/517,constitutional law,,/29/89,2
+212,/21/41/249,forensic sciences,,/21/41,2
+213,/29/93/531,social psychology,,/29/93,2
+214,/21/39/30013,hepatology,,/21/39,2
+215,/23/43/30016,relativistic mechanics,,/23/43,2
+216,/25/67/427,geotechnics,,/25/67,2
+217,/29/101/1363,gender studies,,/29/101,2
+218,/29/99/545,cultural and economic geography,,/29/99,2
+219,/29/97/537,public administration,,/29/97,2
+220,/29/89/509,penology,,/29/89,2
+221,/31/111/605,ethics,,/31/111,2
+222,/21/33/143,nursing,,/21/33,2
+223,/25/77/475,transportation engineering,,/25/77,2
+224,/23/45/275,palaeontology,,/23/45,2
+225,/29/93/525,behavioural psychology,,/29/93,2
+226,/25/63/389,metallurgy,,/25/63,2
+227,/25/69/433,nanoelectronics,,/25/69,2
+228,/25/75/467,mechatronics,,/25/75,2
+229,/31/107/587,linguistics,,/31/107,2
+230,/25/67/39381296,air pollution engineering,,/25/67,2
+231,/25/65/411,chemical process engineering,,/25/65,2
+232,/29/89/513,law enforcement,,/29/89,2
+233,/29/103/567,journalism,,/29/103,2
+234,/21/39/219,hematology,,/21/39,2
+235,/21/39/239,odontology,,/21/39,2
+236,/21/39/233,urology,,/21/39,2
+237,/21/39/211,dermatology,,/21/39,2
+238,/25/67/421,geological engineering,,/25/67,2
+239,/23/43/255,molecular and chemical physics,,/23/43,2
+240,/23/49/41594476,histology,,/23/49,2
+241,/23/49/339,synthetic biology,,/23/49,2
+242,/25/63/407,nanocomposites,,/25/63,2
+243,/21/33/135,parasitology,,/21/33,2
+244,/21/33/5029300,personalized medicine,,/21/33,2
+245,/29/101/1361,family studies,,/29/101,2
+246,/29/89/511,criminology,,/29/89,2
+247,/29/105/575,inclusive education,,/29/105,2
+248,/29/93/529,psycholinguistics,,/29/93,2
+249,/21/39/231,nephrology,,/21/39,2
+250,/21/39/241,clinical neurology,,/21/39,2
+251,/21/35/157,medicinal chemistry,,/21/35,2
+252,/25/67/52713081,carbon capture engineering,,/25/67,2
+253,/25/63/403,liquid crystals,,/25/63,2
+254,/29/89/1837,human rights,,/29/89,2
+255,/25/75/463,tribology,,/25/75,2
+256,/21/39/205,otorhinolaryngology,,/21/39,2
+257,/29/101/1365,social work,,/29/101,2
+258,/25/77/94443578,urban engineering,,/25/77,2
+259,/31/109/601,architectural design,,/31/109,2
+260,/29/93/533,cognitive psychology,,/29/93,2
+261,/23/49/353,biological morphology,,/23/49,2
+262,/25/75/465,applied mechanics,,/25/75,2
+263,/21/41/247,history of medicine,,/21/41,2
+264,/31/109/597,art history,,/31/109,2
+265,/29/93/527,psychotherapy,,/29/93,2
+266,/21/39/181,critical care medicine,,/21/39,2
+267,/23/49/333,reproductive biology,,/23/49,2
+268,/21/33/28360549,speech-language pathology,,/21/33,2
+269,/21/39/189,emergency medicine,,/21/39,2
+270,/21/39/185,anaesthesiology,,/21/39,2
+271,/27/83/505,apiculture,,/27/83,2
+272,/27/79/487,marker assisted selection,,/27/79,2
+273,/21/39/195,paediatrics,,/21/39,2
+274,/21/39/199,andrology,,/21/39,2
+275,/25/69/441,nano-processes,,/25/69,2
+276,/27/79/481,biomass,,/27/79,2
+277,/31/109/595,modern and contemporary art,,/31/109,2
+278,/29/93/3133018,developmental psychology,,/29/93,2
+279,/25/63/405,synthetic dyes,,/25/63,2
+280,/21/33/139,sport and fitness sciences,,/21/33,2
+281,/29/105/569,special education,,/29/105,2
+282,/29/103/1603,graphic design,,/29/103,2
+283,/21/39/187,orthopaedics,,/21/39,2
+284,/29/89/74342181,environmental law,,/29/89,2
+285,/21/33/119,social biomedical sciences,,/21/33,2
+286,/21/33/141,substance abuse,,/21/33,2
+287,/25/61/381,metabolic engineering,,/25/61,2
+288,/21/33/131,health care sciences,,/21/33,2
+289,/21/33/123,inflammatory diseases,,/21/33,2
+290,/21/33/129,tropical medicine,,/21/33,2
+291,/25/69/439,nanoelectromechanical systems,,/25/69,2
+292,/21/33/127,medical ethics,,/21/33,2
+293,/25/65/415,biochemical engineering,,/25/65,2
+294,/29/89/519,international law,,/29/89,2
+295,/23/49/347,freshwater biology,,/23/49,2
+296,/21/39/191,peripheral vascular disease,,/21/39,2
+297,/29/101/1369,globalization,,/29/101,2
+298,/29/89/515,admiralty law,,/29/89,2
+299,/21/39/209,integrative and complementary medicine,,/21/39,2
+300,/21/39/30014,venereal diseases,,/21/39,2
+301,/23/49/331,other biological topics,,/23/49,2
+302,/21/39/30012,internal medicine,,/21/39,2
+303,/21/39/197,clinical microbiology,,/21/39,2
+304,/21/39/229,general medicine,,/21/39,2
+305,/29/97/67681549/64785222,revolutions,,/29/97/67681549,3
+306,/29/101/553/1775,human migrations,,/29/101/553,3
+307,/23/49/315/997,biomolecules,,/23/49/315,3
+308,/29/91/521/83249330,bioeconomy,,/29/91/521,3
+309,/27/81/30021/493,agronomy,,/27/81/30021,3
+310,/27/81/30021/30833628,grains and oilseeds,,/27/81/30021,3
+311,/23/49/341/1035,bacteriology,,/23/49/341,3
+312,/23/49/337/1015,DNA,,/23/49/337,3
+313,/23/49/335/1009,ecosystems,,/23/49/335,3
+314,/29/97/543/1333,e-governance,,/29/97/543,3
+315,/21/39/695/53763899,reproductive medicine,,/21/39/695,3
+316,/29/101/553/1357,fertility,,/29/101/553,3
+317,/29/95/92131787/73291420,development economics,,/29/95/92131787,3
+318,/23/43/251/48354418,microscopy,,/23/43/251,3
+319,/29/101/555/1359,automation,,/29/101/555,3
+320,/25/67/429/97581411,waste treatment processes,,/25/67/429,3
+321,/23/43/257/771,planetary sciences,,/23/43/257,3
+322,/21/33/137/133,epidemiology,,/21/33/137,3
+323,/23/45/277/829,pollution,,/23/45/277,3
+324,/29/91/523/1309,entrepreneurship,,/29/91/523,3
+325,/25/67/425/1169,renewable energy,,/25/67/425,3
+326,/29/91/521/1303,sustainable economy,,/29/91/521,3
+327,/29/101/1367/1779,corruption,,/29/101/1367,3
+328,/23/43/259/787,optoelectronics,,/23/43/259,3
+329,/25/73/453/58525161,sensors,,/25/73/453,3
+330,/23/43/259/777,semiconductivity,,/23/43/259,3
+331,/29/99/547/1351,navigation systems,,/29/99/547,3
+332,/23/47/301/953,multiphysics,,/23/47/301,3
+333,/29/91/521/1299,production economics,,/29/91/521,3
+334,/23/47/299/941,data processing,,/23/47/299,3
+335,/27/83/501/507,animal husbandry,,/27/83/501,3
+336,/25/61/383/1159,biofuels,,/25/61/383,3
+337,/25/75/471/1251,heat engineering,,/25/75/471,3
+338,/23/53/365/72505310,transition metals,,/23/53/365,3
+339,/27/81/30021/55980855,agroecology,,/27/81/30021,3
+340,/25/67/11936537/62051362,ecological restoration,,/25/67/11936537,3
+341,/23/49/345/1045,mammalogy,,/23/49/345,3
+342,/21/39/217/709,tuberculosis,,/21/39/217,3
+343,/21/35/159/653,pharmaceutical drugs,,/21/35/159,3
+344,/21/35/155/643,immunotherapy,,/21/35/155,3
+345,/27/81/495/1283,silviculture,,/27/81/495,3
+346,/25/73/30020/455,telecommunications,,/25/73/30020,3
+347,/23/43/269/811,fluid mechanics,,/23/43/269,3
+348,/23/43/251/1077,spectroscopy,,/23/43/251,3
+349,/23/43/793/1545,quantum optics,,/23/43/793,3
+350,/23/43/251/745,laser physics,,/23/43/251,3
+351,/23/43/259/1525,superconductivity,,/23/43/259,3
+352,/25/75/461/1239,aerospace engineering,,/25/75/461,3
+353,/23/51/355/1055,dynamical systems,,/23/51/355,3
+354,/23/51/355/357,statistics and probability,,/23/51/355,3
+355,/23/47/297/933,machine learning,,/23/47/297,3
+356,/23/47/307/979,software applications,,/23/47/307,3
+357,/25/73/453/449,computer hardware,,/25/73/453,3
+358,/21/35/153/629,epilepsy,,/21/35/153,3
+359,/21/39/179/681,diabetes,,/21/39/179,3
+360,/29/97/87917856/1335,civil society,,/29/97/87917856,3
+361,/29/95/92131787/17995755,development theories,,/29/95/92131787,3
+362,/23/49/337/1023,chromosomes,,/23/49/337,3
+363,/23/49/337/1025,genomes,,/23/49/337,3
+364,/21/39/221/713,cardiovascular diseases,,/21/39/221,3
+365,/21/35/153/635,stroke,,/21/35/153,3
+366,/21/35/153/22901471,dementia,,/21/35/153,3
+367,/23/49/341/12537269,microbiomes,,/23/49/341,3
+368,/21/39/213/703,glaucoma,,/21/39/213,3
+369,/23/43/257/757,stellar astronomy,,/23/43/257,3
+370,/29/101/561/1381,physical anthropology,,/29/101/561,3
+371,/23/43/257/775,physical cosmology,,/23/43/257,3
+372,/23/49/337/1021,RNA,,/23/49/337,3
+373,/23/51/355/1061,numerical analysis,,/23/51/355,3
+374,/25/73/451/1209,power engineering,,/25/73/451,3
+375,/23/43/261/791,particle physics,,/23/43/261,3
+376,/23/51/359/1067,mathematical analysis,,/23/51/359,3
+377,/23/51/359/1071,topology,,/23/51/359,3
+378,/23/51/359/1065,geometry,,/23/51/359,3
+379,/23/53/69669548/1665,photocatalysis,,/23/53/69669548,3
+380,/23/53/365/71735538,metalloids,,/23/53/365,3
+381,/23/43/793/30017,quantum field theory,,/23/43/793,3
+382,/25/69/435/1191,two-dimensional nanostructures,,/25/69/435,3
+383,/23/49/337/1017,mutation,,/23/49/337,3
+384,/29/101/561/1379,ethnology,,/29/101/561,3
+385,/23/43/273/813,ultrasound,,/23/43/273,3
+386,/23/47/15962364/30060,ontology,,/23/47/15962364,3
+387,/23/47/295/917,cryptography,,/23/47/295,3
+388,/29/97/543/1337,democracy,,/29/97/543,3
+389,/29/91/523/1313,employment,,/29/91/523,3
+390,/23/53/367/1117,photochemistry,,/23/53/367,3
+391,/25/77/479/1267,sustainable architecture,,/25/77/479,3
+392,/23/47/305/967,internet of things,,/23/47/305,3
+393,/23/49/341/325,virology,,/23/49/341,3
+394,/23/51/359/1063,discrete mathematics,,/23/51/359,3
+395,/23/49/321/30027,ethology,,/23/49/321,3
+396,/23/53/369/1673,polyurethane,,/23/53/369,3
+397,/23/53/363/1103,alcohols,,/23/53/363,3
+398,/25/67/425/1171,energy conversion,,/25/67/425,3
+399,/29/101/553/1353,mortality,,/29/101/553,3
+400,/21/35/155/48479582,immunisation,,/21/35/155,3
+401,/23/53/365/1085,organometallic chemistry,,/23/53/365,3
+402,/23/43/263/57029799,quasiparticles,,/23/43/263,3
+403,/21/33/121/44109686,RNA viruses,,/21/33/121,3
+404,/23/49/341/1029,phycology,,/23/49/341,3
+405,/21/39/225/78799773,pancreatic cancer,,/21/39/225,3
+406,/21/37/165/659,gene therapy,,/21/37/165,3
+407,/21/33/117/38005658,obesity,,/21/33/117,3
+408,/25/59/379/40683644,organ on a chip,,/25/59/379,3
+409,/21/39/225/1465,skin cancer,,/21/39/225,3
+410,/25/71/443/1201,phytoremediation,,/25/71/443,3
+411,/25/73/453/459,robotics,,/25/73/453,3
+412,/23/45/293/913,natural disasters,,/23/45/293,3
+413,/29/91/523/1307,business models,,/29/91/523,3
+414,/25/71/443/1195,bioreactors,,/25/71/443,3
+415,/25/67/89023697/1183,wastewater treatment processes,,/25/67/89023697,3
+416,/23/53/363/1099,aliphatic compounds,,/23/53/363,3
+417,/23/45/285/869,biogeochemistry,,/23/45/285,3
+418,/23/49/341/1031,mycology,,/23/49/341,3
+419,/23/49/345/1039,entomology,,/23/49/345,3
+420,/31/113/613/79767231,prehistory,,/31/113/613,3
+421,/31/113/611/1429,ethnoarchaeology,,/31/113/611,3
+422,/31/113/611/1425,bioarchaeology,,/31/113/611,3
+423,/25/59/377/1145,food packaging,,/25/59/377,3
+424,/23/53/373/1131,electrolysis,,/23/53/373,3
+425,/23/47/297/935,computer vision,,/23/47/297,3
+426,/27/81/30021/1279,sustainable agriculture,,/27/81/30021,3
+427,/25/63/387/1155,biocomposites,,/25/63/387,3
+428,/25/59/379/29240000,molecular engineering,,/25/59/379,3
+429,/29/91/523/61851014,innovation management,,/29/91/523,3
+430,/25/59/81020971/41165450,nuclear waste management,,/25/59/81020971,3
+431,/23/43/253/753,nuclear decay,,/23/43/253,3
+432,/25/61/383/1147,bioplastics,,/25/61/383,3
+433,/25/77/473/1257,structural health monitoring,,/25/77/473,3
+434,/21/39/225/719,leukemia,,/21/39/225,3
+435,/25/63/19232965/84184824,amorphous semiconductors,,/25/63/19232965,3
+436,/23/45/291/903,mineralogy,,/23/45/291,3
+437,/25/71/443/1197,bioleaching,,/25/71/443,3
+438,/25/75/469/1245,product engineering,,/25/75/469,3
+439,/23/45/30018/30032,climatology,,/23/45/30018,3
+440,/21/33/121/621,malaria,,/21/33/121,3
+441,/25/57/375/1141,laboratory samples analysis,,/25/57/375,3
+442,/25/61/385/1151,fermentation,,/25/61/385,3
+443,/21/35/161/30023,pathophysiology,,/21/35/161,3
+444,/27/81/30021/499,horticulture,,/27/81/30021,3
+445,/25/75/461/1237,naval engineering,,/25/75/461,3
+446,/23/45/289/887,physical oceanography,,/23/45/289,3
+447,/21/35/159/647,pharmacokinetics,,/21/35/159,3
+448,/23/43/259/783,microelectronics,,/23/43/259,3
+449,/23/53/365/78089026,alkali metals,,/23/53/365,3
+450,/23/53/363/1105,hydrocarbons,,/23/53/363,3
+451,/21/33/121/77640482,DNA viruses,,/21/33/121,3
+452,/21/35/153/627,parkinson,,/21/35/153,3
+453,/23/53/363/1101,aldehydes,,/23/53/363,3
+454,/23/53/69669548/1149,biocatalysis,,/23/53/69669548,3
+455,/25/75/461/1235,automotive engineering,,/25/75/461,3
+456,/21/39/243/743,vascular diseases,,/21/39/243,3
+457,/29/91/523/1311,commerce,,/29/91/523,3
+458,/23/53/365/88826151,alkaline earth metals,,/23/53/365,3
+459,/29/101/1367/1771,social inequalities,,/29/101/1367,3
+460,/29/101/561/1377,social anthropology,,/29/101/561,3
+461,/23/43/263/803,soft matter physics,,/23/43/263,3
+462,/21/35/161/655,homeostasis,,/21/35/161,3
+463,/25/67/11936537/253482,green infrastructure,,/25/67/11936537,3
+464,/23/49/337/44114657,epigenetics,,/23/49/337,3
+465,/31/109/593/1405,dramaturgy,,/31/109/593,3
+466,/23/49/313/991,cell signaling,,/23/49/313,3
+467,/31/111/609/1415,epistemology,,/31/111/609,3
+468,/23/53/69669548/1135,electrocatalysis,,/23/53/69669548,3
+469,/31/107/577/30042,history of literature,,/31/107/577,3
+470,/31/115/563/49932688,digital humanities,,/31/115/563,3
+471,/23/43/259/779,spintronics,,/23/43/259,3
+472,/23/53/367/1121,quantum chemistry,,/23/53/367,3
+473,/23/47/295/923,data protection,,/23/47/295,3
+474,/23/47/299/945,data exchange,,/23/47/299,3
+475,/25/73/453/1215,signal processing,,/25/73/453,3
+476,/23/49/327/1005,computational neuroscience,,/23/49/327,3
+477,/31/111/607/1411,islam,,/31/111/607,3
+478,/31/115/563/8796787,knowledge organization,,/31/115/563,3
+479,/29/101/553/1355,census,,/29/101/553,3
+480,/21/33/30011/623,eHealth,,/21/33/30011,3
+481,/29/99/547/1339,transport planning,,/29/99/547,3
+482,/23/47/307/30031,software development,,/23/47/307,3
+483,/23/49/345/1037,invertebrate zoology,,/23/49/345,3
+484,/21/33/137/80706006,occupational health,,/21/33/137,3
+485,/23/53/365/72225544,halogens,,/23/53/365,3
+486,/29/99/547/1347,public transport,,/29/99/547,3
+487,/23/45/277/48154859,sustainability sciences,,/23/45/277,3
+488,/25/67/11936537/64292513,climate change adaptation,,/25/67/11936537,3
+489,/23/45/287/883,ecohydrology,,/23/45/287,3
+490,/23/51/359/1069,arithmetics,,/23/51/359,3
+491,/23/49/335/21057214,evolutionary ecology,,/23/49/335,3
+492,/21/39/217/707,asthma,,/21/39/217,3
+493,/23/49/315/53875678,metabolomes,,/23/49/315,3
+494,/21/39/225/1473,prostate cancer,,/21/39/225,3
+495,/21/35/161/30022,cytology,,/21/35/161,3
+496,/25/69/435/1189,nanocrystals,,/25/69/435,3
+497,/25/65/81684188/1157,desalination,,/25/65/81684188,3
+498,/25/59/379/16253769,lab on a chip,,/25/59/379,3
+499,/23/43/257/767,observational astronomy,,/23/43/257,3
+500,/29/95/92131787/31823250,social developments,,/29/95/92131787,3
+501,/23/49/327/1007,cognitive neuroscience,,/23/49/327,3
+502,/23/49/309/985,molecular neuroscience,,/23/49/309,3
+503,/23/51/359/1073,algebra,,/23/51/359,3
+504,/23/47/297/931,computational intelligence,,/23/47/297,3
+505,/25/57/693/1455,magnetic resonance imaging,,/25/57/693,3
+506,/23/43/257/759,astrophysics,,/23/43/257,3
+507,/23/53/371/1125,radiation chemistry,,/23/53/371,3
+508,/21/39/225/49564263,lung cancer,,/21/39/225,3
+509,/23/45/291/901,seismology,,/23/45/291,3
+510,/25/67/423/11977416,land management,,/25/67/423,3
+511,/23/45/283/855,land-based treatment,,/23/45/283,3
+512,/23/45/283/2818304,soil management,,/23/45/283,3
+513,/25/67/425/1165,fossil energy,,/25/67/425,3
+514,/23/45/291/905,sedimentology,,/23/45/291,3
+515,/25/77/84897392/1187,irrigation,,/25/77/84897392,3
+516,/25/65/81684188/9727961,distillation,,/25/65/81684188,3
+517,/23/43/253/751,nuclear fusion,,/23/43/253,3
+518,/21/39/201/691,nuclear medicine,,/21/39/201,3
+519,/23/51/355/1053,mathematical physics,,/23/51/355,3
+520,/29/97/67681549/33870553,terrorism,,/29/97/67681549,3
+521,/23/53/365/1111,inorganic compounds,,/23/53/365,3
+522,/27/81/30021/12266820,industrial crops,,/27/81/30021,3
+523,/25/67/11936537/91827000,climatic change mitigation,,/25/67/11936537,3
+524,/25/77/84897392/33625299,ocean engineering,,/25/77/84897392,3
+525,/31/113/613/30035,modern history,,/31/113/613,3
+526,/29/101/1363/30044,women’s studies,,/29/101/1363,3
+527,/29/101/559/39205417,environmental governance,,/29/101/559,3
+528,/23/53/363/1095,aromatic compounds,,/23/53/363,3
+529,/29/97/67681549/59419741,elections,,/29/97/67681549,3
+530,/23/45/293/907,glaciology,,/23/45/293,3
+531,/29/91/521/1301,econometrics,,/29/91/521,3
+532,/29/101/561/27781344,science and technology studies,,/29/101/561,3
+533,/25/75/469/1247,additive manufacturing,,/25/75/469,3
+534,/21/39/235/731,schizophrenia,,/21/39/235,3
+535,/31/113/613/30034,medieval history,,/31/113/613,3
+536,/29/97/537/1329,bureaucracy,,/29/97/537,3
+537,/23/43/263/797,mesoscopic physics,,/23/43/263,3
+538,/23/43/263/799,quantum gases,,/23/43/263,3
+539,/31/111/609/1797,political philosophy,,/31/111/609,3
+540,/23/47/297/925,heuristic programming,,/23/47/297,3
+541,/25/73/451/1161,electric energy,,/25/73/451,3
+542,/31/111/609/30040,history of philosophy,,/31/111/609,3
+543,/23/47/299/943,data mining,,/23/47/299,3
+544,/21/39/697/1461,postnatal care,,/21/39/697,3
+545,/21/39/697/1457,childbirth,,/21/39/697,3
+546,/23/53/371/1127,radiochemistry,,/23/53/371,3
+547,/23/53/365/30816592,post-transition metals,,/23/53/365,3
+548,/25/77/475/1263,airport engineering,,/25/77/475,3
+549,/23/45/275/821,palynology,,/23/45/275,3
+550,/31/113/611/1427,underwater archaeology,,/31/113/611,3
+551,/23/45/291/893,geomorphology,,/23/45/291,3
+552,/25/67/425/1167,nuclear energy,,/25/67/425,3
+553,/21/39/225/1471,breast cancer,,/21/39/225,3
+554,/29/101/1363/1769,gender equality,,/29/101/1363,3
+555,/29/101/559/1375,crisis management,,/29/101/559,3
+556,/25/67/425/1173,fuel cells,,/25/67/425,3
+557,/29/91/521/1295,health economics,,/29/91/521,3
+558,/21/35/159/79909316,drug discovery,,/21/35/159,3
+559,/25/73/453/457,control systems,,/25/73/453,3
+560,/23/53/373/1129,electric batteries,,/23/53/373,3
+561,/23/47/299/951,big data,,/23/47/299,3
+562,/23/45/30018/281,meteorology,,/23/45/30018,3
+563,/29/97/87917856/539,public policies,,/29/97/87917856,3
+564,/29/91/521/44428049,political economy,,/29/91/521,3
+565,/25/75/469/1249,subtractive manufacturing,,/25/75/469,3
+566,/23/45/293/911,cartography,,/23/45/293,3
+567,/23/47/295/919,network security,,/23/47/295,3
+568,/21/39/183/683,food allergy,,/21/39/183,3
+569,/21/35/159/649,drug resistance,,/21/35/159,3
+570,/21/39/239/737,orthodontics,,/21/39/239,3
+571,/31/115/563/1383,public libraries,,/31/115/563,3
+572,/23/43/259/785,electromagnetism,,/23/43/259,3
+573,/21/39/213/699,retinopathy,,/21/39/213,3
+574,/29/91/521/1297,microeconomics,,/29/91/521,3
+575,/31/107/577/585,literary theory,,/31/107/577,3
+576,/25/73/453/1211,control engineering,,/25/73/453,3
+577,/23/49/309/987,molecular evolution,,/23/49/309,3
+578,/23/45/287/877,hydrogeology,,/23/45/287,3
+579,/23/43/251/44406885,nonlinear optics,,/23/43/251,3
+580,/23/49/309/983,structural biology,,/23/49/309,3
+581,/31/107/577/581,literary genres,,/31/107/577,3
+582,/23/53/365/68548065,noble gases,,/23/53/365,3
+583,/23/45/291/899,volcanology,,/23/45/291,3
+584,/23/45/285/859,isotope geochemistry,,/23/45/285,3
+585,/31/111/607/30038,judaism,,/31/111/607,3
+586,/31/111/607/1409,christianity,,/31/111/607,3
+587,/23/47/297/927,expert systems,,/23/47/297,3
+588,/25/63/19232965/32419566,organic amorphous solids,,/25/63/19232965,3
+589,/31/109/1403/1793,ethnomusicology,,/31/109/1403,3
+590,/25/67/89023697/42636164,drinking water treatment processes,,/25/67/89023697,3
+591,/23/45/287/351,limnology,,/23/45/287,3
+592,/25/67/423/431,water management,,/25/67/423,3
+593,/23/43/251/747,cavity optomechanics,,/23/43/251,3
+594,/25/59/377/1143,food safety,,/25/59/377,3
+595,/25/77/84897392/21046462,coastal and estuarine hydraulics,,/25/77/84897392,3
+596,/23/45/287/871,drainage basins,,/23/45/287,3
+597,/23/49/309/989,molecular genetics,,/23/49/309,3
+598,/23/49/345/1043,ichthyology,,/23/49/345,3
+599,/23/47/303/20089633,relational databases,,/23/47/303,3
+600,/23/53/373/1137,electrophoresis,,/23/53/373,3
+601,/25/67/425/1163,liquid fuels,,/25/67/425,3
+602,/21/39/235/729,sleep disorders,,/21/39/235,3
+603,/25/77/473/1253,hydraulic engineering,,/25/77/473,3
+604,/23/47/297/26456811,generative artificial intelligence,,/23/47/297,3
+605,/23/53/363/1097,ketones,,/23/53/363,3
+606,/23/53/363/1109,heterocyclic compounds,,/23/53/363,3
+607,/31/107/587/1399,phonetics,,/31/107/587,3
+608,/23/53/363/1107,organic acids,,/23/53/363,3
+609,/29/99/547/1343,electric vehicles,,/29/99/547,3
+610,/25/77/475/1261,railroad engineering,,/25/77/475,3
+611,/23/43/257/30030,extragalactic astronomy,,/23/43/257,3
+612,/23/43/251/749,fibre optics,,/23/43/251,3
+613,/23/47/299/939,natural language processing,,/23/47/299,3
+614,/23/47/297/937,pattern recognition,,/23/47/297,3
+615,/23/47/295/977,malicious software,,/23/47/295,3
+616,/29/101/559/1373,taxation,,/29/101/559,3
+617,/21/39/231/725,renal dialysis,,/21/39/231,3
+618,/23/53/367/1119,thermochemistry,,/23/53/367,3
+619,/23/45/285/863,cosmochemistry,,/23/45/285,3
+620,/23/45/291/891,petrology,,/23/45/291,3
+621,/23/49/313/993,cell metabolism,,/23/49/313,3
+622,/23/53/363/1089,amines,,/23/53/363,3
+623,/23/51/355/1059,mathematical model,,/23/51/355,3
+624,/29/89/1837/1839,human rights violations,,/29/89/1837,3
+625,/25/75/463/1243,lubrication,,/25/75/463,3
+626,/31/111/607/30037,eastern religions,,/31/111/607,3
+627,/23/43/257/761,astrochemistry,,/23/43/257,3
+628,/23/43/269/805,statistical mechanics,,/23/43/269,3
+629,/21/39/235/735,posttraumatic stress disorder,,/21/39/235,3
+630,/29/89/1837/30049,international protection of human rights,,/29/89/1837,3
+631,/25/73/451/87041214,piezoelectrics,,/25/73/451,3
+632,/23/49/337/24525861,genetic selection,,/23/49/337,3
+633,/31/113/611/1431,archaeometry,,/31/113/611,3
+634,/29/101/559/1371,public services,,/29/101/559,3
+635,/23/49/337/1019,nucleotides,,/23/49/337,3
+636,/21/35/155/22184243,autoimmune diseases,,/21/35/155,3
+637,/21/37/163/657,stem cells,,/21/37/163,3
+638,/25/73/453/1217,digital electronics,,/25/73/453,3
+639,/21/39/223/715,robotic surgery,,/21/39/223,3
+640,/23/45/283/857,edaphology,,/23/45/283,3
+641,/23/45/275/823,paleoclimatology,,/23/45/275,3
+642,/31/111/605/1407,ethical principles,,/31/111/605,3
+643,/29/97/67681549/12738214,armed conflicts,,/29/97/67681549,3
+644,/25/77/94443578/1269,smart cities,,/25/77/94443578,3
+645,/25/77/475/1265,port and harbor engineering,,/25/77/475,3
+646,/23/45/289/885,ocean chemistry,,/23/45/289,3
+647,/21/39/177/679,inflammatory bowel disease,,/21/39/177,3
+648,/21/35/153/639,multiple sclerosis,,/21/35/153,3
+649,/23/53/361/1081,mass spectrometry,,/23/53/361,3
+650,/23/53/363/1091,organic reactions,,/23/53/363,3
+651,/23/53/361/1079,calorimetry,,/23/53/361,3
+652,/23/53/363/1093,volatile organic compounds,,/23/53/363,3
+653,/31/111/609/1419,metaphysics,,/31/111/609,3
+654,/23/47/305/963,transport layer,,/23/47/305,3
+655,/23/43/257/763,galactic astronomy,,/23/43/257,3
+656,/23/45/285/867,organic geochemistry,,/23/45/285,3
+657,/25/57/375/1139,diagnostic technologies,,/25/57/375,3
+658,/29/101/561/78350677,cultural anthropology,,/29/101/561,3
+659,/31/113/613/30036,contemporary history,,/31/113/613,3
+660,/23/43/269/30029,solid mechanics,,/23/43/269,3
+661,/21/39/225/1475,bladder cancer,,/21/39/225,3
+662,/21/37/167/663,bioartificial liver,,/21/37/167,3
+663,/25/57/693/1449,computed tomography,,/25/57/693,3
+664,/25/71/443/1199,compost,,/25/71/443,3
+665,/25/67/11936537/24283177,habitat conservation,,/25/67/11936537,3
+666,/29/99/547/1341,social aspects of transport,,/29/99/547,3
+667,/23/45/291/895,lithology,,/23/45/291,3
+668,/23/51/355/1057,game theory,,/23/51/355,3
+669,/31/107/587/1401,phonology,,/31/107/587,3
+670,/23/49/345/1041,ornithology,,/23/49/345,3
+671,/23/45/275/815,paleoecology,,/23/45/275,3
+672,/23/45/291/897,geochronology,,/23/45/291,3
+673,/21/39/189/687,graft versus host disease,,/21/39/189,3
+674,/21/39/231/723,kidney diseases,,/21/39/231,3
+675,/21/39/221/711,paediatric cardiology,,/21/39/221,3
+676,/29/101/1367/11589301,unemployment,,/29/101/1367,3
+677,/27/79/483/1275,plant cloning,,/27/79/483,3
+678,/21/39/223/30025,surgical procedures,,/21/39/223,3
+679,/23/47/295/915,access control,,/23/47/295,3
+680,/23/43/257/765,space exploration,,/23/43/257,3
+681,/23/49/337/1027,heredity,,/23/49/337,3
+682,/23/43/263/795,solid-state physics,,/23/43/263,3
+683,/29/99/547/1345,sustainable transport,,/29/99/547,3
+684,/23/49/313/995,cell polarity,,/23/49/313,3
+685,/23/45/293/909,coastal geography,,/23/45/293,3
+686,/29/97/87917856/67079178,foreign policy,,/29/97/87917856,3
+687,/31/109/1403/1791,popular music studies,,/31/109/1403,3
+688,/25/67/425/83028390,biomass energy,,/25/67/425,3
+689,/31/109/595/589,cinematography,,/31/109/595,3
+690,/23/53/373/1133,bioelectrochemistry,,/23/53/373,3
+691,/23/45/287/875,isotope hydrology,,/23/45/287,3
+692,/31/113/613/30033,ancient history,,/31/113/613,3
+693,/29/91/521/1305,macroeconomics,,/29/91/521,3
+694,/23/47/305/965,web development,,/23/47/305,3
+695,/23/47/303/21583017,non-relational databases,,/23/47/303,3
+696,/23/47/305/959,semantic web,,/23/47/305,3
+697,/21/39/225/1467,liver cancer,,/21/39/225,3
+698,/23/49/353/1051,comparative morphology,,/23/49/353,3
+699,/23/49/353/1049,functional morphology,,/23/49/353,3
+700,/23/45/277/831,ozone depletion,,/23/45/277,3
+701,/23/43/253/755,nuclear fission,,/23/43/253,3
+702,/21/39/225/1469,colorectal cancer,,/21/39/225,3
+703,/23/47/305/969,world wide web,,/23/47/305,3
+704,/29/89/1837/30048,human rights law,,/29/89/1837,3
+705,/21/37/677/665,artificial bone,,/21/37/677,3
+706,/21/39/235/733,anxiety disorders,,/21/39/235,3
+707,/29/93/533/30043,mental processes,,/29/93/533,3
+708,/23/49/311/1285,dendrology,,/23/49/311,3
+709,/23/49/321/1001,behavioural ecology,,/23/49/321,3
+710,/21/33/119/615,sexual health,,/21/33/119,3
+711,/21/33/119/617,family planning,,/21/33/119,3
+712,/25/67/425/1175,synthetic fuels,,/25/67/425,3
+713,/25/77/475/1259,highway engineering,,/25/77/475,3
+714,/29/99/547/1349,freight transport,,/29/99/547,3
+715,/29/105/571/1391,active learning,,/29/105/571,3
+716,/23/45/287/873,hydroinformatics,,/23/45/287,3
+717,/25/69/435/1193,bulk nanostructured materials,,/25/69/435,3
+718,/31/109/595/599,radio and television,,/31/109/595,3
+719,/21/35/153/637,amyotrophic lateral sclerosis,,/21/35/153,3
+720,/21/35/159/645,drug safety,,/21/35/159,3
+721,/25/67/417/64131187,rare earths,,/25/67/417,3
+722,/21/39/697/1459,fetal medicine,,/21/39/697,3
+723,/29/97/67681549/81402623,riots,,/29/97/67681549,3
+724,/29/93/527/1315,psychoanalysis,,/29/93/527,3
+725,/25/73/453/1213,analogue electronics,,/25/73/453,3
+726,/31/107/587/1397,sign language,,/31/107/587,3
+727,/23/47/299/947,business intelligence,,/23/47/299,3
+728,/23/47/297/52679357,edge artificial intelligence,,/23/47/297,3
+729,/21/39/225/30053,head and neck cancer,,/21/39/225,3
+730,/25/67/11936537/45049892,nature-based solutions,,/25/67/11936537,3
+731,/21/39/225/86801484,cervical cancer,,/21/39/225,3
+732,/23/45/287/879,hydrometeorology,,/23/45/287,3
+733,/31/111/605/30041,ethical theories,,/31/111/605,3
+734,/31/111/609/30039,philosophy of language,,/31/111/609,3
+735,/23/49/335/1011,invasive species,,/23/49/335,3
+736,/23/43/263/801,bose-einstein condensates,,/23/43/263,3
+737,/23/43/257/773,history of astronomy,,/23/43/257,3
+738,/25/77/473/1255,earthquake engineering,,/25/77/473,3
+739,/29/91/521/1293,monetary and finances,,/29/91/521,3
+740,/21/39/183/685,drug allergy,,/21/39/183,3
+741,/25/63/387/1153,carbon fibers,,/25/63/387,3
+742,/25/57/693/1451,x-ray radiography,,/25/57/693,3
+743,/23/53/365/1115,bioinorganic chemistry,,/23/53/365,3
+744,/23/43/261/789,string theory,,/23/43/261,3
+745,/23/53/361/1663,volumetric analysis,,/23/53/361,3
+746,/23/49/335/1013,landscape ecology,,/23/49/335,3
+747,/23/49/341/1033,protozoology,,/23/49/341,3
+748,/25/77/84897392/24482249,water supply systems,,/25/77/84897392,3
+749,/29/89/1837/30045,regional human rights,,/29/89/1837,3
+750,/23/53/363/1087,organohalogen compounds,,/23/53/363,3
+751,/21/35/153/631,muscular dystrophies,,/21/35/153,3
+752,/21/37/167/671,artificial pancreas,,/21/37/167,3
+753,/21/39/239/741,dental implantology,,/21/39/239,3
+754,/29/105/571/1389,inquiry based learning,,/29/105/571,3
+755,/21/35/159/651,adverse drug reactions,,/21/35/159,3
+756,/23/47/297/929,computational creativity,,/23/47/297,3
+757,/23/47/305/971,internet access,,/23/47/305,3
+758,/25/63/393/15792233,glass fibers,,/25/63/393,3
+759,/21/39/223/30026,surgical specialties,,/21/39/223,3
+760,/25/63/19232965/64398263,amorphous metals,,/25/63/19232965,3
+761,/23/45/283/853,pedology,,/23/45/283,3
+762,/23/47/305/961,internet protocols,,/23/47/305,3
+763,/23/45/275/827,biostratigraphy,,/23/45/275,3
+764,/21/39/235/727,obsessive-compulsive disorder,,/21/39/235,3
+765,/23/47/297/495996,frugal artificial intelligence,,/23/47/297,3
+766,/25/63/19232965/39908427,inorganic amorphous solids,,/25/63/19232965,3
+767,/21/37/677/1443,breast implants,,/21/37/677,3
+768,/25/77/84897392/56936995,urban drainage,,/25/77/84897392,3
+769,/21/39/213/701,strabismus,,/21/39/213,3
+770,/21/39/239/739,periodontics,,/21/39/239,3
+771,/23/49/315/997/1613,proteins,,/23/49/315/997,4
+772,/27/81/30021/493/1281,plant breeding,,/27/81/30021/493,4
+773,/27/81/30021/30833628/8144402,cereals,,/27/81/30021/30833628,4
+774,/23/49/315/997/1611,carbohydrates,,/23/49/315/997,4
+775,/23/43/251/48354418/98465583,fluorescence lifetime imaging,,/23/43/251/48354418,4
+776,/25/67/429/97581411/1181,recycling,,/25/67/429/97581411,4
+777,/23/43/257/771/1511,planets,,/23/43/257/771,4
+778,/21/33/137/133/9678651,pandemics,,/21/33/137/133,4
+779,/25/67/425/1169/1695,wind energy,,/25/67/425/1169,4
+780,/25/67/425/1169/1693,geothermal energy,,/25/67/425/1169,4
+781,/25/73/453/58525161/44113014,optical sensors,,/25/73/453/58525161,4
+782,/29/99/547/1351/1765,satellite navigation system,,/29/99/547/1351,4
+783,/29/91/521/1299/1757,productivity,,/29/91/521/1299,4
+784,/23/43/257/771/1513,asteroids,,/23/43/257/771,4
+785,/23/43/257/771/1507,natural satellites,,/23/43/257/771,4
+786,/23/43/257/771/1509,comets,,/23/43/257/771,4
+787,/21/33/137/133/96227745,modeling of diseases spread,,/21/33/137/133,4
+788,/25/67/425/1169/1685,solar energy,,/25/67/425/1169,4
+789,/23/49/345/1045/1625,primatology,,/23/49/345/1045,4
+790,/21/35/159/653/1439,vaccines,,/21/35/159/653,4
+791,/25/73/30020/455/1223,mobile phones,,/25/73/30020/455,4
+792,/23/43/269/811/34823946,microfluidics,,/23/43/269/811,4
+793,/23/43/251/1077/41191674,absorption spectroscopy,,/23/43/251/1077,4
+794,/25/75/461/1239/1737,aircraft,,/25/75/461/1239,4
+795,/23/47/307/979/1607,simulation software,,/23/47/307/979,4
+796,/25/73/453/449/1207,quantum computers,,/25/73/453/449,4
+797,/29/97/87917856/1335/31958608,civil society organisations,,/29/97/87917856/1335,4
+798,/29/95/92131787/17995755/42154279,global development studies,,/29/95/92131787/17995755,4
+799,/25/73/453/58525161/66357197,biosensors,,/25/73/453/58525161,4
+800,/21/39/221/713/38221291,cardiac arrhythmia,,/21/39/221/713,4
+801,/21/35/153/22901471/633,alzheimer,,/21/35/153/22901471,4
+802,/23/43/251/48354418/68225803,super resolution microscopy,,/23/43/251/48354418,4
+803,/25/75/461/1239/1739,satellite technology,,/25/75/461/1239,4
+804,/23/43/269/811/1549,fluid dynamics,,/23/43/269/811,4
+805,/21/35/159/653/8052398,antibiotics,,/21/35/159/653,4
+806,/23/49/337/1021/57264360,transcriptomes,,/23/49/337/1021,4
+807,/25/73/451/1209/1707,electric power generation,,/25/73/451/1209,4
+808,/23/43/261/791/1527,particle accelerator,,/23/43/261/791,4
+809,/25/69/435/1191/1699,graphene,,/25/69/435/1191,4
+810,/25/77/479/1267/1749,sustainable building,,/25/77/479/1267,4
+811,/23/51/359/1063/53388279,mathematical logic,,/23/51/359/1063,4
+812,/23/49/321/30027/1003,biological interactions,,/23/49/321/30027,4
+813,/21/39/221/713/1463,arteriosclerosis,,/21/39/221/713,4
+814,/25/67/425/1169/1691,hydrogen energy,,/25/67/425/1169,4
+815,/23/51/359/1063/82355983,combinatorics,,/23/51/359/1063,4
+816,/23/51/359/1067/1635,complex analysis,,/23/51/359/1067,4
+817,/21/33/121/44109686/71336944,influenza,,/21/33/121/44109686,4
+818,/23/43/261/791/1541,photons,,/23/43/261/791,4
+819,/21/33/121/44109686/619,HIV,,/21/33/121/44109686,4
+820,/23/49/337/1025/15534213,eukaryotic genomes,,/23/49/337/1025,4
+821,/21/39/225/1465/1801,melanoma,,/21/39/225/1465,4
+822,/25/73/453/459/1227,swarm robotics,,/25/73/453/459,4
+823,/23/47/307/979/50814433,virtual reality,,/23/47/307/979,4
+824,/25/73/453/459/1229,autonomous robots,,/25/73/453/459,4
+825,/23/45/291/903/1577,crystallography,,/23/45/291/903,4
+826,/23/45/30018/30032/30055,climatic changes,,/23/45/30018/30032,4
+827,/21/33/121/44109686/8132740,coronaviruses,,/21/33/121/44109686,4
+828,/27/81/30021/499/1287,fruit growing,,/27/81/30021/499,4
+829,/25/75/461/1237/1735,sea vessels,,/25/75/461/1237,4
+830,/23/49/335/1009/54034042,coastal ecosystems,,/23/49/335/1009,4
+831,/21/35/159/653/70038406,antivirals,,/21/35/159/653,4
+832,/27/81/30021/499/497,viticulture,,/27/81/30021/499,4
+833,/27/81/30021/493/491,plant protection,,/27/81/30021/493,4
+834,/27/81/30021/499/69103681,vegetable growing,,/27/81/30021/499,4
+835,/23/49/315/997/1615,lipids,,/23/49/315/997,4
+836,/25/73/453/449/1205,supercomputers,,/25/73/453/449,4
+837,/25/75/461/1235/1733,drive by wire,,/25/75/461/1235,4
+838,/25/73/453/449/1203,computer processors,,/25/73/453/449,4
+839,/29/91/523/1311/1759,e-commerce,,/29/91/523/1311,4
+840,/25/73/30020/455/1225,radio technology,,/25/73/30020/455,4
+841,/29/101/1367/1771/1773,racial inequality,,/29/101/1367/1771,4
+842,/23/49/337/44114657/92678204,epigenomes,,/23/49/337/44114657,4
+843,/25/73/30020/455/1221,telecommunications networks,,/25/73/30020/455,4
+844,/25/61/383/1147/1677,polyhydroxyalkanoates,,/25/61/383/1147,4
+845,/25/73/453/58525161/48389028,smart sensors,,/25/73/453/58525161,4
+846,/29/99/547/1339/1761,air traffic management,,/29/99/547/1339,4
+847,/23/47/307/979/973,system software,,/23/47/307/979,4
+848,/23/43/257/771/1515,planetary geology,,/23/43/257/771,4
+849,/23/51/359/1069/2668458,L-functions,,/23/51/359/1069,4
+850,/23/51/359/1067/1637,differential equations,,/23/51/359/1067,4
+851,/23/43/257/771/1805,meteorites,,/23/43/257/771,4
+852,/23/51/359/1063/1629,graph theory,,/23/51/359/1063,4
+853,/25/67/425/1165/1681,petroleum,,/25/67/425/1165,4
+854,/27/81/30021/499/84709101,arboriculture,,/27/81/30021/499,4
+855,/25/75/461/1235/1731,autonomous vehicles,,/25/75/461/1235,4
+856,/23/43/257/757/1483,supernova,,/23/43/257/757,4
+857,/27/81/30021/30833628/72257146,legumes,,/27/81/30021/30833628,4
+858,/23/51/355/1053/10928599,conformal field theory,,/23/51/355/1053,4
+859,/23/43/261/791/1535,gluons,,/23/43/261/791,4
+860,/23/43/261/791/1537,quarks,,/23/43/261/791,4
+861,/27/81/30021/12266820/1833,fodder,,/27/81/30021/12266820,4
+862,/23/43/257/759/1489,dark matter,,/23/43/257/759,4
+863,/23/43/257/759/1487,black holes,,/23/43/257/759,4
+864,/23/43/257/775/1519,galaxy evolution,,/23/43/257/775,4
+865,/29/95/92131787/17995755/19831740,post-colonial theories,,/29/95/92131787/17995755,4
+866,/23/43/261/791/1533,fermions,,/23/43/261/791,4
+867,/31/111/609/30040/1417,medieval philosophy,,/31/111/609/30040,4
+868,/23/47/297/933/1595,supervised learning,,/23/47/297/933,4
+869,/27/81/30021/499/97328111,urban horticulture,,/27/81/30021/499,4
+870,/25/65/81684188/1157/79070535,reverse osmosis,,/25/65/81684188/1157,4
+871,/25/67/425/1165/1683,natural gas,,/25/67/425/1165,4
+872,/25/67/425/1169/1689,hydroelectricity,,/25/67/425/1169,4
+873,/25/75/461/1239/1741,aeronautical engineering,,/25/75/461/1239,4
+874,/23/51/359/1069/1639,prime numbers,,/23/51/359/1069,4
+875,/23/47/307/979/1605,video games,,/23/47/307/979,4
+876,/25/73/451/1209/1705,electric power transmission,,/25/73/451/1209,4
+877,/23/45/30018/281/839,solar radiation,,/23/45/30018/281,4
+878,/23/47/297/933/1589,deep learning,,/23/47/297/933,4
+879,/29/101/1367/1771/1777,age inequality,,/29/101/1367/1771,4
+880,/23/45/293/911/1585,geographic information systems,,/23/45/293/911,4
+881,/23/43/257/757/1481,neutron stars,,/23/43/257/757,4
+882,/23/43/261/791/42674489,neutrinos,,/23/43/261/791,4
+883,/23/43/257/767/1499,optical astronomy,,/23/43/257/767,4
+884,/23/43/257/771/1803,meteors,,/23/43/257/771,4
+885,/21/35/159/649/1435,multidrug resistance,,/21/35/159/649,4
+886,/23/47/297/935/61878528,image recognition,,/23/47/297/935,4
+887,/23/45/291/901/1573,microseisms,,/23/45/291/901,4
+888,/23/45/291/893/1569,speleology,,/23/45/291/893,4
+889,/21/33/137/133/2734973,exposomes,,/21/33/137/133,4
+890,/21/35/159/649/1437,antibiotic resistance,,/21/35/159/649,4
+891,/25/67/429/97581411/1185,remanufacturing,,/25/67/429/97581411,4
+892,/23/43/261/791/1543,leptons,,/23/43/261/791,4
+893,/23/51/359/1069/1641,logarithmic functions,,/23/51/359/1069,4
+894,/25/73/451/1209/1703,electric power distribution,,/25/73/451/1209,4
+895,/25/61/383/1147/1675,polylactic acid,,/25/61/383/1147,4
+896,/23/43/257/771/807,celestial mechanics,,/23/43/257/771,4
+897,/23/45/291/901/1575,plate tectonics,,/23/45/291/901,4
+898,/23/43/251/48354418/38063808,electron microscopy,,/23/43/251/48354418,4
+899,/25/67/425/1165/1679,coal,,/25/67/425/1165,4
+900,/23/51/359/1071/1645,algebraic topology,,/23/51/359/1071,4
+901,/23/47/297/935/90070193,motion analysis,,/23/47/297/935,4
+902,/21/33/137/133/64656619,epidemics prevention,,/21/33/137/133,4
+903,/21/33/137/133/65257712,zoonosis,,/21/33/137/133,4
+904,/25/73/453/459/1231,soft robotics,,/25/73/453/459,4
+905,/29/89/1837/1839/1841,human trafficking,,/29/89/1837/1839,4
+906,/23/47/297/933/1587,reinforcement learning,,/23/47/297/933,4
+907,/29/101/1367/1771/26417764,gender inequality,,/29/101/1367/1771,4
+908,/23/43/251/745/48845697,ultrafast lasers,,/23/43/251/745,4
+909,/29/101/559/1375/1781,flood risk management,,/29/101/559/1375,4
+910,/23/49/345/1045/1627,cetology,,/23/49/345/1045,4
+911,/31/107/577/581/1393,essays,,/31/107/577/581,4
+912,/21/33/121/77640482/46784217,hepatitis B,,/21/33/121/77640482,4
+913,/23/49/337/1025/75243493,prokaryotic genomes,,/23/49/337/1025,4
+914,/23/45/30018/281/845,biosphera,,/23/45/30018/281,4
+915,/23/45/30018/30032/835,climatic zones,,/23/45/30018/30032,4
+916,/27/83/501/507/1291,animal feed,,/27/83/501/507,4
+917,/23/49/345/1039/1623,apidology,,/23/49/345/1039,4
+918,/23/51/359/1073/1651,algebraic geometry,,/23/51/359/1073,4
+919,/23/43/259/779/1521,molecular spintronics,,/23/43/259/779,4
+920,/23/51/359/1067/81178764,functional analysis,,/23/51/359/1067,4
+921,/23/43/269/811/1547,fluid statics,,/23/43/269/811,4
+922,/23/49/341/1031/1621,ethnolichenology,,/23/49/341/1031,4
+923,/31/111/607/1411/30056,muslim culture,,/31/111/607/1411,4
+924,/23/43/257/763/30054,solar physics,,/23/43/257/763,4
+925,/31/111/609/1419/1799,teleology,,/31/111/609/1419,4
+926,/25/69/435/1191/1697,silicene,,/25/69/435/1191,4
+927,/23/49/335/1009/23605117,freshwater ecosystems,,/23/49/335/1009,4
+928,/31/111/609/30040/1413,modern philosophy,,/31/111/609/30040,4
+929,/25/65/81684188/1157/13858428,electrodialysis,,/25/65/81684188/1157,4
+930,/23/43/251/48354418/67902960,confocal microscopy,,/23/43/251/48354418,4
+931,/23/49/341/325/88344707,viromes,,/23/49/341/325,4
+932,/23/47/297/933/1591,unsupervised learning,,/23/47/297/933,4
+933,/31/111/609/30040/1421,contemporary philosophy,,/31/111/609/30040,4
+934,/23/45/30018/30032/1755,dendrochronology,,/23/45/30018/30032,4
+935,/23/51/355/357/82202707,bayesian statistics,,/23/51/355/357,4
+936,/21/33/121/44109686/56306972,ebola,,/21/33/121/44109686,4
+937,/25/75/461/1239/51612216,astronautical engineering,,/25/75/461/1239,4
+938,/29/89/1837/1839/30061,political violence,,/29/89/1837/1839,4
+939,/29/101/559/1375/1783,seismic risk management,,/29/101/559/1375,4
+940,/31/111/609/30040/1423,ancient philosophy,,/31/111/609/30040,4
+941,/23/49/341/1035/8379493,bacteriomes,,/23/49/341/1035,4
+942,/23/49/315/997/1609,nucleic acids,,/23/49/315/997,4
+943,/23/43/251/1077/86010037,emission spectroscopy,,/23/43/251/1077,4
+944,/23/45/291/891/3696400,petrography,,/23/45/291/891,4
+945,/29/101/561/78350677/591,folklore,,/29/101/561/78350677,4
+946,/23/53/373/1133/1667,electroporation,,/23/53/373/1133,4
+947,/25/67/425/1169/1687,hybrid energy,,/25/67/425/1169,4
+948,/21/33/121/44109686/54731337,hepatitis C,,/21/33/121/44109686,4
+949,/27/81/30021/30833628/1831,oilseeds,,/27/81/30021/30833628,4
+950,/23/47/305/969/1597,web accessibility,,/23/47/305/969,4
+951,/23/45/30018/281/841,troposphere,,/23/45/30018/281,4
+952,/29/89/1837/1839/30062,sexual violence,,/29/89/1837/1839,4
+953,/23/49/337/1025/77161814,viral genomes,,/23/49/337/1025,4
+954,/23/51/359/1073/1655,linear algebra,,/23/51/359/1073,4
+955,/29/99/547/1345/1763,intelligent transport systems,,/29/99/547/1345,4
+956,/29/99/547/1351/1767,inertial navigation system,,/29/99/547/1351,4
+957,/23/49/337/1017/2080895,virus mutation,,/23/49/337/1017,4
+958,/25/73/453/459/1233,cognitive robots,,/25/73/453/459,4
+959,/29/89/1837/30048/21785983,national state of emergency,,/29/89/1837/30048,4
+960,/23/43/257/763/769,solar astronomy,,/23/43/257/763,4
+961,/23/51/359/1067/1633,fourier analysis,,/23/51/359/1067,4
+962,/23/43/251/48354418/65898858,scanning tunneling microscopy,,/23/43/251/48354418,4
+963,/23/43/257/767/1495,radio astronomy,,/23/43/257/767,4
+964,/23/43/257/767/1491,gravitational waves,,/23/43/257/767,4
+965,/23/43/261/791/1529,z bosons,,/23/43/261/791,4
+966,/23/43/261/791/1539,higgs bosons,,/23/43/261/791,4
+967,/23/43/257/767/1501,gamma-ray astronomy,,/23/43/257/767,4
+968,/23/45/291/891/1557,igneous petrology,,/23/45/291/891,4
+969,/23/51/359/1071/1649,knot theory,,/23/51/359/1071,4
+970,/23/43/257/757/1479,asteroseismology,,/23/43/257/757,4
+971,/31/111/607/1411/30058,history of islam,,/31/111/607/1411,4
+972,/21/39/243/743/1477,cerebrovascular diseases,,/21/39/243/743,4
+973,/23/45/30018/281/843,atmospheric pressure,,/23/45/30018/281,4
+974,/23/43/257/775/1517,big bang,,/23/43/257/775,4
+975,/23/43/257/767/1503,infrared astronomy,,/23/43/257/767,4
+976,/31/107/577/585/1395,literary criticism,,/31/107/577/585,4
+977,/23/45/30018/281/847,atmospheric circulation,,/23/45/30018/281,4
+978,/29/91/521/1295/6190837,economic impact of epidemics,,/29/91/521/1295,4
+979,/23/45/293/907/1583,glacial geology,,/23/45/293/907,4
+980,/29/97/87917856/1335/1331,nongovernmental organizations,,/29/97/87917856/1335,4
+981,/21/39/225/1465/30063,basal cells,,/21/39/225/1465,4
+982,/21/39/179/681/1447,diabetic nephropathy,,/21/39/179/681,4
+983,/25/73/453/457/1271,home automation,,/25/73/453/457,4
+984,/23/43/261/791/1531,w bosons,,/23/43/261/791,4
+985,/23/45/30018/30032/837,dendroclimatology,,/23/45/30018/30032,4
+986,/25/77/473/1255/1745,seismic loading,,/25/77/473/1255,4
+987,/25/73/453/1215/1709,compressed sensing,,/25/73/453/1215,4
+988,/23/43/251/745/57690345,pulsed lasers,,/23/43/251/745,4
+989,/23/51/359/1071/1647,computational topology,,/23/51/359/1071,4
+990,/21/35/153/631/1433,duchenne muscular dystrophy,,/21/35/153/631,4
+991,/21/37/167/671/30052,continuous glucose monitors,,/21/37/167/671,4
+992,/21/39/225/1465/30064,squamous cell carcinoma,,/21/39/225/1465,4
+993,/23/51/359/1071/1643,symplectic topology,,/23/51/359/1071,4
+994,/27/81/30021/499/44780297,floriculture,,/27/81/30021/499,4
+995,/23/43/257/757/1485,white dwarfs,,/23/43/257/757,4
+996,/23/43/257/767/1497,x-ray astronomy,,/23/43/257/767,4
+997,/27/81/495/1283/1753,coppicing,,/27/81/495/1283,4
+998,/23/51/359/1067/1631,functional equations,,/23/51/359/1067,4
+999,/23/51/359/1073/1653,commutative algebra,,/23/51/359/1073,4
+1000,/31/111/607/1411/30057,muslim societies,,/31/111/607/1411,4
+1001,/25/77/473/1255/1747,base isolation,,/25/77/473/1255,4
+1002,/23/45/291/891/1561,sedimentary petrology,,/23/45/291/891,4
+1003,/29/101/561/1381/1787,paleoanthropology,,/29/101/561/1381,4
+1004,/23/49/341/1031/1619,ethnomycology,,/23/49/341/1031,4
+1005,/23/47/297/933/36035695,semisupervised learning,,/23/47/297/933,4
+1006,/23/47/297/933/1593,transfer learning,,/23/47/297/933,4
+1007,/23/47/297/935/75169834,facial recognition,,/23/47/297/935,4
+1008,/23/49/341/1031/46681819,mycobiomes,,/23/49/341/1031,4
+1009,/23/47/297/935/24997145,object detection,,/23/47/297/935,4
+1010,/27/79/483/1275/76232940,vegetative propagation,,/27/79/483/1275,4
+1011,/27/81/30021/499/89427643,greenhouse horticulture,,/27/81/30021/499,4
+1012,/31/111/607/1411/30059,islamic schools,,/31/111/607/1411,4
+1013,/23/45/291/891/1559,metamorphic petrology,,/23/45/291/891,4
+1014,/23/43/251/745/65649851,ultraviolet lasers,,/23/43/251/745,4
+1015,/23/49/315/997/1613/1617,enzymes,,/23/49/315/997/1613,5
+1016,/29/99/547/1351/1765/1835,global navigation satellite system,,/29/99/547/1351/1765,5
+1017,/25/67/425/1169/1685/83523280,concentrated solar power,,/25/67/425/1169/1685,5
+1018,/29/97/87917856/1335/31958608/1331,nongovernmental organizations,,/29/97/87917856/1335/31958608,5
+1019,/29/95/92131787/17995755/42154279/1369,globalization,,/29/95/92131787/17995755/42154279,5
+1020,/23/49/315/997/1613/1815,proteomics,,/23/49/315/997/1613,5
+1021,/25/73/451/1209/1707/1825,combined heat and power,,/25/73/451/1209/1707,5
+1022,/25/67/425/1169/1685/98939167,photovoltaic,,/25/67/425/1169/1685,5
+1023,/23/43/257/771/1511/1807,exoplanetology,,/23/43/257/771/1511,5
+1024,/23/43/257/771/1511/19823118,giant planets,,/23/43/257/771/1511,5
+1025,/25/73/453/459/1229/1729,drones,,/25/73/453/459/1229,5
+1026,/25/73/30020/455/1225/1727,radar,,/25/73/30020/455/1225,5
+1027,/25/73/30020/455/1221/1715,data networks,,/25/73/30020/455/1221,5
+1028,/25/75/461/1239/1737/1829,rotorcraft,,/25/75/461/1239/1737,5
+1029,/23/51/359/1067/1637/1817,partial differential equations,,/23/51/359/1067/1637,5
+1030,/25/73/30020/455/1225/1723,radio frequency,,/25/73/30020/455/1225,5
+1031,/25/73/30020/455/1221/73074801,mobile network,,/25/73/30020/455/1221,5
+1032,/25/73/30020/455/1221/1713,optical networks,,/25/73/30020/455/1221,5
+1033,/23/47/307/979/973/1601,operating systems,,/23/47/307/979/973,5
+1034,/23/43/269/811/1549/33860407,computational fluid dynamics,,/23/43/269/811/1549,5
+1035,/25/67/425/1169/1685/85521413,solar thermal,,/25/67/425/1169/1685,5
+1036,/31/107/577/581/1393/1789,science fiction,,/31/107/577/581/1393,5
+1037,/25/67/425/1169/1689/1823,marine energy,,/25/67/425/1169/1689,5
+1038,/25/73/30020/455/1225/1719,microwave technology,,/25/73/30020/455/1225,5
+1039,/23/51/359/1067/81178764/72830892,operator algebra,,/23/51/359/1067/81178764,5
+1040,/23/49/315/997/1613/11923635,protein folding,,/23/49/315/997/1613,5
+1041,/25/73/30020/455/1225/52695600,WiFi,,/25/73/30020/455/1225,5
+1042,/27/81/30021/499/69103681/1289,root crops,,/27/81/30021/499/69103681,5
+1043,/25/75/461/1239/51612216/98672716,spacecraft,,/25/75/461/1239/51612216,5
+1044,/25/73/30020/455/1225/72996757,mobile radio,,/25/73/30020/455/1225,5
+1045,/23/45/30018/30032/30055/1809,el niño,,/23/45/30018/30032/30055,5
+1046,/25/73/30020/455/1225/63561740,LiFi,,/25/73/30020/455/1225,5
+1047,/23/47/307/979/973/1599,device drivers,,/23/47/307/979/973,5
+1048,/29/89/1837/30048/21785983/70274390,pandemic risks,,/29/89/1837/30048/21785983,5
+1049,/23/45/30018/30032/30055/1811,north atlantic oscillation,,/23/45/30018/30032/30055,5
+1050,/25/73/30020/455/1225/1717,satellite radio,,/25/73/30020/455/1225,5
+1051,/25/73/30020/455/1225/1725,cognitive radio,,/25/73/30020/455/1225,5
+1052,/25/73/30020/455/1225/1721,bluetooth,,/25/73/30020/455/1225,5
+1053,/23/45/30018/281/847/1553,atmospheric turbulence,,/23/45/30018/281/847,5
+1054,/23/43/257/771/1511/19823118/30068,super-Earths,,/23/43/257/771/1511/19823118,6
+1055,/25/73/30020/455/1221/73074801/1711,5G,,/25/73/30020/455/1221/73074801,6
+1056,/25/67/425/1169/1689/1823/1819,wave power,,/25/67/425/1169/1689/1823,6
+1057,/25/73/30020/455/1221/73074801/45147905,fixed wireless network,,/25/73/30020/455/1221/73074801,6
+1058,/25/73/30020/455/1221/1713/1827,fiber-optic network,,/25/73/30020/455/1221/1713,6
+1059,/25/67/425/1169/1689/1823/1821,tidal energy,,/25/67/425/1169/1689/1823,6
+1060,/25/73/30020/455/1221/73074801/95165544,4G,,/25/73/30020/455/1221/73074801,6
+1061,/23/43/257/771/1511/19823118/30069,gas giants,,/23/43/257/771/1511/19823118,6
+1062,/23/43/257/771/1511/19823118/30067,ice giants,,/23/43/257/771/1511/19823118,6

@@ -1,0 +1,400 @@
+# ============================================================
+# TI-Radar — Docker Compose (16 Services)
+# ============================================================
+# Nutzung (vom Projekt-Root aus):
+#   docker compose -f deploy/docker-compose.yml up -d
+#   docker compose -f deploy/docker-compose.yml --profile monitoring up
+# ============================================================
+
+x-uc-service: &uc-service-defaults
+  build:
+    context: ..
+    dockerfile: services/uc-service.Dockerfile
+  restart: unless-stopped
+  depends_on:
+    db:
+      condition: service_healthy
+  networks:
+    - backend
+  deploy:
+    resources:
+      limits:
+        memory: 512M
+        cpus: "0.5"
+
+services:
+  # ==================== Datenbank ====================
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: ti-radar-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ti_radar}
+      POSTGRES_USER: ${POSTGRES_USER:-tip_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - ${TI_RADAR_DB_PATH:?Set TI_RADAR_DB_PATH in .env}:/var/lib/postgresql/data
+      - ../database/sql/001_extensions.sql:/docker-entrypoint-initdb.d/001_extensions.sql
+      - ../database/sql/002_schema.sql:/docker-entrypoint-initdb.d/002_schema.sql
+      - ../database/sql/003_postgresql_tuning.sql:/docker-entrypoint-initdb.d/003_postgresql_tuning.sql
+      - ../database/sql/004_query_translation.sql:/docker-entrypoint-initdb.d/004_query_translation.sql
+      - ../database/sql/005_import_log.sql:/docker-entrypoint-initdb.d/005_import_log.sql
+      - ../database/sql/006_citation_schema.sql:/docker-entrypoint-initdb.d/006_citation_schema.sql
+      - ../database/sql/007_publication_role.sql:/docker-entrypoint-initdb.d/007_publication_role.sql
+    shm_size: 1g
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tip_admin} -d ${POSTGRES_DB:-ti_radar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: "2.0"
+    networks:
+      - backend
+
+  # ==================== Orchestrator ====================
+  orchestrator-svc:
+    build:
+      context: ..
+      dockerfile: services/orchestrator-svc/Dockerfile
+    container_name: ti-radar-orchestrator
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tip_admin}:${POSTGRES_PASSWORD:-changeme_in_production}@db:5432/${POSTGRES_DB:-ti_radar}
+      UC_LANDSCAPE_ADDRESS: landscape-svc:50051
+      UC_MATURITY_ADDRESS: maturity-svc:50051
+      UC_COMPETITIVE_ADDRESS: competitive-svc:50051
+      UC_FUNDING_ADDRESS: funding-svc:50051
+      UC_CPC_FLOW_ADDRESS: cpc-flow-svc:50051
+      UC_GEOGRAPHIC_ADDRESS: geographic-svc:50051
+      UC_RESEARCH_IMPACT_ADDRESS: research-impact-svc:50051
+      UC_TEMPORAL_ADDRESS: temporal-svc:50051
+      UC_TECH_CLUSTER_ADDRESS: tech-cluster-svc:50051
+      UC_ACTOR_TYPE_ADDRESS: actor-type-svc:50051
+      UC_PATENT_GRANT_ADDRESS: patent-grant-svc:50051
+      UC_EUROSCIVOC_ADDRESS: euroscivoc-svc:50051
+      UC_PUBLICATION_ADDRESS: publication-svc:50051
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    networks:
+      - backend
+      - frontend
+
+  # ==================== UC-Services (12x) ====================
+  landscape-svc:
+    <<: *uc-service-defaults
+    container_name: ti-radar-uc1
+    build:
+      context: ..
+      dockerfile: services/uc-service.Dockerfile
+      args:
+        SERVICE_DIR: services/landscape-svc
+    environment:
+      DATABASE_URL: postgresql://svc_landscape:${SVC_LANDSCAPE_PW:-svc_landscape_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      OPENAIRE_ACCESS_TOKEN: ${OPENAIRE_ACCESS_TOKEN:-}
+      OPENAIRE_REFRESH_TOKEN: ${OPENAIRE_REFRESH_TOKEN:-}
+      SERVICE_PORT: "50051"
+
+  maturity-svc:
+    <<: *uc-service-defaults
+    container_name: ti-radar-uc2
+    build:
+      context: ..
+      dockerfile: services/uc-service.Dockerfile
+      args:
+        SERVICE_DIR: services/maturity-svc
+    environment:
+      DATABASE_URL: postgresql://svc_maturity:${SVC_MATURITY_PW:-svc_maturity_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      SERVICE_PORT: "50051"
+
+  competitive-svc:
+    <<: *uc-service-defaults
+    container_name: ti-radar-uc3
+    build:
+      context: ..
+      dockerfile: services/uc-service.Dockerfile
+      args:
+        SERVICE_DIR: services/competitive-svc
+    environment:
+      DATABASE_URL: postgresql://svc_competitive:${SVC_COMPETITIVE_PW:-svc_competitive_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      SERVICE_PORT: "50051"
+
+  funding-svc:
+    <<: *uc-service-defaults
+    container_name: ti-radar-uc4
+    build:
+      context: ..
+      dockerfile: services/uc-service.Dockerfile
+      args:
+        SERVICE_DIR: services/funding-svc
+    environment:
+      DATABASE_URL: postgresql://svc_funding:${SVC_FUNDING_PW:-svc_funding_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      SERVICE_PORT: "50051"
+
+  cpc-flow-svc:
+    <<: *uc-service-defaults
+    container_name: ti-radar-uc5
+    build:
+      context: ..
+      dockerfile: services/uc-service.Dockerfile
+      args:
+        SERVICE_DIR: services/cpc-flow-svc
+    environment:
+      DATABASE_URL: postgresql://svc_cpc_flow:${SVC_CPC_FLOW_PW:-svc_cpc_flow_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      SERVICE_PORT: "50051"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+
+  geographic-svc:
+    <<: *uc-service-defaults
+    container_name: ti-radar-uc6
+    build:
+      context: ..
+      dockerfile: services/uc-service.Dockerfile
+      args:
+        SERVICE_DIR: services/geographic-svc
+    environment:
+      DATABASE_URL: postgresql://svc_geographic:${SVC_GEOGRAPHIC_PW:-svc_geographic_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      SERVICE_PORT: "50051"
+
+  research-impact-svc:
+    <<: *uc-service-defaults
+    container_name: ti-radar-uc7
+    build:
+      context: ..
+      dockerfile: services/uc-service.Dockerfile
+      args:
+        SERVICE_DIR: services/research-impact-svc
+    environment:
+      DATABASE_URL: postgresql://svc_research_impact:${SVC_RESEARCH_IMPACT_PW:-svc_research_impact_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      SEMANTIC_SCHOLAR_API_KEY: ${SEMANTIC_SCHOLAR_API_KEY:-}
+      SERVICE_PORT: "50051"
+
+  temporal-svc:
+    <<: *uc-service-defaults
+    container_name: ti-radar-uc8
+    build:
+      context: ..
+      dockerfile: services/uc-service.Dockerfile
+      args:
+        SERVICE_DIR: services/temporal-svc
+    environment:
+      DATABASE_URL: postgresql://svc_temporal:${SVC_TEMPORAL_PW:-svc_temporal_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      SERVICE_PORT: "50051"
+
+  tech-cluster-svc:
+    <<: *uc-service-defaults
+    container_name: ti-radar-uc9
+    build:
+      context: ..
+      dockerfile: services/uc-service.Dockerfile
+      args:
+        SERVICE_DIR: services/tech-cluster-svc
+    environment:
+      DATABASE_URL: postgresql://svc_tech_cluster:${SVC_TECH_CLUSTER_PW:-svc_tech_cluster_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      SERVICE_PORT: "50051"
+
+  actor-type-svc:
+    <<: *uc-service-defaults
+    container_name: ti-radar-uc11
+    build:
+      context: ..
+      dockerfile: services/uc-service.Dockerfile
+      args:
+        SERVICE_DIR: services/actor-type-svc
+    environment:
+      DATABASE_URL: postgresql://svc_actor_type:${SVC_ACTOR_TYPE_PW:-svc_actor_type_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      SERVICE_PORT: "50051"
+
+  patent-grant-svc:
+    <<: *uc-service-defaults
+    container_name: ti-radar-uc12
+    build:
+      context: ..
+      dockerfile: services/uc-service.Dockerfile
+      args:
+        SERVICE_DIR: services/patent-grant-svc
+    environment:
+      DATABASE_URL: postgresql://svc_patent_grant:${SVC_PATENT_GRANT_PW:-svc_patent_grant_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      SERVICE_PORT: "50051"
+
+  euroscivoc-svc:
+    <<: *uc-service-defaults
+    container_name: ti-radar-uc10
+    build:
+      context: ..
+      dockerfile: services/uc-service.Dockerfile
+      args:
+        SERVICE_DIR: services/euroscivoc-svc
+    environment:
+      DATABASE_URL: postgresql://svc_euroscivoc:${SVC_EUROSCIVOC_PW:-svc_euroscivoc_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      SERVICE_PORT: "50051"
+
+  publication-svc:
+    <<: *uc-service-defaults
+    container_name: ti-radar-uc-c
+    build:
+      context: ..
+      dockerfile: services/uc-service.Dockerfile
+      args:
+        SERVICE_DIR: services/publication-svc
+    environment:
+      DATABASE_URL: postgresql://svc_publication:${SVC_PUBLICATION_PW:-svc_publication_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      SERVICE_PORT: "50051"
+
+  # ==================== Import-Service ====================
+  import-svc:
+    build:
+      context: ..
+      dockerfile: services/import-svc/Dockerfile
+    container_name: ti-radar-import
+    volumes:
+      - "${EPO_BULK_PATH:-/dev/null}:/data/bulk/EPO:ro"
+      - "${CORDIS_BULK_PATH:-/dev/null}:/data/bulk/CORDIS:ro"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tip_admin}:${POSTGRES_PASSWORD:-changeme_in_production}@db:5432/${POSTGRES_DB:-ti_radar}
+    ports:
+      - "127.0.0.1:8030:8030"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+    networks:
+      - backend
+
+  # ==================== Export-Service ====================
+  export-svc:
+    build:
+      context: ..
+      dockerfile: services/export-svc/Dockerfile
+    container_name: ti-radar-export
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://svc_export:${SVC_EXPORT_PW:-svc_export_pw}@db:5432/${POSTGRES_DB:-ti_radar}
+      ORCHESTRATOR_URL: http://orchestrator-svc:8000
+    ports:
+      - "127.0.0.1:8020:8020"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+    networks:
+      - backend
+
+  # ==================== Frontend ====================
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: ti-radar-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - orchestrator-svc
+    environment:
+      # NEXT_PUBLIC_* wird zur Build-Zeit gebacken (Dockerfile ARG).
+      # Runtime-Wert hier fuer SSR Server-Side Calls:
+      INTERNAL_API_URL: http://orchestrator-svc:8000
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    networks:
+      - frontend
+
+  # ==================== Monitoring ====================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ti-radar-prometheus
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro  # relativ zu deploy/
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    restart: unless-stopped
+    profiles:
+      - monitoring
+      - full
+    networks:
+      - backend
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ti-radar-grafana
+    volumes:
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro       # relativ zu deploy/
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro     # relativ zu deploy/
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+    profiles:
+      - monitoring
+      - full
+    networks:
+      - backend
+
+  # ==================== pgAdmin ====================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ti-radar-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@ti-radar.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_LISTEN_PORT: 5050
+    ports:
+      - "127.0.0.1:5050:5050"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles:
+      - monitoring
+      - full
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - backend
+
+volumes:
+  # pgdata entfernt — wird durch TI_RADAR_DB_PATH Bind-Mount ersetzt
+  prometheus_data:
+  grafana_data:
+  pgadmin_data:
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge

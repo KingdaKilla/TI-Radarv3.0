@@ -1,0 +1,70 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ti-radar-export-svc"
+version = "2.0.0"
+description = "TI-Radar v2 Export Service — CSV, JSON und Excel-Export von Analyseergebnissen"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Benjamin Schaefer" }]
+
+dependencies = [
+    # Web-Framework + ASGI-Server
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.30,<1.0",
+
+    # Validierung + Konfiguration
+    "pydantic>=2.10,<3.0",
+    "pydantic-settings>=2.0,<3.0",
+
+    # Datenbank (asyncpg fuer PostgreSQL-Cache)
+    "asyncpg>=0.29,<1.0",
+
+    # HTTP-Client (Orchestrator-Aufrufe)
+    "httpx>=0.27,<1.0",
+
+    # Excel-Export
+    "openpyxl>=3.1,<4.0",
+
+    # PDF-Export (HTML-to-PDF Rendering)
+    "weasyprint>=61.0,<63.0",
+
+    # Jinja2 Templating (WIPO PDF-Report)
+    "jinja2>=3.1,<4.0",
+
+    # Logging
+    "structlog>=24.0,<25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "httpx>=0.27",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM", "TCH"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

@@ -1,0 +1,64 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ti-radar-import-svc"
+version = "2.0.0"
+description = "TI-Radar v2 Import Service — Bulk-Datenimport von EPO-Patenten und CORDIS-Forschungsprojekten"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Benjamin Schaefer" }]
+
+dependencies = [
+    # Web-Framework + ASGI-Server
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.30,<1.0",
+
+    # Datenbank (asyncpg direkt, kein ORM)
+    "asyncpg>=0.29,<1.0",
+
+    # Validierung + Konfiguration
+    "pydantic>=2.10,<3.0",
+    "pydantic-settings>=2.0,<3.0",
+
+    # Observability
+    "structlog>=24.0,<26.0",
+
+    # Dateiverarbeitung (async)
+    "aiofiles>=24.0,<25.0",
+
+    # XML-Parsing (EPO DOCDB)
+    "lxml>=5.0,<6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=6.0",
+    "httpx>=0.28",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM", "TCH"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

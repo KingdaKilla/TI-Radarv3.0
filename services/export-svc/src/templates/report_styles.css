@@ -1,0 +1,671 @@
+/* ============================================================================
+   TI-Radar PDF Report — Print-optimiertes CSS
+   WIPO Patent Landscape Report (Pub. 946) Struktur
+
+   Optimiert fuer WeasyPrint-Rendering.
+   - A4 Querformat (landscape) fuer Diagramm-Sektionen
+   - A4 Hochformat (portrait) fuer Text-Sektionen
+   Professionelles Business-Report-Layout mit Farbschema #2a4365 (Dunkelblau).
+   ============================================================================ */
+
+/* --- Seitendefinition: A4 Querformat (Standard fuer UC-Sektionen) --- */
+@page {
+    size: A4 landscape;
+    margin: 18mm 20mm 22mm 20mm;
+
+    @top-left {
+        content: "TI-Radar — Patent Landscape Report";
+        font-size: 8pt;
+        color: #64748b;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    @top-right {
+        content: "Vertraulich";
+        font-size: 8pt;
+        color: #94a3b8;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    @bottom-left {
+        content: "TI-Radar v2 — Bachelorarbeit Technology Intelligence — HWR Berlin";
+        font-size: 7pt;
+        color: #94a3b8;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    @bottom-right {
+        content: "Seite " counter(page) " von " counter(pages);
+        font-size: 8pt;
+        color: #64748b;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+}
+
+/* Titelseite ohne Kopf-/Fusszeile */
+@page title-page {
+    size: A4 landscape;
+    margin: 0;
+
+    @top-left { content: none; }
+    @top-right { content: none; }
+    @bottom-left { content: none; }
+    @bottom-right { content: none; }
+}
+
+/* Hochformat-Seiten fuer Text-Sektionen (Executive Summary, Methodik, etc.) */
+@page portrait-page {
+    size: A4 portrait;
+    margin: 20mm 18mm 22mm 18mm;
+
+    @top-left {
+        content: "TI-Radar — Patent Landscape Report";
+        font-size: 8pt;
+        color: #64748b;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    @top-right {
+        content: "Vertraulich";
+        font-size: 8pt;
+        color: #94a3b8;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    @bottom-left {
+        content: "TI-Radar v2 — Bachelorarbeit Technology Intelligence — HWR Berlin";
+        font-size: 7pt;
+        color: #94a3b8;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    @bottom-right {
+        content: "Seite " counter(page) " von " counter(pages);
+        font-size: 8pt;
+        color: #64748b;
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+}
+
+/* --- Grundlegende Typografie --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.55;
+    color: #1e293b;
+    background: #ffffff;
+}
+
+h3 {
+    font-size: 12pt;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 16px 0 8px;
+}
+
+p {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+/* --- Titelseite --- */
+.title-page {
+    page: title-page;
+    width: 297mm;
+    height: 210mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: linear-gradient(135deg, #1e3a5f 0%, #2a4365 40%, #2d5a87 100%);
+    color: #ffffff;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+}
+
+.title-page::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.03) 100%);
+}
+
+.title-badge {
+    position: absolute;
+    top: 20mm;
+    right: 25mm;
+    font-size: 8pt;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 3px;
+}
+
+.title-logo {
+    font-size: 14pt;
+    font-weight: 300;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 30px;
+}
+
+.title-main {
+    font-size: 32pt;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+    max-width: 80%;
+}
+
+.title-subtitle {
+    font-size: 16pt;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 40px;
+}
+
+.title-meta {
+    font-size: 10pt;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1.8;
+}
+
+.title-meta strong {
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 600;
+}
+
+.title-meta-table {
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.title-meta-table td {
+    padding: 3px 10px;
+    vertical-align: top;
+}
+
+.title-meta-label {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    white-space: nowrap;
+}
+
+.title-divider {
+    width: 80px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    margin: 20px auto;
+}
+
+.title-footer {
+    position: absolute;
+    bottom: 15mm;
+    font-size: 8pt;
+    color: rgba(255, 255, 255, 0.35);
+    letter-spacing: 0.5px;
+}
+
+/* --- Inhaltsverzeichnis --- */
+.toc {
+    page-break-after: always;
+    padding-top: 10mm;
+}
+
+.toc h2 {
+    font-size: 18pt;
+    font-weight: 700;
+    color: #2a4365;
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #2a4365;
+}
+
+.toc-list {
+    list-style: none;
+    padding: 0;
+}
+
+.toc-item {
+    display: flex;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px dotted #cbd5e1;
+    font-size: 11pt;
+}
+
+.toc-item-appendix {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.toc-number {
+    font-weight: 700;
+    color: #2a4365;
+    min-width: 40px;
+}
+
+.toc-title {
+    flex: 1;
+    color: #1e293b;
+}
+
+.toc-sub {
+    list-style: none;
+    font-size: 9pt;
+    color: #64748b;
+    padding-left: 40px;
+    padding-bottom: 4px;
+}
+
+.toc-desc {
+    font-size: 9pt;
+    color: #64748b;
+    margin-left: 40px;
+    margin-top: 2px;
+}
+
+/* --- Sektions-Ueberschriften --- */
+.section {
+    page-break-before: always;
+    padding-top: 5mm;
+}
+
+.section:first-of-type {
+    page-break-before: auto;
+}
+
+/* Portrait-Sektionen (Executive Summary, Methodik, Datenqualitaet) */
+.section-portrait {
+    page: portrait-page;
+}
+
+/* Landscape-Sektionen (UC-Analyse mit Diagrammen) */
+.section-landscape {
+    page: unset;  /* Standard @page = landscape */
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #2a4365;
+}
+
+.section-number {
+    font-size: 28pt;
+    font-weight: 700;
+    color: #2a4365;
+    margin-right: 14px;
+    line-height: 1;
+}
+
+.section-title-group {
+    flex: 1;
+}
+
+.section-title {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.section-subtitle {
+    font-size: 9pt;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+/* --- Executive Summary --- */
+.executive-summary {
+    margin-top: 10px;
+}
+
+.executive-summary .summary-box {
+    margin-top: 20px;
+}
+
+.summary-text {
+    margin-top: 16px;
+    font-size: 9.5pt;
+    color: #334155;
+    line-height: 1.7;
+}
+
+/* --- Datentabellen --- */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 8.5pt;
+}
+
+.data-table thead th {
+    background: #2a4365;
+    color: #ffffff;
+    font-weight: 600;
+    text-align: left;
+    padding: 7px 10px;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.data-table thead th:first-child {
+    border-radius: 4px 0 0 0;
+}
+
+.data-table thead th:last-child {
+    border-radius: 0 4px 0 0;
+}
+
+.data-table tbody td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top;
+}
+
+.data-table tbody tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: 2px solid #cbd5e1;
+}
+
+/* Numerische Werte rechtsbuendig */
+.data-table .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Hervorhebung fuer wichtige Zellen */
+.data-table .highlight {
+    font-weight: 600;
+    color: #2a4365;
+}
+
+/* Formelzelle in Tabellen */
+.formula-cell {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 8.5pt;
+}
+
+/* --- Zusammenfassungs-Box --- */
+.summary-box {
+    background: #f0f4f8;
+    border-left: 4px solid #2a4365;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
+}
+
+.summary-box h4 {
+    font-size: 10pt;
+    font-weight: 700;
+    color: #2a4365;
+    margin-bottom: 6px;
+}
+
+.summary-box p {
+    font-size: 9pt;
+    color: #475569;
+    margin: 3px 0;
+}
+
+/* --- KPI-Karten --- */
+.kpi-row {
+    display: flex;
+    gap: 14px;
+    margin: 14px 0;
+    flex-wrap: wrap;
+}
+
+.kpi-card {
+    flex: 1;
+    min-width: 120px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px 14px;
+    text-align: center;
+}
+
+.kpi-card-primary {
+    border-color: #2a4365;
+    border-width: 2px;
+    background: #f0f4f8;
+}
+
+.kpi-value {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #2a4365;
+    line-height: 1.2;
+}
+
+.kpi-label {
+    font-size: 8pt;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+/* --- Chart-Platzhalter --- */
+.chart-placeholder {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 30px 20px;
+    text-align: center;
+    margin: 16px 0;
+    min-height: 100px;
+}
+
+.chart-placeholder-wide {
+    min-height: 140px;
+}
+
+.chart-placeholder-icon {
+    font-size: 28pt;
+    margin-bottom: 8px;
+    opacity: 0.6;
+}
+
+.chart-placeholder p {
+    font-size: 10pt;
+    color: #475569;
+    margin: 4px 0;
+}
+
+/* --- Keine-Daten-Box --- */
+.no-data-box {
+    background: #fef2f2;
+    border-left: 4px solid #ef4444;
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
+}
+
+.no-data-box p {
+    font-size: 9.5pt;
+    color: #991b1b;
+    margin: 0;
+}
+
+/* --- Datenqualitaets-Grid --- */
+.quality-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 16px 0;
+}
+
+.quality-card {
+    padding: 14px 16px;
+    border-radius: 6px;
+    page-break-inside: avoid;
+}
+
+.quality-card h4 {
+    font-size: 10pt;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.quality-card p {
+    font-size: 8.5pt;
+    line-height: 1.55;
+    margin: 0;
+}
+
+.quality-warning {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+}
+
+.quality-warning h4 {
+    color: #92400e;
+}
+
+.quality-warning p {
+    color: #78350f;
+}
+
+.quality-info {
+    background: #eff6ff;
+    border: 1px solid #93c5fd;
+}
+
+.quality-info h4 {
+    color: #1e40af;
+}
+
+.quality-info p {
+    color: #1e3a5f;
+}
+
+/* --- Appendix / Methodik --- */
+.appendix {
+    page-break-before: always;
+    padding-top: 5mm;
+}
+
+.appendix h2 {
+    font-size: 16pt;
+    font-weight: 700;
+    color: #2a4365;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #2a4365;
+}
+
+.appendix h3 {
+    font-size: 12pt;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 16px 0 8px;
+}
+
+.appendix p {
+    font-size: 9pt;
+    color: #475569;
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+.appendix .formula {
+    font-family: "Courier New", Courier, monospace;
+    background: #f1f5f9;
+    padding: 8px 14px;
+    border-radius: 4px;
+    margin: 8px 0;
+    font-size: 9pt;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+}
+
+.source-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 8.5pt;
+}
+
+.source-table th {
+    background: #f1f5f9;
+    font-weight: 600;
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 2px solid #cbd5e1;
+    color: #2a4365;
+}
+
+.source-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* --- Report-Generierungsinformationen --- */
+.report-generation-info {
+    page-break-inside: avoid;
+}
+
+/* --- Haftungsausschluss / EU AI Act --- */
+.disclaimer {
+    margin-top: 20px;
+    padding: 14px 16px;
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 6px;
+    font-size: 8pt;
+    color: #92400e;
+}
+
+.disclaimer strong {
+    display: block;
+    font-size: 9pt;
+    margin-bottom: 4px;
+}
+
+/* --- Hilfsstile --- */
+.page-break {
+    page-break-after: always;
+}
+
+.no-break {
+    page-break-inside: avoid;
+}
+
+.text-muted {
+    color: #64748b;
+}
+
+.text-small {
+    font-size: 8pt;
+}
+
+.mt-1 { margin-top: 8px; }
+.mt-2 { margin-top: 16px; }
+.mb-1 { margin-bottom: 8px; }
+.mb-2 { margin-bottom: 16px; }

@@ -1,0 +1,6 @@
+# HINWEIS: Hauptkonfiguration in prometheus.yml
+# Diese Datei ist leer — Prometheus wird in prometheus.yml konfiguriert.
+# Beide Dateien werden von Grafana automatisch geladen.
+apiVersion: 1
+
+datasources: []

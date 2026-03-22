@@ -1,0 +1,46 @@
+# ============================================================
+# Prometheus Scrape Configuration — TI-Radar v2
+# ============================================================
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Orchestrator (FastAPI + Prometheus Client)
+  - job_name: "orchestrator"
+    static_configs:
+      - targets: ["orchestrator-svc:8000"]
+    metrics_path: /metrics
+
+  # UC-Services (prometheus_client HTTP-Server auf Port 9090)
+  - job_name: "uc-services"
+    static_configs:
+      - targets:
+          - "landscape-svc:9090"
+          - "maturity-svc:9090"
+          - "competitive-svc:9090"
+          - "funding-svc:9090"
+          - "cpc-flow-svc:9090"
+          - "geographic-svc:9090"
+          - "research-impact-svc:9090"
+          - "temporal-svc:9090"
+          - "tech-cluster-svc:9090"
+          - "actor-type-svc:9090"
+          - "patent-grant-svc:9090"
+          - "euroscivoc-svc:9090"
+    metrics_path: /metrics
+
+  # Import/Export Services
+  - job_name: "support-services"
+    static_configs:
+      - targets:
+          - "import-svc:8030"
+          - "export-svc:8020"
+    metrics_path: /metrics
+
+  # PostgreSQL — benoetigt postgres_exporter Container
+  # TODO: postgres_exporter als Sidecar hinzufuegen
+  # - job_name: "postgresql"
+  #   static_configs:
+  #     - targets: ["postgres-exporter:9187"]
+  #   metrics_path: /metrics

@@ -68,7 +68,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-tip_admin}:${POSTGRES_PASSWORD:-changeme_in_production}@db:5432/${POSTGRES_DB:-ti_radar}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tip_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ti_radar}
       UC_LANDSCAPE_ADDRESS: landscape-svc:50051
       UC_MATURITY_ADDRESS: maturity-svc:50051
       UC_COMPETITIVE_ADDRESS: competitive-svc:50051
@@ -271,7 +271,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-tip_admin}:${POSTGRES_PASSWORD:-changeme_in_production}@db:5432/${POSTGRES_DB:-ti_radar}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tip_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ti_radar}
     ports:
       - "127.0.0.1:8030:8030"
     restart: unless-stopped

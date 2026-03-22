@@ -1,0 +1,148 @@
+// =============================================================================
+// uc2_maturity.proto — UC2: Technology Maturity Assessment
+// =============================================================================
+// Fits a logistic S-curve to cumulative patent/publication counts to estimate
+// the technology's lifecycle phase (Emerging, Growing, Mature, Saturation).
+// The frontend renders the S-curve chart and maturity gauge.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.uc2;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.uc2";
+option go_package = "tip/proto/uc2";
+
+import "common.proto";
+
+// ---------------------------------------------------------------------------
+// UC2 Maturity Service
+// ---------------------------------------------------------------------------
+service MaturityService {
+  // Assess technology maturity by fitting an S-curve to cumulative data.
+  rpc AnalyzeMaturity(tip.common.AnalysisRequest) returns (MaturityResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Lifecycle phase of the technology.
+// ---------------------------------------------------------------------------
+enum TechnologyPhase {
+  TECHNOLOGY_PHASE_UNSPECIFIED = 0;
+
+  // Early stage — few patents/publications, high growth potential.
+  EMERGING = 1;
+
+  // Rapid growth — steep part of the S-curve.
+  GROWING = 2;
+
+  // Established — growth is decelerating, approaching ceiling.
+  MATURE = 3;
+
+  // Plateau — cumulative counts near the estimated carrying capacity.
+  SATURATION = 4;
+
+  // Post-saturation decline — annual counts falling consecutively.
+  // Detected via detect_decline() on yearly (non-cumulative) patent counts.
+  DECLINE = 5;
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+// One data point on the S-curve chart.
+message SCurveDataPoint {
+  int32 year = 1;
+
+  // Actual cumulative count of patents (or publications) up to this year.
+  double cumulative = 2;
+
+  // Fitted value from the logistic regression model for this year.
+  double fitted = 3;
+
+  // Annual increment (first difference of cumulative).
+  double annual_count = 4;
+}
+
+// Parameters of the fitted logistic model: y = L / (1 + exp(-k*(x - x0)))
+message LogisticParameters {
+  // L — estimated carrying capacity (upper asymptote).
+  double carrying_capacity = 1;
+
+  // k — steepness / growth rate of the curve.
+  double growth_rate = 2;
+
+  // x0 — inflection point year (midpoint of the S-curve).
+  double inflection_year = 3;
+}
+
+// Confidence interval around the maturity estimate.
+message MaturityConfidence {
+  // Lower bound of the 95% confidence interval for maturity_percent.
+  double lower_bound = 1;
+
+  // Upper bound of the 95% confidence interval for maturity_percent.
+  double upper_bound = 2;
+
+  // Confidence level, e.g. 0.95 for 95%.
+  double confidence_level = 3;
+}
+
+// Full response for the Maturity Assessment.
+message MaturityResponse {
+  // Year-by-year S-curve data points (actual vs. fitted).
+  repeated SCurveDataPoint s_curve_data = 1;
+
+  // Identified lifecycle phase of the technology.
+  TechnologyPhase phase = 2;
+
+  // Maturity as a percentage in [0, 100].
+  // Derived as (current cumulative / carrying capacity) * 100.
+  double maturity_percent = 3;
+
+  // R-squared (coefficient of determination) of the logistic fit.
+  // Values close to 1.0 indicate a good fit.
+  double r_squared = 4;
+
+  // Compound annual growth rate of the underlying counts.
+  double cagr = 5;
+
+  // Fitted logistic model parameters.
+  LogisticParameters model_parameters = 6;
+
+  // Confidence interval around the maturity estimate.
+  MaturityConfidence confidence = 7;
+
+  // Estimated number of years until the next phase transition.
+  // Negative or zero if already in SATURATION.
+  int32 years_to_next_phase = 8;
+
+  // Which data type was used for the S-curve fitting.
+  string fitted_on = 9; // e.g. "patents", "publications", "combined"
+
+  // Standard response metadata.
+  tip.common.ResponseMetadata metadata = 10;
+
+  // Last year for which data is considered complete.
+  // Years after this may have lower counts due to publication/processing lag.
+  int32 data_complete_year = 11;
+
+  // AICc (corrected Akaike Information Criterion) of the selected model.
+  // Lower values indicate better model fit with complexity penalty.
+  // Burnham & Anderson (2002).
+  double aicc_selected = 12;
+
+  // AICc of the alternative (non-selected) model.
+  // 0.0 if only one model could be fitted.
+  double aicc_alternative = 13;
+
+  // Absolute difference |AICc_selected - AICc_alternative|.
+  // Interpretation: <2 = negligible, 2-7 = moderate, >7 = strong evidence.
+  double delta_aicc = 14;
+
+  // True wenn Decline-Phase erkannt: jaehrliche Anmelderaten fallen
+  // konsekutiv bei maturity_percent >= 90%. Ergaenzt die S-Kurve,
+  // die als monoton steigende kumulative Funktion Decline nicht abbildet.
+  bool is_declining = 15;
+}

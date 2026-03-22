@@ -1,0 +1,123 @@
+// =============================================================================
+// uc1_landscape.proto — UC1: Technology Landscape Scan
+// =============================================================================
+// Provides a bird's-eye overview of a technology area across patents,
+// publications, and funded projects over time. The frontend uses this to
+// render the initial dashboard with trend lines, top countries, and growth
+// rates (CAGR).
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.uc1;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.uc1";
+option go_package = "tip/proto/uc1";
+
+import "common.proto";
+
+// ---------------------------------------------------------------------------
+// UC1 Landscape Service — single unary RPC.
+// ---------------------------------------------------------------------------
+service LandscapeService {
+  // Analyse the technology landscape across all data sources.
+  // Returns time-series trends, geographic distribution, and growth metrics.
+  rpc AnalyzeLandscape(tip.common.AnalysisRequest) returns (LandscapeResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+// One row per year in the landscape time series.
+message LandscapeTimeSeriesEntry {
+  int32 year = 1;
+
+  // Number of patent families filed/granted in this year.
+  int64 patent_count = 2;
+
+  // Number of funded research projects starting in this year.
+  int64 project_count = 3;
+
+  // Number of scholarly publications indexed in this year.
+  int64 publication_count = 4;
+
+  // Total funding volume in EUR associated with projects in this year.
+  double funding_eur = 5;
+}
+
+// Compound Annual Growth Rate values for each indicator.
+message CagrValues {
+  // CAGR of patent filings over the full time range, as a fraction (e.g. 0.12 = 12%).
+  double patent_cagr = 1;
+
+  // CAGR of funded projects.
+  double project_cagr = 2;
+
+  // CAGR of publications.
+  double publication_cagr = 3;
+
+  // CAGR of funding volume.
+  double funding_cagr = 4;
+
+  // Number of years over which CAGR was computed.
+  int32 period_years = 5;
+}
+
+// Summary statistics for the entire landscape.
+message LandscapeSummary {
+  // Total patents across all years.
+  int64 total_patents = 1;
+
+  // Total funded projects across all years.
+  int64 total_projects = 2;
+
+  // Total publications across all years.
+  int64 total_publications = 3;
+
+  // Total funding in EUR across all years.
+  double total_funding_eur = 4;
+
+  // Number of distinct countries with activity.
+  int32 active_countries = 5;
+
+  // Number of distinct actors (organisations/applicants).
+  int64 active_actors = 6;
+}
+
+// Full response for the Landscape Scan.
+message LandscapeResponse {
+  // Year-by-year breakdown of patents, projects, and publications.
+  repeated LandscapeTimeSeriesEntry time_series = 1;
+
+  // Top countries ranked by combined activity (patents + projects + publications).
+  repeated tip.common.CountryMetric top_countries = 2;
+
+  // Compound annual growth rates for key indicators.
+  CagrValues cagr_values = 3;
+
+  // High-level summary statistics.
+  LandscapeSummary summary = 4;
+
+  // Top CPC codes found in the patent landscape.
+  repeated CpcCodeCount top_cpc_codes = 5;
+
+  // Standard response metadata (timing, data sources, warnings).
+  tip.common.ResponseMetadata metadata = 6;
+}
+
+// CPC code frequency in the patent landscape.
+message CpcCodeCount {
+  // CPC classification code, e.g. "H01M 10/05".
+  string code = 1;
+
+  // Human-readable description of the CPC code.
+  string description = 2;
+
+  // Number of patent families carrying this code.
+  int64 count = 3;
+
+  // Share of total patents as a fraction in [0, 1].
+  double share = 4;
+}

@@ -1,0 +1,193 @@
+// =============================================================================
+// uc12_patent_grant.proto — UC12: Patent Grant Rate Analysis
+// =============================================================================
+// Analyses the grant rate of patent applications by comparing EPO kind codes:
+// A1 (published application) vs B1 (granted patent). This indicates the
+// quality and maturity of innovation in a technology field. Higher grant rates
+// suggest stronger, more defensible intellectual property. The frontend renders
+// grant rate gauges, temporal trends, and country/applicant comparisons.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.uc12;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.uc12";
+option go_package = "tip/proto/uc12";
+
+import "common.proto";
+
+// ---------------------------------------------------------------------------
+// UC12 Patent Grant Rate Service
+// ---------------------------------------------------------------------------
+service PatentGrantService {
+  // Analyse patent grant rates based on EPO kind codes.
+  rpc AnalyzePatentGrant(tip.common.AnalysisRequest) returns (PatentGrantResponse);
+}
+
+// ---------------------------------------------------------------------------
+// EPO kind code classification.
+// ---------------------------------------------------------------------------
+enum KindCode {
+  KIND_CODE_UNSPECIFIED = 0;
+
+  // A1: European patent application published with search report.
+  A1 = 1;
+
+  // A2: European patent application published without search report.
+  A2 = 2;
+
+  // A3: Separate publication of the European search report.
+  A3 = 3;
+
+  // B1: European patent specification (granted, no prior A publication with claims).
+  B1 = 4;
+
+  // B2: European patent specification (amended after opposition).
+  B2 = 5;
+
+  // B3: European patent specification (limited after post-grant limitation).
+  B3 = 6;
+
+  // Other kind codes not individually tracked.
+  OTHER = 7;
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+// Overall grant rate statistics.
+message GrantRateSummary {
+  // Total patent applications (A-kind codes).
+  int64 total_applications = 1;
+
+  // Total granted patents (B-kind codes).
+  int64 total_grants = 2;
+
+  // Grant rate as a fraction in [0, 1]: grants / applications.
+  double grant_rate = 3;
+
+  // Average time from application (A1) to grant (B1) in months.
+  double avg_time_to_grant_months = 4;
+
+  // Median time to grant in months.
+  double median_time_to_grant_months = 5;
+}
+
+// Year-by-year breakdown of applications vs grants.
+message GrantRateYearEntry {
+  int32 year = 1;
+
+  // Number of A1/A2 applications filed in this year.
+  int64 application_count = 2;
+
+  // Number of B1/B2 grants in this year.
+  int64 grant_count = 3;
+
+  // Grant rate for this year.
+  double grant_rate = 4;
+
+  // Pending applications (filed but not yet granted or rejected).
+  int64 pending_count = 5;
+}
+
+// Kind code frequency distribution.
+message KindCodeDistribution {
+  // Kind code value, e.g. "A1", "B1".
+  string kind_code = 1;
+
+  // Human-readable description.
+  string description = 2;
+
+  // Number of patent documents with this kind code.
+  int64 count = 3;
+
+  // Share of total documents.
+  double share = 4;
+}
+
+// Grant rate by country of the applicant.
+message CountryGrantRate {
+  // ISO 3166-1 alpha-2 country code.
+  string country_code = 1;
+
+  // Full country name.
+  string country_name = 2;
+
+  // Applications from this country.
+  int64 application_count = 3;
+
+  // Grants from this country.
+  int64 grant_count = 4;
+
+  // Grant rate for this country.
+  double grant_rate = 5;
+
+  // Average time to grant for this country in months.
+  double avg_time_to_grant_months = 6;
+}
+
+// Grant rate for a specific applicant/actor.
+message ApplicantGrantRate {
+  // Applicant name.
+  string name = 1;
+
+  // ISO country code.
+  string country_code = 2;
+
+  // Number of applications (A-kind).
+  int64 application_count = 3;
+
+  // Number of grants (B-kind).
+  int64 grant_count = 4;
+
+  // Grant rate for this applicant.
+  double grant_rate = 5;
+
+  // Number of distinct CPC codes across granted patents.
+  int32 technology_breadth = 6;
+}
+
+// Grant rate by CPC code to identify which technology areas grant more easily.
+message CpcGrantRate {
+  // CPC code, e.g. "H01M".
+  string cpc_code = 1;
+
+  // Human-readable CPC description.
+  string description = 2;
+
+  // Applications in this CPC class.
+  int64 application_count = 3;
+
+  // Grants in this CPC class.
+  int64 grant_count = 4;
+
+  // Grant rate for this CPC class.
+  double grant_rate = 5;
+}
+
+// Full response for Patent Grant Rate analysis.
+message PatentGrantResponse {
+  // Overall grant rate summary.
+  GrantRateSummary summary = 1;
+
+  // Year-by-year grant rate trend.
+  repeated GrantRateYearEntry year_trend = 2;
+
+  // Kind code distribution across all matched patents.
+  repeated KindCodeDistribution kind_code_distribution = 3;
+
+  // Grant rate by country.
+  repeated CountryGrantRate country_grant_rates = 4;
+
+  // Grant rate by top applicants.
+  repeated ApplicantGrantRate top_applicant_grant_rates = 5;
+
+  // Grant rate by CPC code.
+  repeated CpcGrantRate cpc_grant_rates = 6;
+
+  // Standard response metadata.
+  tip.common.ResponseMetadata metadata = 7;
+}

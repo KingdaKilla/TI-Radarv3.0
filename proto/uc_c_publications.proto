@@ -1,0 +1,82 @@
+// =============================================================================
+// uc_c_publications.proto — UC-C: Publication Impact Chain
+// =============================================================================
+// Links CORDIS-funded projects to their publication output. Analyses the
+// publication trend over time, identifies top-publishing projects and their
+// funding efficiency (publications per million EUR), and lists notable
+// publications with DOI and project linkage.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.uc_c_publications;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.uc_c";
+option go_package = "tip/proto/uc_c";
+
+import "common.proto";
+
+// ---------------------------------------------------------------------------
+// UC-C Publication Analytics Service
+// ---------------------------------------------------------------------------
+service PublicationAnalyticsService {
+  // Analyse publications linked to EU-funded projects matching a technology.
+  rpc AnalyzePublications(tip.common.AnalysisRequest) returns (PublicationAnalyticsResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+// Publication count per year with associated project count.
+message PublicationYearEntry {
+  int32 year = 1;
+  int32 publication_count = 2;
+  int32 project_count = 3;
+}
+
+// Project with its publication output and funding efficiency.
+message ProjectPublicationLink {
+  string project_acronym = 1;
+  string framework = 2;
+  double ec_contribution_eur = 3;
+  int32 publication_count = 4;
+  double publications_per_million_eur = 5;
+}
+
+// Individual publication with metadata and project link.
+message TopPublication {
+  string title = 1;
+  string doi = 2;
+  string journal = 3;
+  int32 publication_year = 4;
+  string project_acronym = 5;
+}
+
+// Full response for Publication Impact Chain analysis.
+message PublicationAnalyticsResponse {
+  // Total number of publications matching the query.
+  int32 total_publications = 1;
+
+  // Number of distinct projects that have publications.
+  int32 total_projects_with_pubs = 2;
+
+  // Average number of publications per project.
+  double publications_per_project = 3;
+
+  // Fraction of publications that have a DOI in [0, 1].
+  double doi_coverage = 4;
+
+  // Year-by-year publication trend.
+  repeated PublicationYearEntry pub_trend = 5;
+
+  // Top projects ranked by publication count.
+  repeated ProjectPublicationLink top_projects = 6;
+
+  // Notable publications (most recent with DOI).
+  repeated TopPublication top_publications = 7;
+
+  // Standard response metadata.
+  tip.common.ResponseMetadata metadata = 10;
+}

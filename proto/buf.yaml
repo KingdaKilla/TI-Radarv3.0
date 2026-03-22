@@ -1,0 +1,15 @@
+# buf.yaml — Buf configuration for linting and breaking change detection.
+# Run: buf lint proto/
+# Run: buf breaking proto/ --against .git#subdir=proto
+version: v2
+modules:
+  - path: .
+lint:
+  use:
+    - STANDARD
+  except:
+    - FIELD_NOT_REQUIRED
+    - PACKAGE_NO_IMPORT_CYCLE
+breaking:
+  use:
+    - FILE

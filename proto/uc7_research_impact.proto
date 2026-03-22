@@ -1,0 +1,194 @@
+// =============================================================================
+// uc7_research_impact.proto — UC7: Research Impact Analysis
+// =============================================================================
+// Evaluates the scholarly impact of publications in the technology area:
+// h-index, citation metrics, top papers, top venues, and publication type
+// distribution. Primary data source is OpenAlex. The frontend renders
+// citation trend charts, ranked paper lists, and venue breakdowns.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.uc7;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.uc7";
+option go_package = "tip/proto/uc7";
+
+import "common.proto";
+
+// ---------------------------------------------------------------------------
+// UC7 Research Impact Service
+// ---------------------------------------------------------------------------
+service ResearchImpactService {
+  // Analyse the research impact and citation landscape.
+  rpc AnalyzeResearchImpact(tip.common.AnalysisRequest) returns (ResearchImpactResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+// Year-by-year citation trend.
+message CitationTrendEntry {
+  int32 year = 1;
+
+  // Total citations received by papers published in this year.
+  int64 total_citations = 2;
+
+  // Number of publications in this year.
+  int64 publication_count = 3;
+
+  // Average citations per paper for this year's publications.
+  double avg_citations = 4;
+
+  // Median citations per paper for this year.
+  double median_citations = 5;
+
+  // Number of highly cited papers (top 10% by citation count).
+  int64 highly_cited_count = 6;
+}
+
+// A single highly cited or otherwise notable paper.
+message TopPaper {
+  // Paper title.
+  string title = 1;
+
+  // Comma-separated list of authors (abbreviated if > 5).
+  string authors = 2;
+
+  // Publication year.
+  int32 year = 3;
+
+  // Venue (journal or conference) where the paper was published.
+  string venue = 4;
+
+  // Total citation count.
+  int64 citation_count = 5;
+
+  // DOI if available, otherwise empty.
+  string doi = 6;
+
+  // OpenAlex ID for linking.
+  string openalex_id = 7;
+
+  // Whether the paper is open access.
+  bool is_open_access = 8;
+
+  // Publication type (journal-article, conference-paper, etc.).
+  string publication_type = 9;
+}
+
+// A top venue (journal / conference) by publication volume.
+message TopVenue {
+  // Venue name, e.g. "Journal of Power Sources".
+  string name = 1;
+
+  // Number of publications in this venue matching the technology query.
+  int64 publication_count = 2;
+
+  // Average citations of papers in this venue for the queried technology.
+  double avg_citations = 3;
+
+  // h-index of this venue restricted to the queried technology.
+  int32 h_index = 4;
+
+  // Whether the venue is open access.
+  bool is_open_access = 5;
+
+  // Share of total publications.
+  double share = 6;
+}
+
+// Distribution of publication types.
+message PublicationType {
+  // Type name, e.g. "journal-article", "conference-paper", "review", "book-chapter".
+  string type = 1;
+
+  // Number of publications of this type.
+  int64 count = 2;
+
+  // Share of total publications.
+  double share = 3;
+}
+
+// Author-level impact metrics.
+message TopAuthor {
+  // Author name.
+  string name = 1;
+
+  // Number of publications in this technology area.
+  int64 publication_count = 2;
+
+  // Total citations across those publications.
+  int64 total_citations = 3;
+
+  // h-index restricted to this technology area.
+  int32 h_index = 4;
+
+  // Primary affiliation.
+  string affiliation = 5;
+
+  // Country of primary affiliation.
+  string country_code = 6;
+}
+
+// A top research institution derived from CORDIS project participation.
+message TopInstitution {
+  // Institution name, e.g. "Fraunhofer-Gesellschaft".
+  string name = 1;
+
+  // Number of EU-funded project participations matching the technology query.
+  int64 project_count = 2;
+
+  // Country code (ISO 3166-1 alpha-2).
+  string country = 3;
+
+  // Activity type: HES=Higher Education, PRC=Private, REC=Research, PUB=Public, OTH=Other.
+  string activity_type = 4;
+}
+
+// Full response for Research Impact analysis.
+message ResearchImpactResponse {
+  // h-index of the entire technology area (across all matched publications).
+  int32 h_index = 1;
+
+  // Average citations per paper across all matched publications.
+  double avg_citations = 2;
+
+  // Median citations per paper.
+  double median_citations = 3;
+
+  // Total number of citations across all matched publications.
+  int64 total_citations = 4;
+
+  // Total number of matched publications.
+  int64 total_publications = 5;
+
+  // Year-by-year citation trend.
+  repeated CitationTrendEntry citation_trend = 6;
+
+  // Top papers ranked by citation count.
+  repeated TopPaper top_papers = 7;
+
+  // Top venues by publication volume.
+  repeated TopVenue top_venues = 8;
+
+  // Distribution of publication types.
+  repeated PublicationType publication_types = 9;
+
+  // Top authors by impact.
+  repeated TopAuthor top_authors = 10;
+
+  // Share of open access publications as a fraction in [0, 1].
+  double open_access_share = 11;
+
+  // i10-index (number of publications with >= 10 citations).
+  int32 i10_index = 12;
+
+  // Standard response metadata.
+  tip.common.ResponseMetadata metadata = 13;
+
+  // Top research institutions from CORDIS project participation data.
+  repeated TopInstitution top_institutions = 14;
+}

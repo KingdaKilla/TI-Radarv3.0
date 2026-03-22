@@ -1,0 +1,172 @@
+// =============================================================================
+// common.proto — Shared types for the Technology Intelligence Platform
+// =============================================================================
+// All UC-microservices import this file for shared request/response primitives.
+// The orchestrator constructs an AnalysisRequest and fans it out to each UC
+// service via gRPC. Common envelopes (warnings, data sources, metadata) live
+// here so every service speaks the same language.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.common;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.common";
+option go_package = "tip/proto/common";
+
+// ---------------------------------------------------------------------------
+// Time range filter applied to every analysis.
+// Both bounds are inclusive: [start_year, end_year].
+// ---------------------------------------------------------------------------
+message TimeRange {
+  // First year to include in the analysis window (e.g. 2010).
+  int32 start_year = 1;
+
+  // Last year to include in the analysis window (e.g. 2024).
+  int32 end_year = 2;
+}
+
+// ---------------------------------------------------------------------------
+// Canonical request that every UC service accepts.
+// The orchestrator builds this once and sends it (possibly with small
+// per-service extensions) to each downstream gRPC call.
+// ---------------------------------------------------------------------------
+message AnalysisRequest {
+  // Free-text technology query, e.g. "solid-state batteries", "CRISPR".
+  // Services use this to filter patents, publications, and projects.
+  string technology = 1;
+
+  // Optional time window. If omitted, services use their full data range.
+  TimeRange time_range = 2;
+
+  // When true, restrict results to EU-27 + associated countries only.
+  // Affects patent offices, project programmes, and author affiliations.
+  bool european_only = 3;
+
+  // Optional CPC codes to narrow the patent search scope.
+  // Example: ["H01M", "C01B"] for battery-related classes.
+  repeated string cpc_codes = 4;
+
+  // Maximum number of top-N items to return in ranked lists.
+  // Services may define their own defaults if this is 0.
+  int32 top_n = 5;
+
+  // Opaque request identifier for distributed tracing / correlation.
+  string request_id = 6;
+}
+
+// ---------------------------------------------------------------------------
+// Describes a data source that contributed to the analysis.
+// Included in every UC response so the frontend can show provenance.
+// ---------------------------------------------------------------------------
+message DataSource {
+  // Human-readable name, e.g. "EPO PATSTAT", "OpenAlex", "CORDIS".
+  string name = 1;
+
+  // Category of data source.
+  DataSourceType type = 2;
+
+  // Number of records that matched the query in this source.
+  int64 record_count = 3;
+
+  // ISO-8601 timestamp of the last data refresh for this source.
+  string last_updated = 4;
+}
+
+// Enumeration of data source categories.
+enum DataSourceType {
+  DATA_SOURCE_TYPE_UNSPECIFIED = 0;
+  PATENT = 1;
+  PUBLICATION = 2;
+  PROJECT = 3;
+  FUNDING = 4;
+  MIXED = 5;
+}
+
+// ---------------------------------------------------------------------------
+// Non-fatal warning surfaced during analysis.
+// Services attach these when data is sparse, thresholds are not met, or
+// heuristics were applied.
+// ---------------------------------------------------------------------------
+message Warning {
+  // Human-readable warning text.
+  string message = 1;
+
+  // Severity level — the frontend can colour-code or filter on this.
+  WarningSeverity severity = 2;
+
+  // Optional machine-readable code for programmatic handling.
+  string code = 3;
+}
+
+// Severity levels for warnings.
+enum WarningSeverity {
+  WARNING_SEVERITY_UNSPECIFIED = 0;
+  LOW = 1;       // Informational — results are still reliable.
+  MEDIUM = 2;    // Some data gaps — interpret with care.
+  HIGH = 3;      // Significant data issues — results may be unreliable.
+}
+
+// ---------------------------------------------------------------------------
+// Standard metadata footer that every UC response includes.
+// ---------------------------------------------------------------------------
+message ResponseMetadata {
+  // Wall-clock processing time of this service call in milliseconds.
+  int64 processing_time_ms = 1;
+
+  // Data sources that contributed to the response.
+  repeated DataSource data_sources = 2;
+
+  // Non-fatal warnings generated during analysis.
+  repeated Warning warnings = 3;
+
+  // Echo of the request_id for correlation.
+  string request_id = 4;
+
+  // ISO-8601 timestamp when the response was produced.
+  string timestamp = 5;
+}
+
+// ---------------------------------------------------------------------------
+// Generic key-value pair used in various breakdowns.
+// ---------------------------------------------------------------------------
+message KeyValue {
+  string key = 1;
+  double value = 2;
+}
+
+// ---------------------------------------------------------------------------
+// A single point in a named time series.
+// Reused across multiple UC services for year-indexed numeric data.
+// ---------------------------------------------------------------------------
+message TimeSeriesPoint {
+  int32 year = 1;
+  double value = 2;
+}
+
+// ---------------------------------------------------------------------------
+// A named time series — a labelled sequence of (year, value) points.
+// ---------------------------------------------------------------------------
+message NamedTimeSeries {
+  // Series label, e.g. "patents", "publications", "funding_eur".
+  string label = 1;
+  repeated TimeSeriesPoint points = 2;
+}
+
+// ---------------------------------------------------------------------------
+// Country-level aggregation used across multiple UC services.
+// ---------------------------------------------------------------------------
+message CountryMetric {
+  // ISO 3166-1 alpha-2 country code (e.g. "DE", "FR", "US").
+  string country_code = 1;
+
+  // Full country name for display purposes.
+  string country_name = 2;
+
+  // Aggregated count (patents, projects, publications — context-dependent).
+  int64 count = 3;
+
+  // Share of total as a fraction in [0, 1].
+  double share = 4;
+}

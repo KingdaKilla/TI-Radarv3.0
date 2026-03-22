@@ -1,0 +1,155 @@
+// =============================================================================
+// uc4_funding.proto — UC4: Funding Radar
+// =============================================================================
+// Analyses EU and national funding flows: total volumes, programme breakdowns,
+// instrument types, and temporal trends. Primary data source is CORDIS (EU
+// framework programmes). The frontend renders funding dashboards with treemaps,
+// bar charts, and trend lines.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.uc4;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.uc4";
+option go_package = "tip/proto/uc4";
+
+import "common.proto";
+
+// ---------------------------------------------------------------------------
+// UC4 Funding Radar Service
+// ---------------------------------------------------------------------------
+service FundingService {
+  // Analyse funding landscape for a given technology.
+  rpc AnalyzeFunding(tip.common.AnalysisRequest) returns (FundingResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+// Breakdown of funding by EU framework programme (e.g. FP7, Horizon 2020, Horizon Europe).
+message ProgrammeBreakdown {
+  // Programme name, e.g. "Horizon 2020", "Horizon Europe".
+  string programme = 1;
+
+  // Total EU contribution in EUR under this programme.
+  double funding_eur = 2;
+
+  // Number of projects under this programme.
+  int64 project_count = 3;
+
+  // Share of total funding as a fraction in [0, 1].
+  double share = 4;
+
+  // Average project size in EUR.
+  double avg_project_size = 5;
+}
+
+// Breakdown of funding by instrument type (e.g. RIA, IA, CSA, ERC, MSCA).
+message InstrumentBreakdown {
+  // Instrument code/name, e.g. "RIA", "IA", "ERC-STG".
+  string instrument = 1;
+
+  // Full instrument name for display.
+  string instrument_name = 2;
+
+  // Total EU contribution in EUR for this instrument type.
+  double funding_eur = 3;
+
+  // Number of projects using this instrument.
+  int64 project_count = 4;
+
+  // Share of total funding as a fraction in [0, 1].
+  double share = 5;
+}
+
+// Year-by-year funding time series entry.
+message FundingTimeSeriesEntry {
+  int32 year = 1;
+
+  // Total EU contribution in EUR for projects starting this year.
+  double funding_eur = 2;
+
+  // Number of projects starting this year.
+  int64 project_count = 3;
+
+  // Average project size in EUR for this year.
+  double avg_project_size = 4;
+
+  // Number of distinct participating organisations this year.
+  int64 participant_count = 5;
+}
+
+// Top funded organisations.
+message FundedOrganisation {
+  // Organisation name.
+  string name = 1;
+
+  // ISO country code.
+  string country_code = 2;
+
+  // Total EU contribution received in EUR.
+  double funding_eur = 3;
+
+  // Number of projects participated in.
+  int64 project_count = 4;
+
+  // Organisation type (HES, REC, PRC, PUB, OTH).
+  string organisation_type = 5;
+}
+
+// Country-level funding distribution.
+message CountryFunding {
+  // ISO 3166-1 alpha-2 country code.
+  string country_code = 1;
+
+  // Full country name.
+  string country_name = 2;
+
+  // Total EU contribution received by entities in this country.
+  double funding_eur = 3;
+
+  // Number of project participations from this country.
+  int64 participation_count = 4;
+
+  // Share of total funding.
+  double share = 5;
+}
+
+// Full response for the Funding Radar.
+message FundingResponse {
+  // Total EU contribution in EUR across all matched projects.
+  double total_funding_eur = 1;
+
+  // Total number of matched projects.
+  int64 project_count = 2;
+
+  // CAGR of funding volume over the analysed period.
+  double cagr = 3;
+
+  // Breakdown by EU framework programme.
+  repeated ProgrammeBreakdown programme_breakdown = 4;
+
+  // Breakdown by funding instrument type.
+  repeated InstrumentBreakdown instrument_breakdown = 5;
+
+  // Year-by-year funding time series.
+  repeated FundingTimeSeriesEntry time_series = 6;
+
+  // Top funded organisations.
+  repeated FundedOrganisation top_organisations = 7;
+
+  // Country-level funding distribution.
+  repeated CountryFunding country_distribution = 8;
+
+  // Average project duration in months.
+  double avg_duration_months = 9;
+
+  // Average EU contribution per project in EUR.
+  double avg_funding_per_project = 10;
+
+  // Standard response metadata.
+  tip.common.ResponseMetadata metadata = 11;
+}

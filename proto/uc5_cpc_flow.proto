@@ -1,0 +1,147 @@
+// =============================================================================
+// uc5_cpc_flow.proto — UC5: CPC Technology Flow Analysis
+// =============================================================================
+// Computes technology convergence and knowledge flow between CPC patent
+// classification codes using Jaccard similarity on co-occurrence in patent
+// families. The frontend renders chord diagrams and similarity heatmaps.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.uc5;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.uc5";
+option go_package = "tip/proto/uc5";
+
+import "common.proto";
+
+// ---------------------------------------------------------------------------
+// UC5 CPC Technology Flow Service
+// ---------------------------------------------------------------------------
+service CpcFlowService {
+  // Analyse CPC code co-occurrence and technology convergence.
+  rpc AnalyzeCpcFlow(tip.common.AnalysisRequest) returns (CpcFlowResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+// A single cell in the Jaccard similarity matrix between two CPC codes.
+message JaccardMatrixEntry {
+  // First CPC code, e.g. "H01M".
+  string code_a = 1;
+
+  // Second CPC code, e.g. "C01B".
+  string code_b = 2;
+
+  // Jaccard similarity coefficient in [0, 1].
+  // J(A,B) = |A ∩ B| / |A ∪ B| where A, B are sets of patent families.
+  double similarity = 3;
+
+  // Number of patent families carrying both codes (intersection size).
+  int64 co_occurrence_count = 4;
+
+  // Union size (|A ∪ B|) for context.
+  int64 union_count = 5;
+}
+
+// A highly similar CPC pair — top result from the Jaccard matrix.
+message TopCpcPair {
+  // First CPC code.
+  string code_a = 1;
+
+  // Human-readable description of code_a.
+  string description_a = 2;
+
+  // Second CPC code.
+  string code_b = 3;
+
+  // Human-readable description of code_b.
+  string description_b = 4;
+
+  // Jaccard similarity score.
+  double similarity = 5;
+
+  // Number of co-occurring patent families.
+  int64 co_occurrence_count = 6;
+}
+
+// Year-level data for temporal analysis of CPC co-occurrence.
+message CpcYearData {
+  int32 year = 1;
+
+  // Number of distinct CPC codes active in this year.
+  int32 active_codes = 2;
+
+  // Average Jaccard similarity across all code pairs in this year.
+  double avg_similarity = 3;
+
+  // Maximum pairwise Jaccard similarity in this year.
+  double max_similarity = 4;
+
+  // Total patent families in this year.
+  int64 patent_count = 5;
+}
+
+// Data point for chord diagram rendering.
+// Each entry represents a flow (co-occurrence) between two CPC sections.
+message ChordDataEntry {
+  // Source CPC section or group code.
+  string source = 1;
+
+  // Target CPC section or group code.
+  string target = 2;
+
+  // Flow weight (number of co-occurrences).
+  int64 value = 3;
+
+  // Source label for display.
+  string source_label = 4;
+
+  // Target label for display.
+  string target_label = 5;
+}
+
+// Metadata for a CPC code used in the analysis.
+message CpcCodeInfo {
+  // CPC code, e.g. "H01M".
+  string code = 1;
+
+  // Human-readable description.
+  string description = 2;
+
+  // Number of patent families carrying this code.
+  int64 patent_count = 3;
+
+  // CPC section letter (A–H, Y).
+  string section = 4;
+}
+
+// Full response for CPC Technology Flow analysis.
+message CpcFlowResponse {
+  // Full Jaccard similarity matrix (upper triangle, filtered by threshold).
+  repeated JaccardMatrixEntry jaccard_matrix = 1;
+
+  // Top CPC code pairs ranked by similarity.
+  repeated TopCpcPair top_pairs = 2;
+
+  // Year-level temporal evolution of CPC co-occurrence patterns.
+  repeated CpcYearData year_data = 3;
+
+  // Chord diagram data for visualisation.
+  repeated ChordDataEntry chord_data = 4;
+
+  // CPC codes included in the analysis with metadata.
+  repeated CpcCodeInfo cpc_codes = 5;
+
+  // Similarity threshold used to filter the Jaccard matrix.
+  double similarity_threshold = 6;
+
+  // Total number of CPC code pairs analysed.
+  int64 total_pairs_analyzed = 7;
+
+  // Standard response metadata.
+  tip.common.ResponseMetadata metadata = 8;
+}

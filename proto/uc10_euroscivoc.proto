@@ -1,0 +1,219 @@
+// =============================================================================
+// uc10_euroscivoc.proto — UC10: EuroSciVoc Scientific Discipline Mapping
+// =============================================================================
+// Maps the technology area to scientific disciplines using the EuroSciVoc
+// taxonomy (European Science Vocabulary), a multilingual taxonomy of fields
+// of science based on the OECD Frascati Manual. Analyses which scientific
+// disciplines contribute to the technology, cross-disciplinary convergence,
+// and temporal shifts in the disciplinary composition. The frontend renders
+// sunburst charts, treemaps, and discipline evolution area charts.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.uc10;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.uc10";
+option go_package = "tip/proto/uc10";
+
+import "common.proto";
+
+// ---------------------------------------------------------------------------
+// UC10 EuroSciVoc Service
+// ---------------------------------------------------------------------------
+service EuroSciVocService {
+  // Map the technology to scientific disciplines via the EuroSciVoc taxonomy.
+  rpc AnalyzeEuroSciVoc(tip.common.AnalysisRequest) returns (EuroSciVocResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Taxonomy hierarchy levels in EuroSciVoc.
+// ---------------------------------------------------------------------------
+enum TaxonomyLevel {
+  TAXONOMY_LEVEL_UNSPECIFIED = 0;
+
+  // Top-level field of science (e.g. "Natural Sciences", "Engineering").
+  FIELD = 1;
+
+  // Sub-field (e.g. "Computer and Information Sciences").
+  SUB_FIELD = 2;
+
+  // Detailed discipline (e.g. "Artificial Intelligence").
+  DISCIPLINE = 3;
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+// A single node in the EuroSciVoc taxonomy tree.
+message EuroSciVocNode {
+  // EuroSciVoc URI or identifier.
+  string id = 1;
+
+  // Display label in English.
+  string label = 2;
+
+  // Display label in German (for bilingual support).
+  string label_de = 3;
+
+  // Taxonomy level (field, sub-field, or discipline).
+  TaxonomyLevel level = 4;
+
+  // Parent node ID (empty for top-level fields).
+  string parent_id = 5;
+
+  // Number of publications tagged with this discipline.
+  int64 publication_count = 6;
+
+  // Number of projects associated with this discipline.
+  int64 project_count = 7;
+
+  // Share of total publications as a fraction in [0, 1].
+  double share = 8;
+
+  // Children count (for tree rendering).
+  int32 child_count = 9;
+}
+
+// Hierarchical tree structure for sunburst / treemap rendering.
+message DisciplineTree {
+  // Root-level fields of science.
+  repeated DisciplineTreeNode roots = 1;
+}
+
+// A node in the discipline tree with nested children.
+message DisciplineTreeNode {
+  // Node identifier.
+  string id = 1;
+
+  // Display label.
+  string label = 2;
+
+  // Value (publication count or activity score) for sizing.
+  double value = 3;
+
+  // Share of total.
+  double share = 4;
+
+  // Child nodes (sub-fields or disciplines).
+  repeated DisciplineTreeNode children = 5;
+
+  // Taxonomy level.
+  TaxonomyLevel level = 6;
+}
+
+// Cross-disciplinary link showing convergence between fields.
+message DisciplinaryLink {
+  // First discipline ID.
+  string discipline_a_id = 1;
+
+  // First discipline label.
+  string discipline_a_label = 2;
+
+  // Second discipline ID.
+  string discipline_b_id = 3;
+
+  // Second discipline label.
+  string discipline_b_label = 4;
+
+  // Number of publications/projects tagged with both disciplines.
+  int64 co_occurrence_count = 5;
+
+  // Jaccard similarity between the two disciplines.
+  double similarity = 6;
+}
+
+// Temporal evolution of discipline composition.
+message DisciplineYearEntry {
+  int32 year = 1;
+
+  // Discipline label.
+  string discipline = 2;
+
+  // Discipline ID (EuroSciVoc URI).
+  string discipline_id = 3;
+
+  // Publication count for this discipline in this year.
+  int64 publication_count = 4;
+
+  // Share of total publications this year.
+  double share = 5;
+}
+
+// Top-level field of science with aggregated metrics.
+message FieldOfScience {
+  // EuroSciVoc field ID.
+  string id = 1;
+
+  // Field label (e.g. "Natural Sciences").
+  string label = 2;
+
+  // Total publication count across all sub-fields and disciplines.
+  int64 total_publications = 3;
+
+  // Total project count.
+  int64 total_projects = 4;
+
+  // Share of all publications.
+  double share = 5;
+
+  // Number of sub-fields within this field that have activity.
+  int32 active_sub_fields = 6;
+
+  // Growth trend: CAGR of publications in this field.
+  double cagr = 7;
+}
+
+// Interdisciplinarity metrics for the technology area.
+message InterdisciplinarityMetrics {
+  // Shannon diversity index of discipline distribution.
+  double shannon_index = 1;
+
+  // Simpson diversity index.
+  double simpson_index = 2;
+
+  // Rao-Stirling diversity (accounts for cognitive distance between fields).
+  double rao_stirling_index = 3;
+
+  // Number of distinct disciplines with activity.
+  int32 active_disciplines = 4;
+
+  // Number of distinct fields of science.
+  int32 active_fields = 5;
+
+  // Whether the technology is classified as interdisciplinary
+  // (diversity index above threshold).
+  bool is_interdisciplinary = 6;
+}
+
+// Full response for EuroSciVoc Discipline Mapping.
+message EuroSciVocResponse {
+  // Flat list of all EuroSciVoc nodes with activity.
+  repeated EuroSciVocNode disciplines = 1;
+
+  // Hierarchical tree for sunburst/treemap rendering.
+  DisciplineTree discipline_tree = 2;
+
+  // Top-level fields of science with aggregated metrics.
+  repeated FieldOfScience fields_of_science = 3;
+
+  // Cross-disciplinary convergence links.
+  repeated DisciplinaryLink disciplinary_links = 4;
+
+  // Temporal evolution of discipline composition.
+  repeated DisciplineYearEntry discipline_trend = 5;
+
+  // Interdisciplinarity metrics for the technology area.
+  InterdisciplinarityMetrics interdisciplinarity = 6;
+
+  // Total publications mapped to EuroSciVoc.
+  int64 total_mapped_publications = 7;
+
+  // Mapping coverage: fraction of publications successfully mapped.
+  double mapping_coverage = 8;
+
+  // Standard response metadata.
+  tip.common.ResponseMetadata metadata = 9;
+}

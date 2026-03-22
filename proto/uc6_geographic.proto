@@ -1,0 +1,172 @@
+// =============================================================================
+// uc6_geographic.proto — UC6: Geographic Analysis
+// =============================================================================
+// Analyses the geographic distribution of technology activity: country and city
+// hotspots, international cooperation patterns, and cross-border collaboration
+// share. The frontend renders choropleth maps, city bubble maps, and Sankey
+// diagrams of cooperation flows.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.uc6;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.uc6";
+option go_package = "tip/proto/uc6";
+
+import "common.proto";
+
+// ---------------------------------------------------------------------------
+// UC6 Geographic Analysis Service
+// ---------------------------------------------------------------------------
+service GeographicService {
+  // Analyse geographic distribution and cooperation patterns.
+  rpc AnalyzeGeographic(tip.common.AnalysisRequest) returns (GeographicResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+// Country-level distribution of technology activity.
+message CountryDistribution {
+  // ISO 3166-1 alpha-2 country code.
+  string country_code = 1;
+
+  // Full country name.
+  string country_name = 2;
+
+  // Number of patent families originating from this country.
+  int64 patent_count = 3;
+
+  // Number of project participations from this country.
+  int64 project_count = 4;
+
+  // Number of publications with author affiliations in this country.
+  int64 publication_count = 5;
+
+  // Combined activity score (weighted sum across indicators).
+  double activity_score = 6;
+
+  // Share of total activity as a fraction in [0, 1].
+  double share = 7;
+
+  // Latitude of the country centroid (for map rendering).
+  double latitude = 8;
+
+  // Longitude of the country centroid.
+  double longitude = 9;
+}
+
+// City-level distribution of technology activity.
+message CityDistribution {
+  // City name.
+  string city = 1;
+
+  // ISO country code where the city is located.
+  string country_code = 2;
+
+  // Number of organisations/actors located in this city.
+  int64 actor_count = 3;
+
+  // Number of patent families from actors in this city.
+  int64 patent_count = 4;
+
+  // Number of project participations from this city.
+  int64 project_count = 5;
+
+  // Latitude for map rendering.
+  double latitude = 6;
+
+  // Longitude for map rendering.
+  double longitude = 7;
+}
+
+// A cooperation pair between two countries.
+message CooperationPair {
+  // ISO code of the first country.
+  string country_a = 1;
+
+  // Name of the first country.
+  string country_a_name = 2;
+
+  // ISO code of the second country.
+  string country_b = 3;
+
+  // Name of the second country.
+  string country_b_name = 4;
+
+  // Number of co-patents between the two countries.
+  int64 co_patent_count = 5;
+
+  // Number of co-projects between the two countries.
+  int64 co_project_count = 6;
+
+  // Number of co-publications between the two countries.
+  int64 co_publication_count = 7;
+
+  // Combined cooperation strength.
+  double cooperation_score = 8;
+}
+
+// Geographic cluster identified through spatial analysis.
+message GeographicCluster {
+  // Cluster identifier.
+  int32 cluster_id = 1;
+
+  // Descriptive label (e.g. "Central European Battery Hub").
+  string label = 2;
+
+  // Countries in this cluster.
+  repeated string country_codes = 3;
+
+  // Number of actors in this cluster.
+  int64 actor_count = 4;
+
+  // Dominant technology focus within this cluster.
+  string dominant_focus = 5;
+}
+
+// Full response for Geographic Analysis.
+message GeographicResponse {
+  // Country-level distribution of technology activity.
+  repeated CountryDistribution country_distribution = 1;
+
+  // City-level distribution (top cities by activity).
+  repeated CityDistribution city_distribution = 2;
+
+  // International cooperation pairs.
+  repeated CooperationPair cooperation_pairs = 3;
+
+  // Share of all activities that involve cross-border cooperation, in [0, 1].
+  double cross_border_share = 4;
+
+  // Total number of countries with any activity.
+  int32 total_countries = 5;
+
+  // Total number of cities identified.
+  int32 total_cities = 6;
+
+  // Geographic clusters identified through analysis.
+  repeated GeographicCluster clusters = 7;
+
+  // Specialisation index: which countries specialise in this technology
+  // relative to their overall R&D output (revealed comparative advantage).
+  repeated CountrySpecialisation specialisation_index = 8;
+
+  // Standard response metadata.
+  tip.common.ResponseMetadata metadata = 9;
+}
+
+// Revealed comparative advantage (RCA) for a country in this technology.
+message CountrySpecialisation {
+  string country_code = 1;
+  string country_name = 2;
+
+  // RCA index: >1 means the country is relatively specialised.
+  double rca_index = 3;
+
+  // Whether the country is considered specialised (RCA > 1).
+  bool is_specialised = 4;
+}

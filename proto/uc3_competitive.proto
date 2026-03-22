@@ -1,0 +1,169 @@
+// =============================================================================
+// uc3_competitive.proto — UC3: Competitive Intelligence
+// =============================================================================
+// Analyses the competitive landscape: market concentration (HHI), top actors,
+// collaboration networks, and market share distribution. The frontend renders
+// bar charts, network graphs, and concentration indicators.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.uc3;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.uc3";
+option go_package = "tip/proto/uc3";
+
+import "common.proto";
+
+// ---------------------------------------------------------------------------
+// UC3 Competitive Intelligence Service
+// ---------------------------------------------------------------------------
+service CompetitiveService {
+  // Analyse the competitive landscape for a given technology.
+  rpc AnalyzeCompetitive(tip.common.AnalysisRequest) returns (CompetitiveResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Market concentration level derived from the HHI value.
+// ---------------------------------------------------------------------------
+enum ConcentrationLevel {
+  CONCENTRATION_LEVEL_UNSPECIFIED = 0;
+
+  // HHI < 1500 — many actors, no dominant player.
+  LOW = 1;
+
+  // HHI 1500–2500 — moderate concentration.
+  MODERATE = 2;
+
+  // HHI > 2500 — few dominant players.
+  HIGH = 3;
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+// A single actor (company, university, research org) in the competitive field.
+message Actor {
+  // Harmonised actor name.
+  string name = 1;
+
+  // ISO 3166-1 alpha-2 country code of the actor's headquarters.
+  string country_code = 2;
+
+  // Full country name for display.
+  string country_name = 3;
+
+  // Number of patent families held by this actor.
+  int64 patent_count = 4;
+
+  // Number of funded projects this actor participates in.
+  int64 project_count = 5;
+
+  // Number of publications authored by this actor.
+  int64 publication_count = 6;
+
+  // Market share as a fraction in [0, 1], based on patents.
+  double share = 7;
+
+  // Actor type classification.
+  ActorType actor_type = 8;
+}
+
+// Classification of actor types.
+enum ActorType {
+  ACTOR_TYPE_UNSPECIFIED = 0;
+  COMPANY = 1;
+  UNIVERSITY = 2;
+  RESEARCH_INSTITUTION = 3;
+  GOVERNMENT = 4;
+  OTHER = 5;
+}
+
+// An edge in the collaboration / co-patenting network.
+message NetworkEdge {
+  // Name of the first actor.
+  string source = 1;
+
+  // Name of the second actor.
+  string target = 2;
+
+  // Strength of the connection (number of co-patents or co-projects).
+  int64 weight = 3;
+
+  // Type of collaboration that created this edge.
+  CollaborationType collaboration_type = 4;
+}
+
+// Type of collaboration link.
+enum CollaborationType {
+  COLLABORATION_TYPE_UNSPECIFIED = 0;
+  CO_PATENT = 1;
+  CO_PROJECT = 2;
+  CO_PUBLICATION = 3;
+  MIXED = 4;
+}
+
+// A node in the collaboration network (for rendering in the frontend).
+message NetworkNode {
+  // Harmonised actor name (matches Actor.name).
+  string id = 1;
+
+  // Display label.
+  string label = 2;
+
+  // Node size metric (e.g. total patents).
+  double size = 3;
+
+  // Cluster/community ID from network analysis.
+  int32 community = 4;
+
+  // ISO country code.
+  string country_code = 5;
+}
+
+// HHI trend over time.
+message HhiTrendPoint {
+  int32 year = 1;
+  double hhi = 2;
+  ConcentrationLevel level = 3;
+}
+
+// Full response for Competitive Intelligence.
+message CompetitiveResponse {
+  // Herfindahl-Hirschman Index (0–10000 scale).
+  double hhi_index = 1;
+
+  // Qualitative concentration level derived from HHI.
+  ConcentrationLevel hhi_level = 2;
+
+  // Top actors ranked by market share.
+  repeated Actor top_actors = 3;
+
+  // Collaboration network edges for graph visualisation.
+  repeated NetworkEdge network_edges = 4;
+
+  // Network nodes with metadata for graph rendering.
+  repeated NetworkNode network_nodes = 5;
+
+  // Combined market share of the top 3 actors as a fraction in [0, 1].
+  double top3_share = 6;
+
+  // Combined market share of the top 10 actors.
+  double top10_share = 7;
+
+  // Total number of distinct actors identified.
+  int64 total_actors = 8;
+
+  // HHI trend over time.
+  repeated HhiTrendPoint hhi_trend = 9;
+
+  // Standard response metadata.
+  tip.common.ResponseMetadata metadata = 10;
+
+  // Concentration Ratio Top-4: Summe der 4 groessten Marktanteile (0-1).
+  // CR4 > 0.6 = hoch konzentriert, < 0.4 = wettbewerbsintensiv.
+  // Ergaenzt HHI um eine intuitivere Konzentrations-Metrik.
+  double cr4_share = 11;
+}

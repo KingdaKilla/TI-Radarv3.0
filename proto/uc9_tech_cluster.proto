@@ -1,0 +1,175 @@
+// =============================================================================
+// uc9_tech_cluster.proto — UC9: Technology Cluster Analysis
+// =============================================================================
+// Identifies technology clusters by analysing actor-CPC co-occurrence
+// matrices and applying community detection / clustering algorithms. Produces
+// cluster assignments, inter-cluster linkages, and multi-dimensional scoring.
+// The frontend renders cluster network graphs, radar charts, and treemaps.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.uc9;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.uc9";
+option go_package = "tip/proto/uc9";
+
+import "common.proto";
+
+// ---------------------------------------------------------------------------
+// UC9 Technology Cluster Service
+// ---------------------------------------------------------------------------
+service TechClusterService {
+  // Identify technology clusters and actor-CPC relationships.
+  rpc AnalyzeTechCluster(tip.common.AnalysisRequest) returns (TechClusterResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+// A technology cluster identified through community detection.
+message TechnologyCluster {
+  // Unique cluster identifier (0-indexed).
+  int32 cluster_id = 1;
+
+  // Auto-generated or analyst-assigned label for the cluster.
+  string label = 2;
+
+  // CPC codes that define this cluster.
+  repeated string cpc_codes = 3;
+
+  // Number of actors (organisations) assigned to this cluster.
+  int64 actor_count = 4;
+
+  // Number of patent families in this cluster.
+  int64 patent_count = 5;
+
+  // Intra-cluster density (ratio of actual to possible edges).
+  double density = 6;
+
+  // Cluster coherence score in [0, 1] — how tightly related the CPC codes are.
+  double coherence = 7;
+
+  // Top actors in this cluster.
+  repeated ClusterActor top_actors = 8;
+
+  // Dominant CPC descriptions for labelling.
+  repeated string dominant_topics = 9;
+
+  // Growth trend: CAGR of patent filings within this cluster.
+  double cagr = 10;
+}
+
+// An actor's membership in a cluster.
+message ClusterActor {
+  // Actor name.
+  string name = 1;
+
+  // ISO country code.
+  string country_code = 2;
+
+  // Number of patents in this cluster.
+  int64 patent_count = 3;
+
+  // Number of distinct CPC codes the actor holds in this cluster.
+  int32 cpc_breadth = 4;
+
+  // Membership strength: share of the actor's patents that fall in this cluster.
+  double membership_strength = 5;
+}
+
+// A link between an actor and a CPC code (for bipartite network rendering).
+message ActorCpcLink {
+  // Actor name.
+  string actor = 1;
+
+  // CPC code.
+  string cpc_code = 2;
+
+  // Number of patent families with this actor+CPC combination.
+  int64 count = 3;
+
+  // Cluster to which this CPC code is assigned.
+  int32 cluster_id = 4;
+}
+
+// Inter-cluster edge showing how clusters relate to each other.
+message InterClusterEdge {
+  // Source cluster ID.
+  int32 cluster_a = 1;
+
+  // Target cluster ID.
+  int32 cluster_b = 2;
+
+  // Number of actors present in both clusters.
+  int64 shared_actors = 3;
+
+  // Number of patent families carrying CPC codes from both clusters.
+  int64 bridging_patents = 4;
+
+  // Edge weight (normalised coupling strength).
+  double weight = 5;
+}
+
+// Multi-dimensional scoring for each cluster (for radar charts).
+message DimensionScore {
+  // Cluster ID this score applies to.
+  int32 cluster_id = 1;
+
+  // Dimension name, e.g. "innovation_intensity", "international_diversity",
+  // "industry_participation", "funding_volume", "publication_impact".
+  string dimension = 2;
+
+  // Score in [0, 1] normalised across all clusters.
+  double score = 3;
+
+  // Raw (un-normalised) value for the dimension.
+  double raw_value = 4;
+}
+
+// Silhouette quality metrics for the clustering result.
+message ClusteringQuality {
+  // Average silhouette score across all data points.
+  double avg_silhouette = 1;
+
+  // Number of clusters produced.
+  int32 num_clusters = 2;
+
+  // Clustering algorithm used, e.g. "louvain", "leiden", "spectral".
+  string algorithm = 3;
+
+  // Resolution parameter (for Louvain/Leiden) if applicable.
+  double resolution = 4;
+
+  // Modularity score of the network partition.
+  double modularity = 5;
+}
+
+// Full response for Technology Cluster analysis.
+message TechClusterResponse {
+  // Identified technology clusters.
+  repeated TechnologyCluster clusters = 1;
+
+  // Actor-CPC bipartite links for network visualisation.
+  repeated ActorCpcLink actor_cpc_links = 2;
+
+  // Multi-dimensional scores for radar chart rendering.
+  repeated DimensionScore dimension_scores = 3;
+
+  // Inter-cluster edges showing relationships between clusters.
+  repeated InterClusterEdge inter_cluster_edges = 4;
+
+  // Quality metrics for the clustering result.
+  ClusteringQuality quality = 5;
+
+  // Total number of actors across all clusters.
+  int64 total_actors = 6;
+
+  // Total number of CPC codes across all clusters.
+  int32 total_cpc_codes = 7;
+
+  // Standard response metadata.
+  tip.common.ResponseMetadata metadata = 8;
+}

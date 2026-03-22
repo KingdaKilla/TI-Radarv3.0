@@ -1,0 +1,190 @@
+// =============================================================================
+// uc11_actor_type.proto — UC11: Actor Type Distribution
+// =============================================================================
+// Analyses the distribution of actors by organisational type across the
+// technology field. Uses CORDIS activity type codes (HES = Higher Education,
+// PRC = Private Company, REC = Research Organisation, OTH = Other,
+// PUB = Public Body) and maps patent applicants where possible.
+// The frontend renders pie/donut charts, stacked bar charts, and type-specific
+// actor rankings.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.uc11;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.uc11";
+option go_package = "tip/proto/uc11";
+
+import "common.proto";
+
+// ---------------------------------------------------------------------------
+// UC11 Actor Type Distribution Service
+// ---------------------------------------------------------------------------
+service ActorTypeService {
+  // Analyse the distribution of actors by organisational type.
+  rpc AnalyzeActorTypes(tip.common.AnalysisRequest) returns (ActorTypeResponse);
+}
+
+// ---------------------------------------------------------------------------
+// CORDIS activity type classification.
+// ---------------------------------------------------------------------------
+enum OrganisationType {
+  ORGANISATION_TYPE_UNSPECIFIED = 0;
+
+  // Higher Education Establishment (e.g. universities).
+  HES = 1;
+
+  // Private for-profit entity (company / SME).
+  PRC = 2;
+
+  // Research organisation (non-university public/private research body).
+  REC = 3;
+
+  // Other type not captured above.
+  OTH = 4;
+
+  // Public body (government agency, regulatory authority, etc.).
+  PUB = 5;
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+// Aggregated count for a single organisation type.
+message ActorTypeBreakdown {
+  // Organisation type classification.
+  OrganisationType type = 1;
+
+  // Human-readable label, e.g. "Higher Education", "Private Company".
+  string label = 2;
+
+  // Number of distinct actors of this type.
+  int64 actor_count = 3;
+
+  // Number of patent families from actors of this type.
+  int64 patent_count = 4;
+
+  // Number of project participations from actors of this type.
+  int64 project_count = 5;
+
+  // Number of publications from actors of this type.
+  int64 publication_count = 6;
+
+  // Share of total actors as a fraction in [0, 1].
+  double actor_share = 7;
+
+  // Share of total activity (patents + projects + publications) in [0, 1].
+  double activity_share = 8;
+
+  // Total EU funding received by actors of this type in EUR.
+  double funding_eur = 9;
+}
+
+// Temporal evolution of actor type distribution.
+message ActorTypeYearEntry {
+  int32 year = 1;
+
+  // Count per type for this year.
+  int64 hes_count = 2;
+  int64 prc_count = 3;
+  int64 rec_count = 4;
+  int64 oth_count = 5;
+  int64 pub_count = 6;
+
+  // Total actors this year.
+  int64 total = 7;
+}
+
+// Top actor within a specific type category.
+message TypedActor {
+  // Actor name.
+  string name = 1;
+
+  // Organisation type.
+  OrganisationType type = 2;
+
+  // ISO country code.
+  string country_code = 3;
+
+  // Patent families count.
+  int64 patent_count = 4;
+
+  // Project participations count.
+  int64 project_count = 5;
+
+  // Total activity (patents + projects + publications).
+  int64 total_activity = 6;
+
+  // Whether the actor is classified as an SME (Small/Medium Enterprise).
+  bool is_sme = 7;
+}
+
+// Country-level breakdown by organisation type.
+message CountryTypeDistribution {
+  // ISO 3166-1 alpha-2 country code.
+  string country_code = 1;
+
+  // Full country name.
+  string country_name = 2;
+
+  // Count per type for this country.
+  int64 hes_count = 3;
+  int64 prc_count = 4;
+  int64 rec_count = 5;
+  int64 oth_count = 6;
+  int64 pub_count = 7;
+
+  // Dominant type in this country.
+  OrganisationType dominant_type = 8;
+}
+
+// Collaboration pattern between organisation types.
+message TypeCollaboration {
+  // First organisation type.
+  OrganisationType type_a = 1;
+
+  // Second organisation type.
+  OrganisationType type_b = 2;
+
+  // Number of co-patents or co-projects between the two types.
+  int64 collaboration_count = 3;
+
+  // Normalised collaboration intensity in [0, 1].
+  double intensity = 4;
+}
+
+// Full response for Actor Type Distribution analysis.
+message ActorTypeResponse {
+  // Breakdown by organisation type.
+  repeated ActorTypeBreakdown type_breakdown = 1;
+
+  // Year-by-year evolution of type distribution.
+  repeated ActorTypeYearEntry type_trend = 2;
+
+  // Top actors per type category.
+  repeated TypedActor top_actors_by_type = 3;
+
+  // Country-level type distribution.
+  repeated CountryTypeDistribution country_type_distribution = 4;
+
+  // Cross-type collaboration patterns.
+  repeated TypeCollaboration type_collaborations = 5;
+
+  // Total number of actors with type classification.
+  int64 total_classified_actors = 6;
+
+  // Number of actors where type could not be determined.
+  int64 unclassified_actors = 7;
+
+  // Classification coverage as a fraction in [0, 1].
+  double classification_coverage = 8;
+
+  // SME share: fraction of PRC actors that are SMEs.
+  double sme_share = 9;
+
+  // Standard response metadata.
+  tip.common.ResponseMetadata metadata = 10;
+}

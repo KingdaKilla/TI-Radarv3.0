@@ -30,7 +30,7 @@ RUN uv venv /opt/venv && \
     uv pip install --no-cache .
 
 # Shared-Paket kopieren und installieren
-COPY shared/ /app/shared/
+COPY packages/shared/ /app/shared/
 RUN . /opt/venv/bin/activate && \
     uv pip install --no-cache /app/shared/
 

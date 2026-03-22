@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir uv
 WORKDIR /app
 
 # Shared-Paket kopieren und installieren
-COPY shared/ /app/shared/
+COPY packages/shared/ /app/shared/
 
 # Dependencies zuerst kopieren (Docker Layer Caching)
 COPY services/import-svc/pyproject.toml ./

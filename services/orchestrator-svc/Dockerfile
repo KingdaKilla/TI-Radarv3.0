@@ -58,8 +58,8 @@ WORKDIR /app
 COPY services/orchestrator-svc/src/ src/
 
 # Shared Domain-Paket (Modelle, Metriken)
-COPY shared/ shared/
-RUN pip install --no-cache-dir shared/
+COPY packages/shared/ shared/
+RUN pip install --no-cache-dir -e shared/
 
 # Berechtigungen setzen
 RUN chown -R appuser:appuser /app

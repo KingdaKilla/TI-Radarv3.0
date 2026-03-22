@@ -25,7 +25,7 @@ WORKDIR /app
 ARG SERVICE_DIR=services/landscape-svc
 
 # Shared Domain-Logik installieren (als Package)
-COPY shared/ /app/shared/
+COPY packages/shared/ /app/shared/
 RUN uv venv /app/.venv && \
     uv pip install --python /app/.venv/bin/python -e /app/shared/
 

@@ -1,0 +1,82 @@
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#009E73"/>
+      <stop offset="100%" stop-color="#091428"/>
+    </linearGradient>
+    <radialGradient id="glowGreen" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#009E73" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#009E73" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="globeShading" cx="40%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#009E73" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#091428" stop-opacity="0.05"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#bgGrad)"/>
+
+  <!-- Globe outline -->
+  <circle cx="400" cy="300" r="200" fill="url(#globeShading)" stroke="#009E73" stroke-width="2" opacity="0.3"/>
+
+  <!-- Globe equator -->
+  <ellipse cx="400" cy="300" rx="200" ry="30" fill="none" stroke="#009E73" stroke-width="1" opacity="0.2"/>
+
+  <!-- Latitude lines -->
+  <ellipse cx="400" cy="230" rx="175" ry="22" fill="none" stroke="#009E73" stroke-width="1" opacity="0.15"/>
+  <ellipse cx="400" cy="370" rx="175" ry="22" fill="none" stroke="#009E73" stroke-width="1" opacity="0.15"/>
+  <ellipse cx="400" cy="180" rx="130" ry="15" fill="none" stroke="#009E73" stroke-width="0.8" opacity="0.12"/>
+  <ellipse cx="400" cy="420" rx="130" ry="15" fill="none" stroke="#009E73" stroke-width="0.8" opacity="0.12"/>
+
+  <!-- Longitude arcs (vertical ellipses clipped to globe) -->
+  <ellipse cx="400" cy="300" rx="40" ry="200" fill="none" stroke="#009E73" stroke-width="1" opacity="0.2"/>
+  <ellipse cx="400" cy="300" rx="110" ry="200" fill="none" stroke="#009E73" stroke-width="1" opacity="0.18"/>
+  <ellipse cx="400" cy="300" rx="170" ry="200" fill="none" stroke="#009E73" stroke-width="0.8" opacity="0.12"/>
+
+  <!-- Points on globe surface -->
+  <circle cx="340" cy="220" r="5" fill="#009E73" opacity="0.5"/>
+  <circle cx="340" cy="220" r="12" fill="url(#glowGreen)" opacity="0.6"/>
+
+  <circle cx="480" cy="260" r="5" fill="#009E73" opacity="0.5"/>
+  <circle cx="480" cy="260" r="12" fill="url(#glowGreen)" opacity="0.6"/>
+
+  <circle cx="420" cy="350" r="4" fill="#009E73" opacity="0.45"/>
+  <circle cx="420" cy="350" r="10" fill="url(#glowGreen)" opacity="0.5"/>
+
+  <circle cx="310" cy="310" r="4" fill="#009E73" opacity="0.45"/>
+  <circle cx="310" cy="310" r="10" fill="url(#glowGreen)" opacity="0.5"/>
+
+  <circle cx="500" cy="330" r="3.5" fill="#009E73" opacity="0.4"/>
+  <circle cx="500" cy="330" r="9" fill="url(#glowGreen)" opacity="0.45"/>
+
+  <!-- Connection arcs between points on globe -->
+  <path d="M 340 220 Q 410 180 480 260" fill="none" stroke="#50d4a0" stroke-width="1.5" opacity="0.3" stroke-linecap="round"/>
+  <path d="M 480 260 Q 460 310 420 350" fill="none" stroke="#50d4a0" stroke-width="1.5" opacity="0.25" stroke-linecap="round"/>
+  <path d="M 340 220 Q 300 270 310 310" fill="none" stroke="#50d4a0" stroke-width="1.5" opacity="0.25" stroke-linecap="round"/>
+  <path d="M 310 310 Q 360 360 420 350" fill="none" stroke="#50d4a0" stroke-width="1.2" opacity="0.2" stroke-linecap="round"/>
+  <path d="M 420 350 Q 470 350 500 330" fill="none" stroke="#50d4a0" stroke-width="1.2" opacity="0.2" stroke-linecap="round"/>
+
+  <!-- Flying arcs above globe (long-distance connections) -->
+  <path d="M 340 220 Q 400 100 500 330" fill="none" stroke="#50d4a0" stroke-width="1" opacity="0.18" stroke-dasharray="4 4"/>
+  <path d="M 310 310 Q 450 150 480 260" fill="none" stroke="#50d4a0" stroke-width="1" opacity="0.15" stroke-dasharray="4 4"/>
+
+  <!-- Scattered background dots -->
+  <circle cx="120" cy="100" r="2" fill="#50d4a0" opacity="0.25"/>
+  <circle cx="680" cy="80" r="1.5" fill="#50d4a0" opacity="0.2"/>
+  <circle cx="100" cy="450" r="1.5" fill="#50d4a0" opacity="0.2"/>
+  <circle cx="700" cy="480" r="2" fill="#50d4a0" opacity="0.2"/>
+  <circle cx="80" cy="250" r="1.5" fill="#50d4a0" opacity="0.2"/>
+  <circle cx="720" cy="200" r="1.5" fill="#50d4a0" opacity="0.18"/>
+  <circle cx="650" cy="530" r="2" fill="#50d4a0" opacity="0.18"/>
+  <circle cx="150" cy="540" r="1.5" fill="#50d4a0" opacity="0.2"/>
+
+  <!-- Subtle outer orbit ring around globe -->
+  <circle cx="400" cy="300" r="240" fill="none" stroke="#009E73" stroke-width="0.5" opacity="0.1" stroke-dasharray="8 12"/>
+
+  <!-- Small satellite dots on outer orbit -->
+  <circle cx="160" cy="310" r="3" fill="#009E73" opacity="0.25"/>
+  <circle cx="635" cy="260" r="3" fill="#009E73" opacity="0.25"/>
+  <circle cx="400" cy="60" r="3" fill="#009E73" opacity="0.2"/>
+  <circle cx="400" cy="540" r="3" fill="#009E73" opacity="0.2"/>
+</svg>

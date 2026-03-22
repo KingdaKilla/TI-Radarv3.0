@@ -1,0 +1,89 @@
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#d4a853"/>
+      <stop offset="100%" stop-color="#091428"/>
+    </linearGradient>
+    <linearGradient id="barGrad" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#d4a853" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#d4a853" stop-opacity="0.4"/>
+    </linearGradient>
+    <radialGradient id="glowGold" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d4a853" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#d4a853" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#bgGrad)"/>
+
+  <!-- Subtle baseline -->
+  <line x1="80" y1="480" x2="720" y2="480" stroke="#d4a853" stroke-width="1" opacity="0.15"/>
+
+  <!-- Bar chart shapes - 7 ascending bars of varying heights -->
+  <rect x="110" y="380" width="55" height="100" rx="3" fill="url(#barGrad)" stroke="#d4a853" stroke-width="1" opacity="0.2"/>
+  <rect x="195" y="340" width="55" height="140" rx="3" fill="url(#barGrad)" stroke="#d4a853" stroke-width="1" opacity="0.25"/>
+  <rect x="280" y="290" width="55" height="190" rx="3" fill="url(#barGrad)" stroke="#d4a853" stroke-width="1" opacity="0.28"/>
+  <rect x="365" y="260" width="55" height="220" rx="3" fill="url(#barGrad)" stroke="#d4a853" stroke-width="1" opacity="0.3"/>
+  <rect x="450" y="220" width="55" height="260" rx="3" fill="url(#barGrad)" stroke="#d4a853" stroke-width="1" opacity="0.33"/>
+  <rect x="535" y="180" width="55" height="300" rx="3" fill="url(#barGrad)" stroke="#d4a853" stroke-width="1" opacity="0.35"/>
+  <rect x="620" y="150" width="55" height="330" rx="3" fill="url(#barGrad)" stroke="#d4a853" stroke-width="1" opacity="0.38"/>
+
+  <!-- Upward trend line across bars -->
+  <polyline
+    points="137,370 222,330 307,280 392,250 477,210 562,170 647,140"
+    fill="none"
+    stroke="#d4a853"
+    stroke-width="2"
+    opacity="0.4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Trend line dots at each bar top -->
+  <circle cx="137" cy="370" r="4" fill="#d4a853" opacity="0.45"/>
+  <circle cx="222" cy="330" r="4" fill="#d4a853" opacity="0.45"/>
+  <circle cx="307" cy="280" r="4" fill="#d4a853" opacity="0.45"/>
+  <circle cx="392" cy="250" r="5" fill="#d4a853" opacity="0.5"/>
+  <circle cx="477" cy="210" r="4" fill="#d4a853" opacity="0.45"/>
+  <circle cx="562" cy="170" r="5" fill="#d4a853" opacity="0.5"/>
+  <circle cx="647" cy="140" r="5" fill="#d4a853" opacity="0.5"/>
+
+  <!-- Glow at the peak -->
+  <circle cx="647" cy="140" r="30" fill="url(#glowGold)" opacity="0.6"/>
+
+  <!-- Scattered actor/node circles -->
+  <circle cx="160" cy="150" r="8" fill="none" stroke="#d4a853" stroke-width="1" opacity="0.2"/>
+  <circle cx="160" cy="150" r="2" fill="#f0d78c" opacity="0.4"/>
+
+  <circle cx="350" cy="120" r="10" fill="none" stroke="#d4a853" stroke-width="1" opacity="0.18"/>
+  <circle cx="350" cy="120" r="2.5" fill="#f0d78c" opacity="0.35"/>
+
+  <circle cx="520" cy="90" r="7" fill="none" stroke="#d4a853" stroke-width="1" opacity="0.2"/>
+  <circle cx="520" cy="90" r="2" fill="#f0d78c" opacity="0.4"/>
+
+  <circle cx="700" cy="80" r="9" fill="none" stroke="#d4a853" stroke-width="1" opacity="0.18"/>
+  <circle cx="700" cy="80" r="2.5" fill="#f0d78c" opacity="0.35"/>
+
+  <circle cx="250" cy="530" r="6" fill="none" stroke="#d4a853" stroke-width="1" opacity="0.15"/>
+  <circle cx="250" cy="530" r="1.5" fill="#f0d78c" opacity="0.3"/>
+
+  <circle cx="580" cy="540" r="7" fill="none" stroke="#d4a853" stroke-width="1" opacity="0.15"/>
+  <circle cx="580" cy="540" r="2" fill="#f0d78c" opacity="0.3"/>
+
+  <!-- Subtle connection lines between actor nodes -->
+  <line x1="160" y1="150" x2="350" y2="120" stroke="#d4a853" stroke-width="0.8" opacity="0.12"/>
+  <line x1="350" y1="120" x2="520" y2="90" stroke="#d4a853" stroke-width="0.8" opacity="0.12"/>
+  <line x1="520" y1="90" x2="700" y2="80" stroke="#d4a853" stroke-width="0.8" opacity="0.12"/>
+
+  <!-- Decorative diagonal lines for depth -->
+  <line x1="50" y1="50" x2="200" y2="600" stroke="#d4a853" stroke-width="0.5" opacity="0.06"/>
+  <line x1="600" y1="0" x2="750" y2="550" stroke="#d4a853" stroke-width="0.5" opacity="0.06"/>
+
+  <!-- Small accent dots -->
+  <circle cx="90" cy="250" r="1.5" fill="#f0d78c" opacity="0.3"/>
+  <circle cx="740" cy="300" r="1.5" fill="#f0d78c" opacity="0.25"/>
+  <circle cx="400" cy="550" r="1.5" fill="#f0d78c" opacity="0.25"/>
+  <circle cx="130" cy="500" r="2" fill="#f0d78c" opacity="0.2"/>
+  <circle cx="680" cy="520" r="1.5" fill="#f0d78c" opacity="0.2"/>
+</svg>

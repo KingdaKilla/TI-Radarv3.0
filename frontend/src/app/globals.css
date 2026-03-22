@@ -1,0 +1,352 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base Layer ── */
+@layer base {
+  :root {
+    --color-bg-primary: #f8fafc;
+    --color-bg-secondary: #ffffff;
+    --color-bg-panel: #ffffff;
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-muted: #94a3b8;
+    --color-border: #e2e8f0;
+    --color-accent: #0891b2;
+    --color-accent-hover: #06b6d4;
+    --color-success: #22c55e;
+    --color-warning: #f59e0b;
+    --color-error: #ef4444;
+
+    /* Okabe-Ito farbenblind-sichere Diagrammfarben */
+    --color-chart-1: #0072B2;
+    --color-chart-2: #E69F00;
+    --color-chart-3: #009E73;
+    --color-chart-4: #D55E00;
+    --color-chart-5: #56B4E9;
+    --color-chart-6: #F0E442;
+    --color-chart-7: #CC79A7;
+    --color-chart-growth: #009E73;
+    --color-chart-decline: #D55E00;
+
+    --color-bg-glass: rgba(255,255,255, 0.7);
+    --color-border-glow: rgba(0,180,216, 0.1);
+    --color-accent-gold: #b8860b;
+    --color-accent-gold-hover: #d4a853;
+  }
+
+  .dark {
+    --color-bg-primary: #091428;
+    --color-bg-secondary: #0d1b2a;
+    --color-bg-panel: #132238;
+    --color-text-primary: #e8edf4;
+    --color-text-secondary: #8899aa;
+    --color-text-muted: #4a5f78;
+    --color-border: #1e3350;
+    --color-accent: #00b4d8;
+    --color-accent-hover: #48cae4;
+    --color-success: #4ade80;
+    --color-warning: #fbbf24;
+    --color-error: #f87171;
+
+    /* Okabe-Ito farbenblind-sichere Diagrammfarben */
+    --color-chart-1: #0072B2;
+    --color-chart-2: #E69F00;
+    --color-chart-3: #009E73;
+    --color-chart-4: #D55E00;
+    --color-chart-5: #56B4E9;
+    --color-chart-6: #F0E442;
+    --color-chart-7: #CC79A7;
+    --color-chart-growth: #009E73;
+    --color-chart-decline: #D55E00;
+
+    --color-bg-glass: rgba(13,27,42, 0.7);
+    --color-border-glow: rgba(0,180,216, 0.15);
+    --color-accent-gold: #d4a853;
+    --color-accent-gold-hover: #e6be6a;
+  }
+
+  body {
+    @apply bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] antialiased;
+  }
+}
+
+/* ── Component Layer ── */
+@layer components {
+  .panel-card {
+    @apply rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-panel)]
+           shadow-sm transition-shadow duration-200
+           hover:shadow-md;
+  }
+
+  .panel-card-header {
+    @apply flex items-center justify-between border-b border-[var(--color-border)]
+           px-4 py-3;
+  }
+
+  .panel-card-body {
+    @apply p-4;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5
+           text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400;
+  }
+
+  .badge-warning {
+    @apply badge bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400;
+  }
+
+  .badge-error {
+    @apply badge bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400;
+  }
+
+  .badge-info {
+    @apply badge bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400;
+  }
+
+  .badge-patents {
+    @apply badge;
+    background-color: color-mix(in srgb, #0072B2 15%, transparent);
+    color: #0072B2;
+  }
+  .dark .badge-patents {
+    background-color: color-mix(in srgb, #0072B2 25%, transparent);
+    color: #56B4E9;
+  }
+
+  .badge-projects {
+    @apply badge;
+    background-color: color-mix(in srgb, #E69F00 15%, transparent);
+    color: #7a5400;
+  }
+  .dark .badge-projects {
+    background-color: color-mix(in srgb, #E69F00 25%, transparent);
+    color: #E69F00;
+  }
+
+  .badge-publications {
+    @apply badge;
+    background-color: color-mix(in srgb, #CC79A7 15%, transparent);
+    color: #7a3060;
+  }
+  .dark .badge-publications {
+    background-color: color-mix(in srgb, #CC79A7 25%, transparent);
+    color: #CC79A7;
+  }
+
+  .input-field {
+    @apply w-full rounded-lg border border-[var(--color-border)]
+           bg-[var(--color-bg-secondary)] px-4 py-2.5
+           text-[var(--color-text-primary)] placeholder-[var(--color-text-muted)]
+           outline-none transition-colors
+           focus:border-[var(--color-accent)] focus:ring-2;
+    &:focus {
+      --tw-ring-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
+    }
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg
+           bg-[var(--color-accent)] px-5 py-2.5
+           text-sm font-semibold text-white
+           transition-colors
+           hover:bg-[var(--color-accent-hover)]
+           focus:outline-none focus:ring-2
+           disabled:cursor-not-allowed disabled:opacity-50;
+    &:focus {
+      --tw-ring-color: color-mix(in srgb, var(--color-accent) 50%, transparent);
+    }
+  }
+
+  .glass {
+    background: var(--color-bg-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--color-border);
+  }
+
+  .glow-border {
+    box-shadow: 0 0 20px var(--color-border-glow),
+                inset 0 0 20px var(--color-border-glow);
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 30px rgba(0,180,216, 0.2);
+  }
+
+  .text-gold {
+    color: var(--color-accent-gold);
+  }
+
+  .bg-hero-gradient {
+    background: radial-gradient(ellipse at 50% 0%, #0d2847 0%, #091428 70%);
+  }
+
+  .bg-card-gradient {
+    background: linear-gradient(135deg, #132238 0%, #0d1b2a 100%);
+  }
+}
+
+/* ── Utility Layer ── */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Spinner animation for loading states */
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 2s linear infinite;
+  }
+}
+
+/* ── Print Styles ── */
+/* Optimiert für Browser-Druck (Ctrl+P) und PDF-Export */
+@media print {
+  /* Reset auf Light-Mode für Druck */
+  :root {
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #ffffff;
+    --color-bg-panel: #ffffff;
+    --color-text-primary: #000000;
+    --color-text-secondary: #333333;
+    --color-text-muted: #666666;
+    --color-border: #cccccc;
+  }
+
+  /* Weißer Hintergrund und schwarze Schrift */
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10pt;
+    line-height: 1.4;
+  }
+
+  /* Header, Footer, Suchleiste und Buttons ausblenden */
+  header,
+  footer,
+  nav,
+  .btn-primary,
+  .input-field,
+  [role="search"],
+  [aria-label="Suche"],
+  [data-testid="search-bar"],
+  .no-print {
+    display: none !important;
+  }
+
+  /* Vollbreite für Hauptinhalt */
+  main {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* 2-Spalten-Grid für Analyse-Panels */
+  [role="region"][aria-label="Radar-Analyse Ergebnisse"] {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8pt !important;
+  }
+
+  /* Panels: Seitenumbrüche vermeiden, keine Schatten */
+  .panel-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #d1d5db !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    margin-bottom: 8pt;
+  }
+
+  .panel-card:hover {
+    box-shadow: none !important;
+  }
+
+  .panel-card-body {
+    padding: 8px !important;
+  }
+
+  /* Tabellen druckfreundlich */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th {
+    background: #f3f4f6 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-weight: 700;
+    border-bottom: 2px solid #9ca3af;
+  }
+
+  th,
+  td {
+    padding: 4px 8px;
+    border: 1px solid #d1d5db;
+    font-size: 9pt;
+  }
+
+  /* Diagramme: Farben beibehalten */
+  svg,
+  canvas,
+  .recharts-wrapper {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    page-break-inside: avoid;
+  }
+
+  /* Links als Text darstellen */
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 8pt;
+    color: #6b7280 !important;
+  }
+
+  /* Seitenformat: A4 Querformat (Dashboard) */
+  @page {
+    size: A4 landscape;
+    margin: 15mm;
+  }
+
+  /* ── Detailansicht: Overlay drucken ── */
+  .detail-overlay {
+    position: static !important;
+    overflow: visible !important;
+    z-index: auto !important;
+  }
+
+  /* Wenn Detail-Overlay offen: Dashboard ausblenden */
+  .detail-overlay ~ main,
+  .detail-overlay ~ header,
+  .detail-overlay ~ footer {
+    display: none !important;
+  }
+
+  .detail-overlay section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #d1d5db !important;
+    box-shadow: none !important;
+  }
+
+  /* Detailansicht: Portrait statt Landscape */
+  .detail-overlay ~ * {
+    display: none !important;
+  }
+}

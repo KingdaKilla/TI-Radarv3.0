@@ -1,0 +1,13 @@
+export { default as LandscapeDetail } from "./LandscapeDetail";
+export { default as MaturityDetail } from "./MaturityDetail";
+export { default as CompetitiveDetail } from "./CompetitiveDetail";
+export { default as FundingDetail } from "./FundingDetail";
+export { default as CpcFlowDetail } from "./CpcFlowDetail";
+export { default as GeographicDetail } from "./GeographicDetail";
+export { default as ResearchImpactDetail } from "./ResearchImpactDetail";
+export { default as TemporalDetail } from "./TemporalDetail";
+export { default as TechClusterDetail } from "./TechClusterDetail";
+export { default as EuroSciVocDetail } from "./EuroSciVocDetail";
+export { default as ActorTypeDetail } from "./ActorTypeDetail";
+export { default as PatentGrantDetail } from "./PatentGrantDetail";
+export { default as PublicationDetail } from "./PublicationDetail";

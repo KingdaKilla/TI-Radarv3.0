@@ -28,6 +28,10 @@ import asyncpg
 import pytest
 import pytest_asyncio
 
+# Alle async Tests verwenden den Session-scoped Event-Loop
+# (notwendig weil asyncpg-Pool an den Session-Loop gebunden ist)
+pytestmark = pytest.mark.asyncio(loop_scope="session")
+
 # ---------------------------------------------------------------------------
 # Pfade zu den SQL-Init-Skripten
 # ---------------------------------------------------------------------------
@@ -122,7 +126,15 @@ def postgres_container():
 # ---------------------------------------------------------------------------
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest.fixture(scope="session")
+def event_loop():
+    """Session-scoped event loop for all async tests and fixtures."""
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def db_pool(postgres_container):
     """Erstellt einen asyncpg Connection-Pool und baut das vollstaendige Schema auf.
 
@@ -161,7 +173,7 @@ async def db_pool(postgres_container):
 # ---------------------------------------------------------------------------
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def populated_db(db_pool):
     """Befuellt den Pool mit repraesentativen Testdaten.
 

@@ -248,7 +248,7 @@ async def _insert_test_patents(conn: asyncpg.Connection) -> None:
             publication_number, country, doc_number, kind,
             title, publication_date, publication_year, family_id,
             applicant_names, applicant_countries, cpc_codes
-        ) VALUES ($1, $2, $3, $4, $5, $6, EXTRACT(YEAR FROM $6)::SMALLINT, $7, $8, $9, $10)
+        ) VALUES ($1, $2, $3, $4, $5, $6, EXTRACT(YEAR FROM $6::DATE)::SMALLINT, $7, $8, $9, $10)
         ON CONFLICT (publication_number, publication_year) DO NOTHING
         """,
         [

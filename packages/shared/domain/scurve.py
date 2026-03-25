@@ -21,7 +21,7 @@ from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.optimize import curve_fit
+from scipy.optimize import curve_fit  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
@@ -516,11 +516,9 @@ def fit_best_model(
         aicc_values = {c["model"]: c["aicc"] for c in candidates}
 
         logger.info(
-            "modellselektion_aicc",
-            gewinner=selected["model"],
-            kandidaten=model_names,
-            aicc_werte=aicc_values,
-            delta_aicc=round(delta, 4),
+            f"modellselektion_aicc gewinner={selected['model']} "
+            f"kandidaten={model_names} aicc_werte={aicc_values} "
+            f"delta_aicc={round(delta, 4)}"
         )
         return selected
 
@@ -537,8 +535,7 @@ def fit_best_model(
     # Fallback: AICc nicht berechenbar (z.B. perfekter Fit oder n zu klein)
     # → R² als Ausweichkriterium
     logger.info(
-        "modellselektion_fallback_r2",
-        grund="AICc nicht berechenbar",
+        "modellselektion_fallback_r2 grund=AICc nicht berechenbar"
     )
 
     candidates.sort(key=lambda c: c["r_squared"], reverse=True)

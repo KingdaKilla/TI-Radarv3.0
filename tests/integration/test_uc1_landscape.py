@@ -16,18 +16,24 @@ vorbereiteten Testdaten bereit.
 
 from __future__ import annotations
 
-import sys
+import importlib.util
 import pathlib
 
 import pytest
 import pytest_asyncio
 
-# Repository aus dem Service-Pfad importieren
-_SVC_PATH = pathlib.Path(__file__).parent.parent.parent / "services" / "landscape-svc" / "src"
-if str(_SVC_PATH) not in sys.path:
-    sys.path.insert(0, str(_SVC_PATH))
-
-from infrastructure.repository import LandscapeRepository  # noqa: E402
+# Repository aus dem Service-Pfad importieren — per importlib, um Konflikte
+# mit gleichnamigen Modulen anderer Services zu vermeiden (sys.path-Kollision).
+_REPO_FILE = (
+    pathlib.Path(__file__).resolve().parent.parent.parent
+    / "services" / "landscape-svc" / "src" / "infrastructure" / "repository.py"
+)
+_spec = importlib.util.spec_from_file_location(
+    "landscape_infrastructure_repository", _REPO_FILE
+)
+_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_mod)
+LandscapeRepository = _mod.LandscapeRepository
 
 
 # ===========================================================================

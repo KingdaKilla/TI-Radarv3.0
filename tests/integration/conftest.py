@@ -20,6 +20,7 @@ Testdaten per REFRESH aktualisiert (nur dann nicht-leer).
 from __future__ import annotations
 
 import asyncio
+import datetime
 import pathlib
 import re
 
@@ -255,28 +256,28 @@ async def _insert_test_patents(conn: asyncpg.Connection) -> None:
             (
                 "DE102020001001A1", "DE", "102020001001", "A1",
                 "Quantum computing error correction system",
-                "2020-01-15", "FAM001",
+                datetime.date(2020, 1, 15), "FAM001",
                 "Quantum Systems GmbH",
                 ["DE"], ["G06F", "H04W"],
             ),
             (
                 "DE102020002001A1", "DE", "102020002001", "A1",
                 "Quantum entanglement based communication device",
-                "2020-03-22", "FAM002",
+                datetime.date(2020, 3, 22), "FAM002",
                 "TU Berlin",
                 ["DE", "FR"], ["H04W", "G06F"],
             ),
             (
                 "FR3100001A1", "FR", "3100001", "A1",
                 "Quantum computing processor with error mitigation",
-                "2021-06-10", "FAM003",
+                datetime.date(2021, 6, 10), "FAM003",
                 "CNRS",
                 ["FR"], ["G06F"],
             ),
             (
                 "DE102021001001A1", "DE", "102021001001", "A1",
                 "Topological quantum computing architecture",
-                "2021-09-05", "FAM004",
+                datetime.date(2021, 9, 5), "FAM004",
                 "Max Planck Institut",
                 ["DE"], ["G06F", "H01M"],
             ),
@@ -284,42 +285,42 @@ async def _insert_test_patents(conn: asyncpg.Connection) -> None:
             (
                 "DE102020003001A1", "DE", "102020003001", "A1",
                 "Solid state battery with ceramic electrolyte",
-                "2020-02-28", "FAM010",
+                datetime.date(2020, 2, 28), "FAM010",
                 "BASF SE",
                 ["DE"], ["H01M", "H02J"],
             ),
             (
                 "DE102021002001A1", "DE", "102021002001", "A1",
                 "Solid state lithium ion battery manufacturing process",
-                "2021-04-14", "FAM011",
+                datetime.date(2021, 4, 14), "FAM011",
                 "BASF SE",
                 ["DE", "US"], ["H01M"],
             ),
             (
                 "FR3110001A1", "FR", "3110001", "A1",
                 "Solid state battery for electric vehicle applications",
-                "2021-11-30", "FAM012",
+                datetime.date(2021, 11, 30), "FAM012",
                 "Renault SA",
                 ["FR"], ["H01M", "B60L"],
             ),
             (
                 "DE102022001001A1", "DE", "102022001001", "A1",
                 "Quantum computing qubit fabrication method",
-                "2022-01-20", "FAM005",
+                datetime.date(2022, 1, 20), "FAM005",
                 "Infineon Technologies AG",
                 ["DE"], ["G06F"],
             ),
             (
                 "DE102022002001A1", "DE", "102022002001", "A1",
                 "Quantum computing quantum computing algorithm optimization",
-                "2022-07-11", "FAM006",
+                datetime.date(2022, 7, 11), "FAM006",
                 "Siemens AG",
                 ["DE"], ["G06F", "H04W"],
             ),
             (
                 "FR3120001A1", "FR", "3120001", "A1",
                 "Quantum computing neural network accelerator",
-                "2022-12-01", "FAM007",
+                datetime.date(2022, 12, 1), "FAM007",
                 "Airbus SE",
                 ["FR", "DE"], ["G06F"],
             ),
@@ -376,7 +377,7 @@ async def _insert_test_cordis_data(conn: asyncpg.Connection) -> None:
                 "Research on quantum computing algorithms for optimization in industrial contexts "
                 "using superconducting qubits and error correction.",
                 "quantum computing optimization qubits",
-                "2020-01-01", "2023-12-31", "CLOSED",
+                datetime.date(2020, 1, 1), datetime.date(2023, 12, 31), "CLOSED",
                 3_500_000.00, 2_800_000.00, "RIA",
             ),
             (
@@ -385,7 +386,7 @@ async def _insert_test_cordis_data(conn: asyncpg.Connection) -> None:
                 "Development of quantum communication protocols for secure data transmission "
                 "using quantum entanglement.",
                 "quantum networking entanglement communication",
-                "2020-06-01", "2024-05-31", "CLOSED",
+                datetime.date(2020, 6, 1), datetime.date(2024, 5, 31), "CLOSED",
                 2_100_000.00, 1_680_000.00, "IA",
             ),
             (
@@ -393,7 +394,7 @@ async def _insert_test_cordis_data(conn: asyncpg.Connection) -> None:
                 "Quantum computing software stack",
                 "Open-source software toolkit for quantum computing algorithm development.",
                 "quantum computing software algorithms",
-                "2021-03-01", "2025-02-28", "ACTIVE",
+                datetime.date(2021, 3, 1), datetime.date(2025, 2, 28), "ACTIVE",
                 4_200_000.00, 3_360_000.00, "RIA",
             ),
             # Solid State Battery Projekte
@@ -403,7 +404,7 @@ async def _insert_test_cordis_data(conn: asyncpg.Connection) -> None:
                 "Development of next-generation solid state batteries with ceramic electrolytes "
                 "for electric vehicle applications.",
                 "solid state battery electrolyte electric vehicle",
-                "2020-04-01", "2023-09-30", "CLOSED",
+                datetime.date(2020, 4, 1), datetime.date(2023, 9, 30), "CLOSED",
                 5_000_000.00, 4_000_000.00, "IA",
             ),
             (
@@ -411,7 +412,7 @@ async def _insert_test_cordis_data(conn: asyncpg.Connection) -> None:
                 "Next generation battery manufacturing process",
                 "Scalable manufacturing processes for solid state lithium batteries.",
                 "battery manufacturing solid state lithium",
-                "2021-09-01", "2025-08-31", "ACTIVE",
+                datetime.date(2021, 9, 1), datetime.date(2025, 8, 31), "ACTIVE",
                 3_800_000.00, 3_040_000.00, "RIA",
             ),
             (
@@ -419,7 +420,7 @@ async def _insert_test_cordis_data(conn: asyncpg.Connection) -> None:
                 "Electric vehicle battery performance optimization",
                 "Research on performance optimization for solid state batteries in electric vehicles.",
                 "battery performance electric vehicle solid state",
-                "2019-01-01", "2022-12-31", "CLOSED",
+                datetime.date(2019, 1, 1), datetime.date(2022, 12, 31), "CLOSED",
                 2_500_000.00, 2_000_000.00, "CSA",
             ),
         ],

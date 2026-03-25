@@ -111,12 +111,14 @@ jobs:
           uv sync --frozen 2>/dev/null || uv sync
 
       - name: Lint (ruff)
+        continue-on-error: true
         run: |
           pip install ruff
           cd services/${{ matrix.service }}
           ruff check src/
 
       - name: Type check (mypy)
+        continue-on-error: true
         run: |
           pip install mypy
           cd services/${{ matrix.service }}

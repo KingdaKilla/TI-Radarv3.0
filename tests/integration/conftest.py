@@ -100,7 +100,7 @@ def postgres_container():
     from testcontainers.postgres import PostgresContainer
 
     container = PostgresContainer(
-        image="postgres:17-alpine",
+        image="pgvector/pgvector:pg17",
         username="ti_test",
         password="ti_test_password",
         dbname="ti_radar_test",

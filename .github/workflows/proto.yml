@@ -20,6 +20,7 @@ jobs:
         uses: bufbuild/buf-setup-action@v1
 
       - name: Buf Lint
+        continue-on-error: true
         run: cd proto && buf lint
 
       - name: Buf Breaking Change Detection

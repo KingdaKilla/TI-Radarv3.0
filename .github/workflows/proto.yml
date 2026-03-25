@@ -8,6 +8,7 @@ on:
   pull_request:
     paths:
       - "proto/**"
+  workflow_dispatch:
 
 jobs:
   lint-and-compile:

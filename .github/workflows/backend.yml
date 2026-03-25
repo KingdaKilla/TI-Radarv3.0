@@ -10,6 +10,7 @@ on:
     paths:
       - "services/**"
       - "packages/shared/**"
+  workflow_dispatch:
 
 jobs:
   # ── Shared Domain Tests (216+ Unit Tests) ──

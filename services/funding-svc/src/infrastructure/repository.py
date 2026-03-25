@@ -318,7 +318,7 @@ class FundingRepository:
 
         sql = f"""
             SELECT AVG(
-                EXTRACT(EPOCH FROM (p.end_date - p.start_date)) / (30.44 * 86400)
+                (p.end_date - p.start_date)::float / 30.44
             ) AS avg_months
             FROM cordis_schema.projects p
             WHERE {where}

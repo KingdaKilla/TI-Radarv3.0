@@ -64,20 +64,20 @@ class TestCountPatentsByYear:
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_struktur_der_eintraege(self, repo):
-        """Jeder Eintrag hat die Schluesse 'year' (int) und 'count' (int)."""
+        """Jeder Eintrag hat die Attribute 'year' (int) und 'count' (int)."""
         ergebnisse = await repo.count_patents_by_year("quantum computing")
         for eintrag in ergebnisse:
-            assert "year" in eintrag
-            assert "count" in eintrag
-            assert isinstance(eintrag["year"], int)
-            assert isinstance(eintrag["count"], int)
-            assert eintrag["count"] > 0
+            assert hasattr(eintrag, 'year')
+            assert hasattr(eintrag, 'count')
+            assert isinstance(eintrag.year, int)
+            assert isinstance(eintrag.count, int)
+            assert eintrag.count > 0
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_chronologische_sortierung(self, repo):
         """Ergebnisse sind aufsteigend nach Jahr sortiert."""
         ergebnisse = await repo.count_patents_by_year("quantum computing")
-        jahre = [e["year"] for e in ergebnisse]
+        jahre = [e.year for e in ergebnisse]
         assert jahre == sorted(jahre)
 
     @pytest.mark.asyncio(loop_scope="session")
@@ -90,7 +90,7 @@ class TestCountPatentsByYear:
         # Ab 2022 gefiltert — gleich viele oder weniger Ergebnisse
         assert len(gefiltert) <= len(alle)
         for eintrag in gefiltert:
-            assert eintrag["year"] >= 2022
+            assert eintrag.year >= 2022
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_jahresfilter_ende(self, repo):
@@ -99,7 +99,7 @@ class TestCountPatentsByYear:
             "quantum computing", end_year=2020
         )
         for eintrag in ergebnisse:
-            assert eintrag["year"] <= 2020
+            assert eintrag.year <= 2020
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_unbekannte_technologie_gibt_leere_liste(self, repo):
@@ -115,8 +115,8 @@ class TestCountPatentsByYear:
             "quantum computing", european_only=True
         )
         # EU-Only-Ergebnisse duerfen nicht groesser als 'alle' sein
-        gesamt_alle = sum(e["count"] for e in alle)
-        gesamt_eu = sum(e["count"] for e in eu_only)
+        gesamt_alle = sum(e.count for e in alle)
+        gesamt_eu = sum(e.count for e in eu_only)
         assert gesamt_eu <= gesamt_alle
 
     @pytest.mark.asyncio(loop_scope="session")
@@ -124,7 +124,7 @@ class TestCountPatentsByYear:
         """Solid-State-Battery-Patente werden per Volltextsuche gefunden."""
         ergebnisse = await repo.count_patents_by_year("solid state battery")
         assert len(ergebnisse) > 0
-        gesamt = sum(e["count"] for e in ergebnisse)
+        gesamt = sum(e.count for e in ergebnisse)
         assert gesamt >= 3  # Mindestens 3 Battery-Testpatente eingefuegt
 
 
@@ -140,27 +140,27 @@ class TestCountPatentsByCountry:
     async def test_laender_vorhanden(self, repo):
         """Quantum-Computing-Patente sind in DE und FR angemeldet."""
         ergebnisse = await repo.count_patents_by_country("quantum computing")
-        laender = {e["country"] for e in ergebnisse}
+        laender = {e.country for e in ergebnisse}
         # Beide Anmelderlaender aus den Testdaten muessen erscheinen
         assert "DE" in laender or "FR" in laender
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_struktur(self, repo):
-        """Jeder Eintrag hat 'country' (str) und 'count' (int)."""
+        """Jeder Eintrag hat die Attribute 'country' (str) und 'count' (int)."""
         ergebnisse = await repo.count_patents_by_country("quantum computing")
         assert len(ergebnisse) > 0
         for eintrag in ergebnisse:
-            assert "country" in eintrag
-            assert "count" in eintrag
-            assert isinstance(eintrag["country"], str)
-            assert isinstance(eintrag["count"], int)
-            assert len(eintrag["country"]) == 2  # ISO-2-Code
+            assert hasattr(eintrag, 'country')
+            assert hasattr(eintrag, 'count')
+            assert isinstance(eintrag.country, str)
+            assert isinstance(eintrag.count, int)
+            assert len(eintrag.country) == 2  # ISO-2-Code
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_absteigende_sortierung(self, repo):
         """Ergebnisse sind absteigend nach count sortiert."""
         ergebnisse = await repo.count_patents_by_country("quantum computing")
-        counts = [e["count"] for e in ergebnisse]
+        counts = [e.count for e in ergebnisse]
         assert counts == sorted(counts, reverse=True)
 
     @pytest.mark.asyncio(loop_scope="session")
@@ -189,18 +189,18 @@ class TestCountProjectsByYear:
         """Quantum-Computing-Projekte aus CORDIS sind abrufbar."""
         ergebnisse = await repo.count_projects_by_year("quantum computing")
         assert len(ergebnisse) > 0
-        gesamt = sum(e["count"] for e in ergebnisse)
+        gesamt = sum(e.count for e in ergebnisse)
         assert gesamt >= 2  # Mindestens 2 Quantum-Projekte in Testdaten
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_struktur(self, repo):
-        """Jeder Eintrag hat 'year' (int) und 'count' (int)."""
+        """Jeder Eintrag hat die Attribute 'year' (int) und 'count' (int)."""
         ergebnisse = await repo.count_projects_by_year("quantum computing")
         for eintrag in ergebnisse:
-            assert "year" in eintrag
-            assert "count" in eintrag
-            assert isinstance(eintrag["year"], int)
-            assert isinstance(eintrag["count"], int)
+            assert hasattr(eintrag, 'year')
+            assert hasattr(eintrag, 'count')
+            assert isinstance(eintrag.year, int)
+            assert isinstance(eintrag.count, int)
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_battery_projekte(self, repo):
@@ -221,7 +221,7 @@ class TestCountProjectsByYear:
             "quantum computing", start_year=2021
         )
         for eintrag in ergebnisse:
-            assert eintrag["year"] >= 2021
+            assert eintrag.year >= 2021
 
 
 # ===========================================================================
@@ -240,22 +240,22 @@ class TestFundingByYear:
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_struktur(self, repo):
-        """Jeder Eintrag hat 'year' (int), 'funding' (float) und 'count' (int)."""
+        """Jeder Eintrag hat die Attribute 'year' (int), 'funding' (float) und 'count' (int)."""
         ergebnisse = await repo.funding_by_year("quantum computing")
         for eintrag in ergebnisse:
-            assert "year" in eintrag
-            assert "funding" in eintrag
-            assert "count" in eintrag
-            assert isinstance(eintrag["year"], int)
-            assert isinstance(eintrag["funding"], float)
-            assert isinstance(eintrag["count"], int)
-            assert eintrag["funding"] >= 0.0
+            assert hasattr(eintrag, 'year')
+            assert hasattr(eintrag, 'funding')
+            assert hasattr(eintrag, 'count')
+            assert isinstance(eintrag.year, int)
+            assert isinstance(eintrag.funding, float)
+            assert isinstance(eintrag.count, int)
+            assert eintrag.funding >= 0.0
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_foerdervolumen_positiv(self, repo):
         """Das gesamte Foerdervolumen ist groesser als Null."""
         ergebnisse = await repo.funding_by_year("quantum computing")
-        gesamt_foerderung = sum(e["funding"] for e in ergebnisse)
+        gesamt_foerderung = sum(e.funding for e in ergebnisse)
         assert gesamt_foerderung > 0.0
 
     @pytest.mark.asyncio(loop_scope="session")
@@ -281,15 +281,15 @@ class TestTopCpcCodes:
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_struktur(self, repo):
-        """Jeder Eintrag hat 'code', 'description' und 'count'."""
+        """Jeder Eintrag hat die Attribute 'code', 'description' und 'count'."""
         ergebnisse = await repo.top_cpc_codes("quantum computing")
         for eintrag in ergebnisse:
-            assert "code" in eintrag
-            assert "description" in eintrag
-            assert "count" in eintrag
-            assert isinstance(eintrag["code"], str)
-            assert isinstance(eintrag["count"], int)
-            assert eintrag["count"] > 0
+            assert hasattr(eintrag, 'code')
+            assert hasattr(eintrag, 'description')
+            assert hasattr(eintrag, 'count')
+            assert isinstance(eintrag.code, str)
+            assert isinstance(eintrag.count, int)
+            assert eintrag.count > 0
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_limit(self, repo):
@@ -303,4 +303,4 @@ class TestTopCpcCodes:
         ergebnisse = await repo.top_cpc_codes("quantum computing", limit=5)
         if ergebnisse:
             # G06F sollte im Top-1 sein (sechs von sieben Quantum-Patenten)
-            assert ergebnisse[0]["code"] == "G06F"
+            assert ergebnisse[0].code == "G06F"

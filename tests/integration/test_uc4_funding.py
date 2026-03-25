@@ -65,27 +65,27 @@ class TestFundingByYear:
         """Jeder Eintrag hat 'year' (int), 'funding' (float), 'count' (int)."""
         ergebnisse = await repo.funding_by_year("quantum computing")
         for eintrag in ergebnisse:
-            assert "year" in eintrag
-            assert "funding" in eintrag
-            assert "count" in eintrag
-            assert isinstance(eintrag["year"], int)
-            assert isinstance(eintrag["funding"], float)
-            assert isinstance(eintrag["count"], int)
-            assert eintrag["funding"] >= 0.0
-            assert eintrag["count"] > 0
+            assert hasattr(eintrag, "year")
+            assert hasattr(eintrag, "funding")
+            assert hasattr(eintrag, "count")
+            assert isinstance(eintrag.year, int)
+            assert isinstance(eintrag.funding, float)
+            assert isinstance(eintrag.count, int)
+            assert eintrag.funding >= 0.0
+            assert eintrag.count > 0
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_foerdervolumen_positiv(self, repo):
         """Gesamt-Foerdervolumen fuer Quantum-Computing ist groesser als Null."""
         ergebnisse = await repo.funding_by_year("quantum computing")
-        gesamt = sum(e["funding"] for e in ergebnisse)
+        gesamt = sum(e.funding for e in ergebnisse)
         assert gesamt > 0.0
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_chronologische_sortierung(self, repo):
         """Ergebnisse sind aufsteigend nach Jahr sortiert."""
         ergebnisse = await repo.funding_by_year("quantum computing")
-        jahre = [e["year"] for e in ergebnisse]
+        jahre = [e.year for e in ergebnisse]
         assert jahre == sorted(jahre)
 
     @pytest.mark.asyncio(loop_scope="session")
@@ -93,21 +93,21 @@ class TestFundingByYear:
         """start_year-Filter schliesst Jahre vor dem Grenzwert aus."""
         ergebnisse = await repo.funding_by_year("quantum computing", start_year=2021)
         for eintrag in ergebnisse:
-            assert eintrag["year"] >= 2021
+            assert eintrag.year >= 2021
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_jahresfilter_ende(self, repo):
         """end_year-Filter schliesst Jahre nach dem Grenzwert aus."""
         ergebnisse = await repo.funding_by_year("quantum computing", end_year=2020)
         for eintrag in ergebnisse:
-            assert eintrag["year"] <= 2020
+            assert eintrag.year <= 2020
 
     @pytest.mark.asyncio(loop_scope="session")
     async def test_battery_foerderung_gefunden(self, repo):
         """Foerderung fuer Solid-State-Battery-Projekte ist abrufbar."""
         ergebnisse = await repo.funding_by_year("solid state battery")
         assert len(ergebnisse) > 0
-        gesamt = sum(e["funding"] for e in ergebnisse)
+        gesamt = sum(e.funding for e in ergebnisse)
         assert gesamt > 0.0
 
     @pytest.mark.asyncio(loop_scope="session")

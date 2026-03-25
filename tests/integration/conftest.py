@@ -31,7 +31,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 _REPO_ROOT = pathlib.Path(__file__).parent.parent.parent
-_SQL_DIR = _REPO_ROOT / "db" / "sql"
+_SQL_DIR = _REPO_ROOT / "database" / "sql"
 
 _SQL_001_EXTENSIONS = _SQL_DIR / "001_extensions.sql"
 _SQL_002_SCHEMA = _SQL_DIR / "002_schema.sql"
@@ -121,7 +121,19 @@ def postgres_container():
 
 
 @pytest.fixture(scope="session")
-def db_pool(postgres_container):
+def event_loop():
+    """Erstellt einen gemeinsamen Event-Loop fuer die gesamte Session.
+
+    Verhindert 'Event loop is closed'-Fehler, die entstehen wenn
+    asyncio.run() in session-scoped Fixtures eigene Loops erstellt.
+    """
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="session")
+def db_pool(postgres_container, event_loop):
     """Erstellt einen asyncpg Connection-Pool und baut das vollstaendige Schema auf.
 
     Fuehrt in Reihenfolge aus:
@@ -159,9 +171,9 @@ def db_pool(postgres_container):
     async def _teardown(pool: asyncpg.Pool) -> None:
         await pool.close()
 
-    pool = asyncio.run(_setup())
+    pool = event_loop.run_until_complete(_setup())
     yield pool
-    asyncio.run(_teardown(pool))
+    event_loop.run_until_complete(_teardown(pool))
 
 
 # ---------------------------------------------------------------------------
@@ -170,7 +182,7 @@ def db_pool(postgres_container):
 
 
 @pytest.fixture(scope="session")
-def populated_db(db_pool):
+def populated_db(db_pool, event_loop):
     """Befuellt den Pool mit repraesentativen Testdaten.
 
     Fuegt in alle relevanten Schemas Beispieldatensaetze ein:
@@ -197,7 +209,7 @@ def populated_db(db_pool):
         async with db_pool.acquire() as conn:
             await _refresh_materialized_views(conn)
 
-    asyncio.run(_insert())
+    event_loop.run_until_complete(_insert())
     yield db_pool
 
 

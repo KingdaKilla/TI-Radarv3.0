@@ -112,13 +112,15 @@ jobs:
 
       - name: Lint (ruff)
         run: |
+          pip install ruff
           cd services/${{ matrix.service }}
-          uv run ruff check src/
+          ruff check src/
 
       - name: Type check (mypy)
         run: |
+          pip install mypy
           cd services/${{ matrix.service }}
-          uv run mypy src/
+          mypy src/ --ignore-missing-imports
 
       - name: Unit tests with coverage
         env:

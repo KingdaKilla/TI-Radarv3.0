@@ -358,7 +358,7 @@ def find_matches(
     pair_scores: dict[tuple[int, int], tuple[float, str]] = {}
 
     # Paarweiser Vergleich innerhalb jedes Blocks
-    for block_key, indices in blocks.items():
+    for _block_key, indices in blocks.items():
         if len(indices) < 2:
             continue
 
@@ -402,7 +402,7 @@ def find_matches(
 
     # Ergebnis aufbauen
     result: list[dict[str, Any]] = []
-    for root, members in groups.items():
+    for _root, members in groups.items():
         # Kanonischer Name: laengster Originalname (meiste Information)
         canonical_idx = max(members, key=lambda i: len(actors[i].get("name", "")))
         canonical_name = actors[canonical_idx].get("name", "")

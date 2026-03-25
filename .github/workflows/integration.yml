@@ -58,10 +58,12 @@ jobs:
             uv-integration-${{ runner.os }}-
 
       - name: Install shared domain package
-        run: pip install -e "packages/shared"
+        run: pip install -e packages/shared
 
       - name: Install integration test requirements
         run: pip install -r tests/integration/requirements.txt
 
       - name: Run integration tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/packages
         run: python -m pytest tests/integration/ -v --tb=short

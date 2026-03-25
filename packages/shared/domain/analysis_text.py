@@ -18,7 +18,6 @@ from shared.domain.models import (
     TemporalPanel,
 )
 
-
 # ---------------------------------------------------------------------------
 # Hilfsfunktionen (Formatierung)
 # ---------------------------------------------------------------------------
@@ -358,7 +357,7 @@ def generate_competitive_text(panel: CompetitivePanel) -> str:
     # HHI + Konzentration + Einordnung
     if panel.hhi_index > 0:
         level_map = {"Low": "gering", "Moderate": "moderat", "High": "hoch"}
-        level_de = level_map.get(panel.concentration_level, panel.concentration_level)
+        level_map.get(panel.concentration_level, panel.concentration_level)
         interpretation = _hhi_interpretation(panel.hhi_index)
         parts.append(
             f"Der Herfindahl-Hirschman-Index (HHI) betraegt {_fmt_int(int(panel.hhi_index))} — "

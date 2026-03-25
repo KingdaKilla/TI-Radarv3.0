@@ -29,7 +29,6 @@ export default function ClusterCarousel({
   compact = false,
 }: Props) {
   const count = clusters.length;
-  if (count === 0) return null;
 
   /*
    * Slides: [clone-last, 0, 1, ..., N-1, clone-first]
@@ -123,6 +122,8 @@ export default function ClusterCarousel({
     },
     [goNext, goPrev],
   );
+
+  if (count === 0) return null;
 
   /* Slides array */
   const slides = [clusters[count - 1], ...clusters, clusters[0]];

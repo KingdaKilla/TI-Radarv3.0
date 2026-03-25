@@ -1,0 +1,66 @@
+# Integration Tests — UC1/UC3/UC4 against PostgreSQL (testcontainers)
+name: Integration Tests
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "services/**"
+      - "packages/shared/**"
+      - "tests/integration/**"
+  pull_request:
+    paths:
+      - "services/**"
+      - "packages/shared/**"
+      - "tests/integration/**"
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'ti_test_password' }}
+          POSTGRES_DB: ${{ vars.POSTGRES_DB || 'ti_radar' }}
+          POSTGRES_USER: ${{ vars.POSTGRES_USER || 'tip_admin' }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U $POSTGRES_USER || pg_isready"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://${{ vars.POSTGRES_USER || 'tip_admin' }}:${{ secrets.POSTGRES_PASSWORD || 'ti_test_password' }}@localhost:5432/${{ vars.POSTGRES_DB || 'ti_radar' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-integration-${{ runner.os }}-${{ hashFiles('packages/shared/pyproject.toml', 'tests/integration/requirements.txt') }}
+          restore-keys: |
+            uv-integration-${{ runner.os }}-
+
+      - name: Install shared domain package
+        run: pip install -e "packages/shared"
+
+      - name: Install integration test requirements
+        run: pip install -r tests/integration/requirements.txt
+
+      - name: Run integration tests
+        run: python -m pytest tests/integration/ -v --tb=short

@@ -324,7 +324,7 @@ def _iter_patents_from_zip(
             inner_zips = sorted(
                 entry
                 for entry in outer_zf.namelist()
-                if entry.startswith("Root/DOC/")
+                if "Root/DOC/" in entry
                 and entry.lower().endswith(".zip")
             )
 

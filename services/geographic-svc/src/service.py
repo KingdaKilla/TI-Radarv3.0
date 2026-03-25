@@ -128,8 +128,8 @@ class GeographicServicer(_get_base_class()):  # type: ignore[misc]
         warnings: list[dict[str, str]] = []
         data_sources: list[dict[str, Any]] = []
 
-        patent_countries: list[dict[str, str | int]] = []
-        cordis_countries: list[dict[str, str | int]] = []
+        patent_countries: list[Any] = []
+        cordis_countries: list[Any] = []
         city_data: list[dict[str, Any]] = []
         collab_pairs: list[dict[str, Any]] = []
         cross_border: dict[str, int | float] = {}
@@ -191,9 +191,9 @@ class GeographicServicer(_get_base_class()):  # type: ignore[misc]
                     continue
 
                 if name == "patent_countries":
-                    patent_countries = cast(list[dict[str, str | int]], result)
+                    patent_countries = list(result)
                 elif name == "cordis_countries":
-                    cordis_countries = cast(list[dict[str, str | int]], result)
+                    cordis_countries = list(result)
                 elif name == "city_distribution":
                     city_data = cast(list[dict[str, Any]], result)
                 elif name == "cooperation_pairs":
@@ -209,13 +209,13 @@ class GeographicServicer(_get_base_class()):  # type: ignore[misc]
             data_sources.append({
                 "name": "EPO DOCDB (PostgreSQL)",
                 "type": "PATENT",
-                "record_count": sum(int(c["count"]) for c in patent_countries),
+                "record_count": sum(int(c.count) for c in patent_countries),
             })
         if cordis_countries:
             data_sources.append({
                 "name": "CORDIS (PostgreSQL)",
                 "type": "PROJECT",
-                "record_count": sum(int(c["count"]) for c in cordis_countries),
+                "record_count": sum(int(c.count) for c in cordis_countries),
             })
 
         total_countries = len(country_dist)

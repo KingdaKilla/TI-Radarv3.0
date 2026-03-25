@@ -192,12 +192,12 @@ class FundingServicer(_get_base_class()):  # type: ignore[misc]
             data_sources.append({
                 "name": "CORDIS (PostgreSQL)",
                 "type": "FUNDING",
-                "record_count": sum(int(f.get("count", 0)) for f in funding_years),
+                "record_count": sum(int(f.count) for f in funding_years),
             })
 
         # --- Aggregationen berechnen ---
-        total_funding = sum(float(f.get("funding", 0) or 0) for f in funding_years)
-        total_projects = sum(int(f.get("count", 0) or 0) for f in funding_years)
+        total_funding = sum(float(f.funding) for f in funding_years)
+        total_projects = sum(int(f.count) for f in funding_years)
         avg_size = total_funding / total_projects if total_projects > 0 else 0.0
 
         # Durchschnittliche Projektdauer (Monate) — muss extra abgefragt werden
@@ -213,13 +213,13 @@ class FundingServicer(_get_base_class()):  # type: ignore[misc]
         funding_cagr = 0.0
         non_zero = [
             f for f in funding_years
-            if float(f.get("funding", 0) or 0) > 0
+            if float(f.funding) > 0
         ]
         if len(non_zero) >= 2:
-            first = float(non_zero[0]["funding"] or 0)
-            last = float(non_zero[-1]["funding"] or 0)
-            first_year = int(non_zero[0]["year"])
-            last_year = int(non_zero[-1]["year"])
+            first = float(non_zero[0].funding)
+            last = float(non_zero[-1].funding)
+            first_year = int(non_zero[0].year)
+            last_year = int(non_zero[-1].year)
             year_span = last_year - first_year
             if year_span > 0:
                 funding_cagr = cagr(first, last, year_span)
@@ -321,15 +321,15 @@ class FundingServicer(_get_base_class()):  # type: ignore[misc]
         # Time Series
         pb_time_series = []
         for f in funding_years:
-            funding = float(f.get("funding", 0) or 0)
-            count = int(f.get("count", 0) or 0)
+            funding = float(f.funding)
+            count = int(f.count)
             avg_proj = funding / count if count > 0 else 0.0
             pb_time_series.append(uc4_funding_pb2.FundingTimeSeriesEntry(
-                year=int(f["year"]),
+                year=int(f.year),
                 funding_eur=funding,
                 project_count=count,
                 avg_project_size=avg_proj,
-                participant_count=int(f.get("participant_count", 0) or 0),
+                participant_count=0,
             ))
 
         # Top Organisations
@@ -428,7 +428,10 @@ class FundingServicer(_get_base_class()):  # type: ignore[misc]
             "cagr": funding_cagr / 100.0,
             "programme_breakdown": programme_data,
             "instrument_breakdown": instrument_data,
-            "time_series": funding_years,
+            "time_series": [
+                {"year": f.year, "funding": f.funding, "count": f.count}
+                for f in funding_years
+            ],
             "top_organisations": top_orgs,
             "country_distribution": country_data,
             "avg_duration_months": avg_duration,

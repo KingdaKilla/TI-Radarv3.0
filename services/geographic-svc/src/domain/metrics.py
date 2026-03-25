@@ -8,6 +8,11 @@ from __future__ import annotations
 
 from typing import Any
 
+try:
+    from shared.domain.result_types import CountryCount
+except ImportError:
+    CountryCount = Any  # type: ignore[assignment,misc]
+
 
 # ---------------------------------------------------------------------------
 # EU/EEA-Laender (Fallback fuer shared.domain.eu_countries)
@@ -32,8 +37,8 @@ def is_european(code: str) -> bool:
 # ---------------------------------------------------------------------------
 
 def merge_country_data(
-    patent_countries: list[dict[str, str | int]],
-    cordis_countries: list[dict[str, str | int]],
+    patent_countries: list[CountryCount],
+    cordis_countries: list[CountryCount],
     *,
     limit: int | None = None,
 ) -> list[dict[str, str | int]]:
@@ -44,16 +49,16 @@ def merge_country_data(
     data: dict[str, dict[str, int]] = {}
 
     for entry in patent_countries:
-        code = str(entry["country"])
+        code = str(entry.country)
         if code not in data:
             data[code] = {"patents": 0, "projects": 0}
-        data[code]["patents"] = int(entry["count"])
+        data[code]["patents"] = int(entry.count)
 
     for entry in cordis_countries:
-        code = str(entry["country"])
+        code = str(entry.country)
         if code not in data:
             data[code] = {"patents": 0, "projects": 0}
-        data[code]["projects"] = int(entry["count"])
+        data[code]["projects"] = int(entry.count)
 
     result: list[dict[str, str | int]] = []
     for code, d in data.items():

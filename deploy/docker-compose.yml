@@ -32,7 +32,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-tip_admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
-      - ${TI_RADAR_DB_PATH:?Set TI_RADAR_DB_PATH in .env}:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
       - ../database/sql/001_extensions.sql:/docker-entrypoint-initdb.d/001_extensions.sql
       - ../database/sql/002_schema.sql:/docker-entrypoint-initdb.d/002_schema.sql
       - ../database/sql/003_postgresql_tuning.sql:/docker-entrypoint-initdb.d/003_postgresql_tuning.sql
@@ -388,7 +388,9 @@ services:
       - backend
 
 volumes:
-  # pgdata entfernt — wird durch TI_RADAR_DB_PATH Bind-Mount ersetzt
+  pgdata:
+    external: true
+    name: mvp_v2_pgdata
   prometheus_data:
   grafana_data:
   pgadmin_data:

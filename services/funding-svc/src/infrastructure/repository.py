@@ -101,7 +101,7 @@ class FundingRepository:
         where = " AND ".join(conditions)
 
         sql = f"""
-            SELECT COALESCE(p.framework_programme, 'UNKNOWN') AS programme,
+            SELECT COALESCE(p.framework, 'UNKNOWN') AS programme,
                    COALESCE(SUM(p.ec_max_contribution), 0) AS funding,
                    COUNT(*) AS count
             FROM cordis_schema.projects p

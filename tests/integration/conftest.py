@@ -26,6 +26,7 @@ import re
 
 import asyncpg
 import pytest
+import pytest_asyncio
 
 # ---------------------------------------------------------------------------
 # Pfade zu den SQL-Init-Skripten
@@ -121,20 +122,8 @@ def postgres_container():
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Erstellt einen gemeinsamen Event-Loop fuer die gesamte Session.
-
-    Verhindert 'Event loop is closed'-Fehler, die entstehen wenn
-    asyncio.run() in session-scoped Fixtures eigene Loops erstellt.
-    """
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest.fixture(scope="session")
-def db_pool(postgres_container, event_loop):
+@pytest_asyncio.fixture(scope="session")
+async def db_pool(postgres_container):
     """Erstellt einen asyncpg Connection-Pool und baut das vollstaendige Schema auf.
 
     Fuehrt in Reihenfolge aus:
@@ -151,30 +140,20 @@ def db_pool(postgres_container, event_loop):
     dsn = dsn.replace("postgresql+psycopg2://", "postgresql://")
     dsn = dsn.replace("postgresql+asyncpg://", "postgresql://")
 
-    async def _setup() -> asyncpg.Pool:
-        pool = await asyncpg.create_pool(
-            dsn=dsn,
-            min_size=1,
-            max_size=5,
-            command_timeout=60.0,
-        )
-        async with pool.acquire() as conn:
-            # Extensions anlegen (benoetigt Superuser-Rechte im Container)
-            if _SQL_001_EXTENSIONS.exists():
-                await _execute_sql_file(conn, _SQL_001_EXTENSIONS)
+    pool = await asyncpg.create_pool(
+        dsn=dsn,
+        min_size=1,
+        max_size=5,
+        command_timeout=60.0,
+    )
+    async with pool.acquire() as conn:
+        if _SQL_001_EXTENSIONS.exists():
+            await _execute_sql_file(conn, _SQL_001_EXTENSIONS)
+        if _SQL_002_SCHEMA.exists():
+            await _execute_sql_file(conn, _SQL_002_SCHEMA)
 
-            # Schema anlegen (Tabellen, Indexes, Trigger, MVs)
-            if _SQL_002_SCHEMA.exists():
-                await _execute_sql_file(conn, _SQL_002_SCHEMA)
-
-        return pool
-
-    async def _teardown(pool: asyncpg.Pool) -> None:
-        await pool.close()
-
-    pool = event_loop.run_until_complete(_setup())
     yield pool
-    event_loop.run_until_complete(_teardown(pool))
+    await pool.close()
 
 
 # ---------------------------------------------------------------------------
@@ -182,8 +161,8 @@ def db_pool(postgres_container, event_loop):
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture(scope="session")
-def populated_db(db_pool, event_loop):
+@pytest_asyncio.fixture(scope="session")
+async def populated_db(db_pool):
     """Befuellt den Pool mit repraesentativen Testdaten.
 
     Fuegt in alle relevanten Schemas Beispieldatensaetze ein:
@@ -210,7 +189,7 @@ def populated_db(db_pool, event_loop):
         async with db_pool.acquire() as conn:
             await _refresh_materialized_views(conn)
 
-    event_loop.run_until_complete(_insert())
+    await _insert()
     yield db_pool
 
 

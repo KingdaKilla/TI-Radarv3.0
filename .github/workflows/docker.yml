@@ -1,28 +1,135 @@
-# Docker Compose Build — nur bei Dockerfile-Aenderungen
-name: Docker Build
+# Docker Build + Push to GitHub Container Registry (ghcr.io)
+name: Docker Build & Publish
 
 on:
   push:
-    paths:
-      - "deploy/docker-compose.yml"
-      - "services/**/Dockerfile"
-      - "frontend/Dockerfile"
-      - "services/uc-service.Dockerfile"
+    branches: [master]
+    tags: ["v*"]
   pull_request:
-    paths:
-      - "deploy/docker-compose.yml"
-      - "services/**/Dockerfile"
-      - "frontend/Dockerfile"
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/ti-radar
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # UC-Services (shared Dockerfile)
+          - service: landscape-svc
+            dockerfile: services/uc-service.Dockerfile
+            context: .
+            build-args: SERVICE_DIR=services/landscape-svc
+          - service: maturity-svc
+            dockerfile: services/uc-service.Dockerfile
+            context: .
+            build-args: SERVICE_DIR=services/maturity-svc
+          - service: competitive-svc
+            dockerfile: services/uc-service.Dockerfile
+            context: .
+            build-args: SERVICE_DIR=services/competitive-svc
+          - service: funding-svc
+            dockerfile: services/uc-service.Dockerfile
+            context: .
+            build-args: SERVICE_DIR=services/funding-svc
+          - service: cpc-flow-svc
+            dockerfile: services/uc-service.Dockerfile
+            context: .
+            build-args: SERVICE_DIR=services/cpc-flow-svc
+          - service: geographic-svc
+            dockerfile: services/uc-service.Dockerfile
+            context: .
+            build-args: SERVICE_DIR=services/geographic-svc
+          - service: research-impact-svc
+            dockerfile: services/uc-service.Dockerfile
+            context: .
+            build-args: SERVICE_DIR=services/research-impact-svc
+          - service: temporal-svc
+            dockerfile: services/uc-service.Dockerfile
+            context: .
+            build-args: SERVICE_DIR=services/temporal-svc
+          - service: tech-cluster-svc
+            dockerfile: services/uc-service.Dockerfile
+            context: .
+            build-args: SERVICE_DIR=services/tech-cluster-svc
+          - service: actor-type-svc
+            dockerfile: services/uc-service.Dockerfile
+            context: .
+            build-args: SERVICE_DIR=services/actor-type-svc
+          - service: patent-grant-svc
+            dockerfile: services/uc-service.Dockerfile
+            context: .
+            build-args: SERVICE_DIR=services/patent-grant-svc
+          - service: euroscivoc-svc
+            dockerfile: services/uc-service.Dockerfile
+            context: .
+            build-args: SERVICE_DIR=services/euroscivoc-svc
+          - service: publication-svc
+            dockerfile: services/uc-service.Dockerfile
+            context: .
+            build-args: SERVICE_DIR=services/publication-svc
+          # Eigenstaendige Services
+          - service: orchestrator-svc
+            dockerfile: services/orchestrator-svc/Dockerfile
+            context: .
+            build-args: ""
+          - service: import-svc
+            dockerfile: services/import-svc/Dockerfile
+            context: .
+            build-args: ""
+          - service: export-svc
+            dockerfile: services/export-svc/Dockerfile
+            context: .
+            build-args: ""
+          # Frontend
+          - service: frontend
+            dockerfile: frontend/Dockerfile
+            context: frontend
+            build-args: ""
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build all services
-        run: docker compose -f deploy/docker-compose.yml build
-        continue-on-error: true
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          build-args: ${{ matrix.build-args }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

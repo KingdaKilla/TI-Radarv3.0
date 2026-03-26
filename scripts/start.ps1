@@ -13,28 +13,6 @@ if (-not (Test-Path $envFile)) {
     exit 1
 }
 
-# TI_RADAR_DB_PATH prüfen
-$envContent = Get-Content $envFile | Where-Object { $_ -notmatch "^\s*#" -and $_ -match "=" }
-$envVars = @{}
-foreach ($line in $envContent) {
-    $parts = $line -split "=", 2
-    if ($parts.Count -eq 2) {
-        $envVars[$parts[0].Trim()] = $parts[1].Trim()
-    }
-}
-
-$dbPath = $envVars["TI_RADAR_DB_PATH"]
-if ([string]::IsNullOrWhiteSpace($dbPath)) {
-    Write-Host "FEHLER: TI_RADAR_DB_PATH nicht gesetzt in .env" -ForegroundColor Red
-    exit 1
-}
-
-if (-not (Test-Path $dbPath)) {
-    Write-Host "FEHLER: Datenbank-Verzeichnis nicht gefunden: $dbPath" -ForegroundColor Red
-    Write-Host "Ist das externe Laufwerk angeschlossen?"
-    exit 1
-}
-
 # Services starten
 Push-Location $ProjectRoot
 docker compose --env-file .env -f deploy/docker-compose.yml up -d

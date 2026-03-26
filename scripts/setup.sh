@@ -25,9 +25,8 @@ if [ ! -f "$PROJECT_ROOT/.env" ]; then
     cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
     echo "[INFO] .env aus .env.example erstellt. Bitte Werte eintragen!"
     echo ""
-    echo "Mindestens folgende Werte müssen gesetzt werden:"
-    echo "  - POSTGRES_PASSWORD"
-    echo "  - TI_RADAR_DB_PATH (z.B. D:/ti-radar-db)"
+    echo "Mindestens folgenden Wert setzen:"
+    echo "  - POSTGRES_PASSWORD (sicheres Passwort wählen)"
     echo ""
     read -p "Möchten Sie die .env jetzt bearbeiten? [j/N] " answer
     if [[ "$answer" =~ ^[jJyY]$ ]]; then
@@ -35,18 +34,13 @@ if [ ! -f "$PROJECT_ROOT/.env" ]; then
     fi
 fi
 
-# 3. TI_RADAR_DB_PATH prüfen
+# 3. POSTGRES_PASSWORD prüfen
 source "$PROJECT_ROOT/.env"
-if [ -z "${TI_RADAR_DB_PATH:-}" ]; then
-    echo "FEHLER: TI_RADAR_DB_PATH ist nicht gesetzt in .env"
+if [ -z "${POSTGRES_PASSWORD:-}" ]; then
+    echo "FEHLER: POSTGRES_PASSWORD ist nicht gesetzt in .env"
     exit 1
 fi
-
-if [ ! -d "$TI_RADAR_DB_PATH" ]; then
-    echo "[INFO] Erstelle Datenbank-Verzeichnis: $TI_RADAR_DB_PATH"
-    mkdir -p "$TI_RADAR_DB_PATH"
-fi
-echo "[OK] Datenbank-Verzeichnis: $TI_RADAR_DB_PATH"
+echo "[OK] Datenbank-Passwort gesetzt"
 
 # 4. Proto-Stubs generieren
 echo "[...] Generiere Protobuf-Stubs..."

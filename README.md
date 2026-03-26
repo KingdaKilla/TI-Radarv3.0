@@ -46,10 +46,9 @@ graph TD
 | Komponente | Version | Hinweis |
 |---|---|---|
 | Docker Desktop | >= 4.x | inkl. Docker Compose Plugin |
-| Festplattenspeicher | >= 400 GB | Datenbank (~300 GB) + Docker-Images + Wachstumspuffer |
+| RAM | >= 16 GB | empfohlen (PostgreSQL nutzt bis zu 8 GB) |
+| Festplattenspeicher | >= 5 GB | Docker-Images + Demo-Datenbank. Für Vollimport (EPO + CORDIS): ~400 GB |
 | EPO API Key | optional | für Live-Patent-Abfragen (kostenlose Registrierung) |
-
-Die PostgreSQL-Daten liegen im Docker-Volume am selben Speicherort wie das Repository.
 
 ## Schnellstart
 
@@ -61,18 +60,23 @@ cd TI-Radarv3.0
 # 2. Umgebungskonfiguration erstellen
 cp .env.example .env
 
-# 3. Pflicht-Wert in .env eintragen:
-#    - POSTGRES_PASSWORD (sicheres Passwort wählen)
+# 3. POSTGRES_PASSWORD in .env setzen (einziger Pflicht-Wert):
+#    POSTGRES_PASSWORD=mein_sicheres_passwort
 
 # 4. Stack starten (baut Images automatisch beim ersten Mal)
 docker compose -f deploy/docker-compose.yml --env-file .env up -d
 
-# 5. Im Browser öffnen
+# 5. Warten bis alle Services healthy sind (~1-2 Minuten)
+docker compose -f deploy/docker-compose.yml --env-file .env ps
+
+# 6. Im Browser öffnen
 #    Frontend:  http://localhost:3000
 #    API Docs:  http://localhost:8000/docs
 ```
 
-Beim ersten Start wird automatisch das Datenbankschema angelegt und CORDIS-Demodaten geladen. Das System ist sofort nutzbar.
+Beim ersten Start wird automatisch das Datenbankschema angelegt und CORDIS-Demodaten geladen (~6.000 Patente, ~5.000 Projekte, ~18.000 Publikationen). Das System ist sofort nutzbar — kein manueller Datenimport noetig.
+
+> **Troubleshooting:** Falls Services nicht starten, prüfen mit `docker compose -f deploy/docker-compose.yml --env-file .env logs <service-name>`. Häufigste Ursache: `POSTGRES_PASSWORD` nicht gesetzt.
 
 ## Projektstruktur
 

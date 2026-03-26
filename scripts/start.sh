@@ -12,20 +12,6 @@ if [ ! -f "$PROJECT_ROOT/.env" ]; then
     exit 1
 fi
 
-source "$PROJECT_ROOT/.env"
-
-# DB-Pfad prüfen
-if [ -z "${TI_RADAR_DB_PATH:-}" ]; then
-    echo "FEHLER: TI_RADAR_DB_PATH nicht gesetzt in .env"
-    exit 1
-fi
-
-if [ ! -d "$TI_RADAR_DB_PATH" ]; then
-    echo "FEHLER: Datenbank-Verzeichnis nicht gefunden: $TI_RADAR_DB_PATH"
-    echo "Ist das externe Laufwerk angeschlossen?"
-    exit 1
-fi
-
 # Services starten
 cd "$PROJECT_ROOT"
 docker compose --env-file .env -f deploy/docker-compose.yml up -d

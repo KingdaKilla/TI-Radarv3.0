@@ -49,7 +49,7 @@ graph TD
 | Festplattenspeicher | >= 400 GB | Datenbank (~300 GB) + Docker-Images + Wachstumspuffer |
 | EPO API Key | optional | für Live-Patent-Abfragen (kostenlose Registrierung) |
 
-Das gesamte Projekt (Code, Datenbank, Konfiguration) wird an **einem Ort** gespeichert. Ein externes Laufwerk ist nicht mehr erforderlich -- die PostgreSQL-Daten liegen im Docker-Volume am selben Speicherort wie das Repository.
+Die PostgreSQL-Daten liegen im Docker-Volume am selben Speicherort wie das Repository.
 
 ## Schnellstart
 
@@ -141,7 +141,7 @@ Docker-Images werden in der **GitHub Container Registry** (`ghcr.io`) publiziert
 
 - [Architektur](docs/ARCHITEKTUR.md) -- Systemübersicht, Clean Architecture, Service-Kommunikation
 - [Datenmodell](docs/DATENMODELL.md) -- Datenbankschemas, Datenquellen, ER-Diagramm
-- [Deployment](docs/DEPLOYMENT.md) -- Vollständige Setup-Anleitung, externes Laufwerk, Monitoring
+- [Deployment](docs/DEPLOYMENT.md) -- Vollständige Setup-Anleitung, Monitoring
 - [API](docs/API.md) -- REST-Endpunkte, Request/Response-Beispiele, Fehlerbehandlung
 
 ## Lizenz

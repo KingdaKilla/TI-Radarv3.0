@@ -64,7 +64,7 @@ Beim ersten Start werden automatisch das Datenbankschema angelegt und CORDIS-Dem
 
 ## Datenbankspeicher
 
-Die PostgreSQL-Daten werden in einem Docker-Volume am Projektstandort gespeichert. Ein externes Laufwerk ist nicht erforderlich.
+Die PostgreSQL-Daten werden in einem Docker-Volume am Projektstandort gespeichert.
 
 **Hinweise:**
 - Das Volume wird beim ersten Start automatisch erstellt

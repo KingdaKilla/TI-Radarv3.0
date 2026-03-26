@@ -268,8 +268,8 @@ services:
       dockerfile: services/import-svc/Dockerfile
     container_name: ti-radar-import
     volumes:
-      - "${EPO_BULK_PATH:-/dev/null}:/data/bulk/EPO:ro"
-      - "${CORDIS_BULK_PATH:-/dev/null}:/data/bulk/CORDIS:ro"
+      - "${EPO_BULK_PATH:-./.empty}:/data/bulk/EPO:ro"
+      - "${CORDIS_BULK_PATH:-./.empty}:/data/bulk/CORDIS:ro"
     depends_on:
       db:
         condition: service_healthy
@@ -392,8 +392,6 @@ services:
 
 volumes:
   pgdata:
-    external: true
-    name: mvp_v2_pgdata
   prometheus_data:
   grafana_data:
   pgadmin_data:

@@ -6,7 +6,7 @@
 |---|---|---|
 | Docker Desktop | >= 4.x | `docker --version` |
 | Docker Compose Plugin | >= 2.x | `docker compose version` |
-| Festplattenspeicher | >= 400 GB | Datenbank (~300 GB) + Docker-Images + Wachstumspuffer |
+| Festplattenspeicher | >= 5 GB | Docker-Images + Demo-Datenbank. Für Vollimport (EPO + CORDIS): ~400 GB |
 | RAM | >= 16 GB empfohlen | PostgreSQL benötigt 8 GB (konfiguriert) |
 
 ## Schritt-für-Schritt-Setup

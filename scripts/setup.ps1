@@ -31,9 +31,8 @@ if (-not (Test-Path $envFile)) {
     Copy-Item $envExample $envFile
     Write-Host "[INFO] .env aus .env.example erstellt. Bitte Werte eintragen!" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "Mindestens folgende Werte müssen gesetzt werden:"
-    Write-Host "  - POSTGRES_PASSWORD"
-    Write-Host "  - TI_RADAR_DB_PATH (z.B. D:/ti-radar-db)"
+    Write-Host "Mindestens folgenden Wert setzen:"
+    Write-Host "  - POSTGRES_PASSWORD (sicheres Passwort wählen)"
     Write-Host ""
     $answer = Read-Host "Möchten Sie die .env jetzt bearbeiten? [j/N]"
     if ($answer -match "^[jJyY]$") {
@@ -43,7 +42,7 @@ if (-not (Test-Path $envFile)) {
     }
 }
 
-# 3. TI_RADAR_DB_PATH prüfen
+# 3. POSTGRES_PASSWORD prüfen
 $envContent = Get-Content $envFile | Where-Object { $_ -notmatch "^\s*#" -and $_ -match "=" }
 $envVars = @{}
 foreach ($line in $envContent) {
@@ -53,17 +52,12 @@ foreach ($line in $envContent) {
     }
 }
 
-$dbPath = $envVars["TI_RADAR_DB_PATH"]
-if ([string]::IsNullOrWhiteSpace($dbPath)) {
-    Write-Host "FEHLER: TI_RADAR_DB_PATH ist nicht gesetzt in .env" -ForegroundColor Red
+$pgPassword = $envVars["POSTGRES_PASSWORD"]
+if ([string]::IsNullOrWhiteSpace($pgPassword)) {
+    Write-Host "FEHLER: POSTGRES_PASSWORD ist nicht gesetzt in .env" -ForegroundColor Red
     exit 1
 }
-
-if (-not (Test-Path $dbPath)) {
-    Write-Host "[INFO] Erstelle Datenbank-Verzeichnis: $dbPath" -ForegroundColor Yellow
-    New-Item -ItemType Directory -Path $dbPath -Force | Out-Null
-}
-Write-Host "[OK] Datenbank-Verzeichnis: $dbPath" -ForegroundColor Green
+Write-Host "[OK] Datenbank-Passwort gesetzt" -ForegroundColor Green
 
 # 4. Docker-Images bauen
 Write-Host "[...] Baue Docker-Images (kann beim ersten Mal mehrere Minuten dauern)..." -ForegroundColor Yellow

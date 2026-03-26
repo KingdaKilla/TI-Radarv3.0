@@ -24,6 +24,7 @@ interface GeographicPanelProps {
   isLoading: boolean;
   error: string | null;
   onDetailClick?: () => void;
+  queryTimeSeconds?: number;
 }
 
 export default function GeographicPanel({
@@ -31,6 +32,7 @@ export default function GeographicPanel({
   isLoading,
   error,
   onDetailClick,
+  queryTimeSeconds,
 }: GeographicPanelProps) {
   const chartCountries = data?.countries
     .filter(c => c.patent_count > 0 || c.project_count > 0)
@@ -47,9 +49,11 @@ export default function GeographicPanel({
     <PanelCard
       title="Geographische Verteilung"
       ucNumber={6}
+      ucKey="geographic"
       isLoading={isLoading}
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
+      queryTimeSeconds={queryTimeSeconds}
     >
       {data && (
         <div className="flex flex-col items-center justify-center gap-4 h-full">

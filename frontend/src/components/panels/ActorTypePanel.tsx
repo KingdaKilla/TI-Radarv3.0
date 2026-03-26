@@ -23,6 +23,7 @@ interface ActorTypePanelProps {
   isLoading: boolean;
   error: string | null;
   onDetailClick?: () => void;
+  queryTimeSeconds?: number;
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -51,6 +52,7 @@ export default function ActorTypePanel({
   isLoading,
   error,
   onDetailClick,
+  queryTimeSeconds,
 }: ActorTypePanelProps) {
   const chartData = data?.type_breakdown.map((entry) => ({
     name: entry.label,
@@ -63,9 +65,11 @@ export default function ActorTypePanel({
     <PanelCard
       title="Akteurs-Typverteilung"
       ucNumber={11}
+      ucKey="actor_type"
       isLoading={isLoading}
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
+      queryTimeSeconds={queryTimeSeconds}
     >
       {data && (
         <div className="flex flex-col gap-4">

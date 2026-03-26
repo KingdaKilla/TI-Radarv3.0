@@ -8,6 +8,8 @@
 import { Euro } from "lucide-react";
 import FundingTreemap from "@/components/charts/FundingTreemap";
 import PanelCard from "./PanelCard";
+import InfoTooltip from "@/components/ui/InfoTooltip";
+import { METRIC_TOOLTIPS } from "@/lib/metric-tooltips";
 import type { FundingPanel as FundingPanelData } from "@/lib/types";
 
 interface FundingPanelProps {
@@ -15,6 +17,7 @@ interface FundingPanelProps {
   isLoading: boolean;
   error: string | null;
   onDetailClick?: () => void;
+  queryTimeSeconds?: number;
 }
 
 function formatCurrency(value: number): string {
@@ -35,14 +38,17 @@ export default function FundingPanel({
   isLoading,
   error,
   onDetailClick,
+  queryTimeSeconds,
 }: FundingPanelProps) {
   return (
     <PanelCard
       title="Förderungsanalyse"
       ucNumber={4}
+      ucKey="funding"
       isLoading={isLoading}
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
+      queryTimeSeconds={queryTimeSeconds}
     >
       {data && (
         <div className="flex flex-col items-center gap-4">
@@ -51,6 +57,7 @@ export default function FundingPanel({
             <span className="badge-success flex items-center gap-1">
               <Euro className="h-3 w-3" aria-hidden="true" />
               Gesamt: {formatCurrency(data.total_funding)}
+              <InfoTooltip text={METRIC_TOOLTIPS.funding_volume} />
             </span>
             <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
               {data.total_projects.toLocaleString("de-DE")} Projekte

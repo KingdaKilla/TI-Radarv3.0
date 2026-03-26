@@ -19,6 +19,8 @@ import {
   ReferenceArea,
 } from "recharts";
 import PanelCard from "./PanelCard";
+import InfoTooltip from "@/components/ui/InfoTooltip";
+import { METRIC_TOOLTIPS } from "@/lib/metric-tooltips";
 import { CHART_COLORS } from "@/lib/chart-colors";
 import type { PatentGrantPanel as PatentGrantPanelData } from "@/lib/types";
 
@@ -28,6 +30,7 @@ interface PatentGrantPanelProps {
   error: string | null;
   onDetailClick?: () => void;
   dataCompleteYear?: number;
+  queryTimeSeconds?: number;
 }
 
 function formatPercent(value: number): string {
@@ -40,6 +43,7 @@ export default function PatentGrantPanel({
   error,
   onDetailClick,
   dataCompleteYear,
+  queryTimeSeconds,
 }: PatentGrantPanelProps) {
   const chartData = data?.year_trend.map((entry) => ({
     ...entry,
@@ -50,9 +54,11 @@ export default function PatentGrantPanel({
     <PanelCard
       title="Erteilungsquoten"
       ucNumber={12}
+      ucKey="patent_grant"
       isLoading={isLoading}
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
+      queryTimeSeconds={queryTimeSeconds}
     >
       {data && (
         <div className="flex flex-col gap-4">
@@ -60,6 +66,7 @@ export default function PatentGrantPanel({
           <div className="flex flex-wrap items-center justify-center gap-2">
             <span className="badge-success">
               Quote: {formatPercent(data.summary.grant_rate)}
+              <InfoTooltip text={METRIC_TOOLTIPS.grant_rate} />
             </span>
             <span className="badge-info">
               {data.summary.avg_time_to_grant_months.toFixed(1)} Mon. bis Erteilung

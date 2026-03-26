@@ -19,6 +19,8 @@ import {
 } from "recharts";
 import clsx from "clsx";
 import PanelCard from "./PanelCard";
+import InfoTooltip from "@/components/ui/InfoTooltip";
+import { METRIC_TOOLTIPS } from "@/lib/metric-tooltips";
 import type { MaturityPanel as MaturityPanelData } from "@/lib/types";
 
 interface MaturityPanelProps {
@@ -26,6 +28,7 @@ interface MaturityPanelProps {
   isLoading: boolean;
   error: string | null;
   onDetailClick?: () => void;
+  queryTimeSeconds?: number;
 }
 
 const PHASE_CONFIG: Record<
@@ -64,6 +67,7 @@ export default function MaturityPanel({
   isLoading,
   error,
   onDetailClick,
+  queryTimeSeconds,
 }: MaturityPanelProps) {
   const phaseInfo = data ? PHASE_CONFIG[data.phase] : null;
 
@@ -71,9 +75,11 @@ export default function MaturityPanel({
     <PanelCard
       title="Reifegrad-Analyse"
       ucNumber={2}
+      ucKey="maturity"
       isLoading={isLoading}
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
+      queryTimeSeconds={queryTimeSeconds}
     >
       {data && phaseInfo && (
         <div className="flex flex-col gap-4">
@@ -84,16 +90,19 @@ export default function MaturityPanel({
               aria-label={`Reifephase: ${phaseInfo.label}`}
             >
               Phase: {phaseInfo.label}
+              <InfoTooltip text={METRIC_TOOLTIPS.phase} />
             </span>
             <span
               className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
               aria-label={`R-Quadrat: ${data.r_squared.toFixed(3)}`}
             >
               R² = {data.r_squared.toFixed(3)}
+              <InfoTooltip text={METRIC_TOOLTIPS.r_squared} />
             </span>
             {data.inflection_year && (
               <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                 Wendepunkt: {data.inflection_year}
+                <InfoTooltip text={METRIC_TOOLTIPS.inflection_year} />
               </span>
             )}
           </div>

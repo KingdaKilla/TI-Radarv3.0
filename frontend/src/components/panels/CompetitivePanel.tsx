@@ -17,6 +17,8 @@ import {
 } from "recharts";
 import clsx from "clsx";
 import PanelCard from "./PanelCard";
+import InfoTooltip from "@/components/ui/InfoTooltip";
+import { METRIC_TOOLTIPS } from "@/lib/metric-tooltips";
 import { CHART_COLORS } from "@/lib/chart-colors";
 import type { CompetitivePanel as CompetitivePanelData } from "@/lib/types";
 
@@ -25,6 +27,7 @@ interface CompetitivePanelProps {
   isLoading: boolean;
   error: string | null;
   onDetailClick?: () => void;
+  queryTimeSeconds?: number;
 }
 
 const CONCENTRATION_LABELS: Record<CompetitivePanelData["concentration"], string> = {
@@ -49,14 +52,17 @@ export default function CompetitivePanel({
   isLoading,
   error,
   onDetailClick,
+  queryTimeSeconds,
 }: CompetitivePanelProps) {
   return (
     <PanelCard
       title="Wettbewerbsanalyse"
       ucNumber={3}
+      ucKey="competitive"
       isLoading={isLoading}
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
+      queryTimeSeconds={queryTimeSeconds}
     >
       {data && (
         <div className="flex flex-col gap-4">
@@ -67,6 +73,7 @@ export default function CompetitivePanel({
               aria-label={`Marktkonzentration: ${CONCENTRATION_LABELS[data.concentration]}`}
             >
               {CONCENTRATION_LABELS[data.concentration]}
+              <InfoTooltip text={METRIC_TOOLTIPS.hhi} />
             </span>
           </div>
 

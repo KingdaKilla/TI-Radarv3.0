@@ -46,8 +46,10 @@ graph TD
 | Komponente | Version | Hinweis |
 |---|---|---|
 | Docker Desktop | >= 4.x | inkl. Docker Compose Plugin |
-| Externes Laufwerk | >= 400 GB | für PostgreSQL-Datenverzeichnis (~300 GB Datenbankgröße + Wachstumspuffer) |
+| Festplattenspeicher | >= 400 GB | Datenbank (~300 GB) + Docker-Images + Wachstumspuffer |
 | EPO API Key | optional | für Live-Patent-Abfragen (kostenlose Registrierung) |
+
+Das gesamte Projekt (Code, Datenbank, Konfiguration) wird an **einem Ort** gespeichert. Ein externes Laufwerk ist nicht mehr erforderlich -- die PostgreSQL-Daten liegen im Docker-Volume am selben Speicherort wie das Repository.
 
 ## Schnellstart
 
@@ -59,20 +61,18 @@ cd TI-Radarv3.0
 # 2. Umgebungskonfiguration erstellen
 cp .env.example .env
 
-# 3. Pflicht-Werte in .env eintragen:
+# 3. Pflicht-Wert in .env eintragen:
 #    - POSTGRES_PASSWORD (sicheres Passwort wählen)
-#    - TI_RADAR_DB_PATH  (z.B. D:/ti-radar-db oder /mnt/external/ti-radar-db)
 
-# 4. Setup ausführen (Docker-Images bauen, Proto-Stubs generieren)
-bash scripts/setup.sh
+# 4. Stack starten (baut Images automatisch beim ersten Mal)
+docker compose -f deploy/docker-compose.yml --env-file .env up -d
 
-# 5. Stack starten
-bash scripts/start.sh
-
-# 6. Im Browser öffnen
+# 5. Im Browser öffnen
 #    Frontend:  http://localhost:3000
 #    API Docs:  http://localhost:8000/docs
 ```
+
+Beim ersten Start wird automatisch das Datenbankschema angelegt und CORDIS-Demodaten geladen. Das System ist sofort nutzbar.
 
 ## Projektstruktur
 

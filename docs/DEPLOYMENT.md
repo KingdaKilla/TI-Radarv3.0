@@ -6,7 +6,7 @@
 |---|---|---|
 | Docker Desktop | >= 4.x | `docker --version` |
 | Docker Compose Plugin | >= 2.x | `docker compose version` |
-| Externes Laufwerk | >= 400 GB | für PostgreSQL-Datenverzeichnis |
+| Festplattenspeicher | >= 400 GB | Datenbank (~300 GB) + Docker-Images + Wachstumspuffer |
 | RAM | >= 16 GB empfohlen | PostgreSQL benötigt 8 GB (konfiguriert) |
 
 ## Schritt-für-Schritt-Setup
@@ -29,7 +29,6 @@ Folgende Werte müssen in `.env` eingetragen werden:
 | Variable | Pflicht | Beschreibung | Beispiel |
 |---|---|---|---|
 | `POSTGRES_PASSWORD` | ja | Datenbank-Passwort | `mein_sicheres_pw` |
-| `TI_RADAR_DB_PATH` | ja | Pfad zum DB-Verzeichnis (externes Laufwerk) | `D:/ti-radar-db` |
 | `EPO_OPS_CONSUMER_KEY` | nein | EPO API Key (für Live-Abfragen) | |
 | `EPO_OPS_CONSUMER_SECRET` | nein | EPO API Secret | |
 | `GRAFANA_ADMIN_PASSWORD` | nein | Grafana-Passwort (nur mit Monitoring-Profil) | `admin` |
@@ -43,17 +42,16 @@ bash scripts/setup.sh
 Das Skript:
 1. Prüft Docker-Installation
 2. Erstellt `.env` falls nicht vorhanden
-3. Prüft `TI_RADAR_DB_PATH`
-4. Generiert Protobuf-Stubs (falls grpcio-tools installiert)
-5. Baut alle Docker-Images
+3. Generiert Protobuf-Stubs (falls grpcio-tools installiert)
+4. Baut alle Docker-Images
 
 ### 4. Stack starten
 
 ```bash
-bash scripts/start.sh
+docker compose -f deploy/docker-compose.yml --env-file .env up -d
 ```
 
-Das Skript prüft, ob das externe Laufwerk angeschlossen ist, und startet alle 18 Services.
+Beim ersten Start werden automatisch das Datenbankschema angelegt und CORDIS-Demodaten geladen.
 
 ### 5. Erreichbarkeit prüfen
 
@@ -64,23 +62,15 @@ Das Skript prüft, ob das externe Laufwerk angeschlossen ist, und startet alle 1
 | API Docs (Debug) | http://localhost:8000/docs |
 | Health Check | http://localhost:8000/health |
 
-## Datenbank auf externem Laufwerk
+## Datenbankspeicher
 
-Die PostgreSQL-Daten liegen standardmäßig auf einem externen Laufwerk. Der Pfad wird über `TI_RADAR_DB_PATH` in `.env` konfiguriert.
+Die PostgreSQL-Daten werden in einem Docker-Volume am Projektstandort gespeichert. Ein externes Laufwerk ist nicht erforderlich.
 
-**Wichtig:**
-- Das Verzeichnis wird beim ersten Start automatisch erstellt
-- Beim Starten muss das externe Laufwerk angeschlossen sein
-- Bei Wechsel des Laufwerksbuchstabens (Windows) muss `TI_RADAR_DB_PATH` angepasst werden
-- Das Datenverzeichnis enthält die komplette PostgreSQL-Instanz (~298 GB)
-
-```bash
-# Beispiel Windows
-TI_RADAR_DB_PATH=D:/ti-radar-db
-
-# Beispiel Linux
-TI_RADAR_DB_PATH=/mnt/external/ti-radar-db
-```
+**Hinweise:**
+- Das Volume wird beim ersten Start automatisch erstellt
+- Die Datenbank belegt ca. 300 GB (mit EPO-Patenten)
+- Ohne EPO-Import (nur CORDIS-Demodaten) ca. 50 MB
+- Backup: `docker compose -f deploy/docker-compose.yml exec db pg_dump -U tip_admin ti_radar > backup.sql`
 
 ## Bulk-Daten-Import (optional)
 
@@ -266,11 +256,13 @@ curl http://localhost:8000/health?deep=true | python -m json.tool
 docker logs ti-radar-uc1 --tail 50
 ```
 
-### Externes Laufwerk nicht erreichbar
+### Datenbank-Volume zurücksetzen
 
-```
-FEHLER: Datenbank-Verzeichnis nicht gefunden: D:/ti-radar-db
-Ist das externe Laufwerk angeschlossen?
+Falls die Datenbank komplett neu aufgesetzt werden soll:
+
+```bash
+docker compose -f deploy/docker-compose.yml --env-file .env down -v
+docker compose -f deploy/docker-compose.yml --env-file .env up -d
 ```
 
-Prüfen, ob das externe Laufwerk gemountet ist und der in `TI_RADAR_DB_PATH` konfigurierte Pfad existiert.
+Das `-v` Flag löscht das Volume. Beim nächsten Start werden Schema und Demodaten neu angelegt.

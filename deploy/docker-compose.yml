@@ -392,8 +392,6 @@ services:
 
 volumes:
   pgdata:
-    external: true
-    name: mvp_v2_pgdata
   prometheus_data:
   grafana_data:
   pgadmin_data:

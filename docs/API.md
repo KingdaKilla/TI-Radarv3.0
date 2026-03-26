@@ -10,6 +10,11 @@ Der Orchestrator stellt eine REST/JSON-API auf Port 8000 bereit. Alle Analyse-En
 | `GET` | `/api/v1/suggestions` | Autocomplete-Vorschläge für das Suchfeld |
 | `GET` | `/health` | Health Check (shallow oder deep) |
 | `GET` | `/metrics` | Prometheus-Metriken (OpenMetrics-Format) |
+| `POST` | `/api/v1/import/epo` | EPO-Patent-Bulk-Import |
+| `POST` | `/api/v1/import/cordis` | CORDIS-Projekt-Import |
+| `POST` | `/api/v1/import/euroscivoc` | EuroSciVoc-Taxonomie-Import |
+| `POST` | `/api/v1/import/refresh-views` | Materialized Views aktualisieren |
+| `GET` | `/api/v1/import/status` | Import-Status abfragen |
 
 ---
 
@@ -254,6 +259,89 @@ ti_radar_grpc_calls_total{uc="landscape",status="success"} 42.0
 ti_radar_grpc_calls_total{uc="landscape",status="timeout"} 1.0
 ...
 ```
+
+---
+
+## Import-Endpunkte
+
+Der Import-Service (`import-svc`) stellt Endpunkte zum Befüllen und Aktualisieren der Datenbank bereit.
+
+### POST /api/v1/import/epo
+
+Startet einen Bulk-Import von EPO-Patentdaten (DOCDB). Die Patente werden geparst und in die `patent_schema`-Tabellen geschrieben.
+
+```bash
+curl -X POST http://localhost:8000/api/v1/import/epo \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <api-key>"
+```
+
+### POST /api/v1/import/cordis
+
+Importiert CORDIS-Projektdaten (EU-Forschungsprojekte) in die `project_schema`-Tabellen.
+
+```bash
+curl -X POST http://localhost:8000/api/v1/import/cordis \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <api-key>"
+```
+
+### POST /api/v1/import/euroscivoc
+
+Importiert die EuroSciVoc-Taxonomie (European Science Vocabulary) für die Klassifikation von Forschungsthemen.
+
+```bash
+curl -X POST http://localhost:8000/api/v1/import/euroscivoc \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <api-key>"
+```
+
+### POST /api/v1/import/refresh-views
+
+Aktualisiert alle Materialized Views in der Datenbank. Dies sollte nach einem Import ausgeführt werden, damit die Analyse-Services auf aktuelle, vorberechnete Daten zugreifen.
+
+```bash
+curl -X POST http://localhost:8000/api/v1/import/refresh-views \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: <api-key>"
+```
+
+### GET /api/v1/import/status
+
+Gibt den aktuellen Import-Status zurück (laufende und abgeschlossene Imports, Anzahl importierter Datensätze, Fehler).
+
+```bash
+curl http://localhost:8000/api/v1/import/status \
+  -H "X-API-Key: <api-key>"
+```
+
+### Auto-Seeding (Demo-Daten)
+
+Beim ersten Datenbankstart werden automatisch CORDIS-Demo-Daten geladen. Das System ist dadurch sofort nach `docker compose up` für Tests und Demos nutzbar, ohne manuelle Imports durchführen zu müssen.
+
+---
+
+## API-Caching
+
+Externe API-Aufrufe (OpenAIRE, Semantic Scholar) werden in der Datenbank gecacht, um Latenz zu reduzieren und die Rate Limits der externen APIs zu schonen.
+
+### Cache-Strategie
+
+Alle externen API-Zugriffe folgen demselben Ablauf:
+
+1. **Cache prüfen** -- Ist ein gültiger (nicht abgelaufener) Cache-Eintrag vorhanden, wird dieser direkt zurückgegeben.
+2. **API aufrufen** -- Kein Cache-Hit: die externe API wird live abgefragt.
+3. **Ergebnis speichern** -- Die API-Antwort wird mit Zeitstempel in der Datenbank persistiert.
+4. **Stale Cache bei API-Ausfall** -- Ist die externe API nicht erreichbar, wird ein abgelaufener Cache-Eintrag als Fallback genutzt (besser veraltete Daten als gar keine).
+
+> **Hinweis:** Die erste Abfrage für eine neue Technologie dauert länger (Live-API-Call), alle Folgeabfragen innerhalb der TTL werden sofort aus dem Cache bedient.
+
+### Cache-Konfiguration
+
+| Datenquelle | TTL | Cache-Tabellen |
+|---|---|---|
+| OpenAIRE (Publikationsdaten) | 7 Tage | `research_schema.openaire_cache` |
+| Semantic Scholar | 30 Tage | `research_schema.papers`, `research_schema.authors`, `research_schema.query_cache` |
 
 ---
 

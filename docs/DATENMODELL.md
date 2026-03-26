@@ -2,14 +2,22 @@
 
 ## Übersicht
 
-TI-Radar nutzt eine einzelne PostgreSQL-17-Instanz mit 6 isolierten Schemas. Die Datenbank enthält ca. 555M Zeilen bei einer Gesamtgröße von ~590 GB. Für Vektorähnlichkeitssuche ist pgvector installiert, für unscharfe Textsuche pg_trgm.
+TI-Radar nutzt eine einzelne PostgreSQL-17-Instanz mit 6 isolierten Schemas. Die Datenbank enthält ca. ~170M Zeilen bei einer Gesamtgröße von ~298 GB. Für Vektorähnlichkeitssuche ist pgvector installiert, für unscharfe Textsuche pg_trgm.
+
+**Größenverteilung nach Schema:**
+- `patent_schema`: 151 GB
+- `cross_schema`: 65 GB (überwiegend document_chunks-Embeddings)
+- `cordis_schema`: 1.7 GB
+- `entity_schema`: 636 MB
+
+**Speicherempfehlung:** >= 400 GB für das PostgreSQL-Datenverzeichnis (inkl. Headroom für Indexe, WAL und temporäre Dateien).
 
 ## Datenquellen
 
 | Quelle | Beschreibung | Volumen | Schema |
 |---|---|---|---|
-| EPO DOCDB | Europäisches Patentamt, weltweite Patentpublikationen | 154.8M Patente | `patent_schema` |
-| CORDIS | EU-Forschungsprojekte (FP7, H2020, Horizon Europe) | 80.5K Projekte, 438K Organisationen, 529K Publikationen | `cordis_schema` |
+| EPO DOCDB | Europäisches Patentamt, weltweite Patentpublikationen | ~156M Patente | `patent_schema` |
+| CORDIS | EU-Forschungsprojekte (FP7, H2020, Horizon Europe) | 80.5K Projekte, 438K Organisationen, 1.15M Publikationen | `cordis_schema` |
 | OpenAIRE | Open-Access-Publikationen | via API | `research_schema` |
 | Semantic Scholar | Zitations- und Autorendaten | Cache-basiert | `research_schema` |
 | GLEIF | Legal Entity Identifier für Akteurs-Matching | Cache | `entity_schema` |
@@ -22,10 +30,10 @@ EPO-Patentdaten und patentspezifische Analysen. Genutzt von: UC2 (Maturity), UC5
 
 | Tabelle | Zeilen | Beschreibung |
 |---|---|---|
-| `patents` | 154.8M | Haupttabelle, range-partitioned nach `publication_year` |
-| `applicants` | 15.5M | Normalisierte Patentanmelder |
-| `patent_applicants` | 147M | N:M-Zuordnung Patent-Anmelder, co-partitioned |
-| `patent_cpc` | 237M | N:M-Zuordnung Patent-CPC-Klasse, co-partitioned |
+| `patents` | ~156M | Haupttabelle, range-partitioned nach `publication_year` |
+| `applicants` | 1.24M | Normalisierte Patentanmelder |
+| `patent_applicants` | 0 (noch nicht befüllt) | N:M-Zuordnung Patent-Anmelder, co-partitioned |
+| `patent_cpc` | 0 (noch nicht befüllt) | N:M-Zuordnung Patent-CPC-Klasse, co-partitioned |
 | `cpc_descriptions` | ~670 | CPC-Subclass-Beschreibungen (Referenzdaten) |
 | `import_metadata` | variabel | Tracking verarbeiteter EPO-DOCDB-ZIP-Dateien |
 
@@ -35,6 +43,8 @@ EPO-Patentdaten und patentspezifische Analysen. Genutzt von: UC2 (Maturity), UC5
 - tsvector-Spalten mit GIN-Index ersetzen SQLite FTS5
 - TEXT[]-Arrays mit GIN-Index für Länder- und CPC-Abfragen
 
+> **Hinweis:** Die Junction-Tabellen `patent_applicants` und `patent_cpc` sind definiert, aber noch nicht befüllt. Nach vollständiger Befüllung würden sie ca. ~40 GB zusätzlichen Speicher belegen.
+
 ### cordis_schema
 
 CORDIS-EU-Forschungsprojektdaten. Genutzt von: UC4 (Funding), UC11 (Actor-Type), UC10 (EuroSciVoc).
@@ -43,7 +53,7 @@ CORDIS-EU-Forschungsprojektdaten. Genutzt von: UC4 (Funding), UC11 (Actor-Type),
 |---|---|---|
 | `projects` | 80.5K | EU-Forschungsprojekte (FP7, H2020, HORIZON) |
 | `organizations` | 438K | Projektbeteiligte mit Typ (HES, PRC, REC, PUB, OTH) |
-| `publications` | 529K | Projektpublikationen mit DOI-Deduplizierung |
+| `publications` | 1.15M | Projektpublikationen mit DOI-Deduplizierung |
 | `euroscivoc` | ~220K | EuroSciVoc-Taxonomie (hierarchisch, self-referencing) |
 | `project_euroscivoc` | variabel | Zuordnung Projekte zu EuroSciVoc-Kategorien |
 | `import_metadata` | variabel | Tracking verarbeiteter CORDIS-Dateien |
@@ -66,7 +76,7 @@ Entity Resolution für quellenübergreifendes Akteurs-Matching (EPO + CORDIS + G
 
 | Tabelle | Zeilen | Beschreibung |
 |---|---|---|
-| `unified_actors` | 129.8K | Vereinheitlichte Akteure mit UUID |
+| `unified_actors` | 983K | Vereinheitlichte Akteure mit UUID |
 | `actor_source_mappings` | variabel | Zuordnung zu Quellsystem-IDs |
 | `gleif_cache` | variabel | GLEIF Legal Entity Identifier Cache |
 | `resolution_runs` | variabel | Audit-Log der Entity-Resolution-Läufe |
@@ -75,7 +85,17 @@ Entity Resolution für quellenübergreifendes Akteurs-Matching (EPO + CORDIS + G
 
 ### cross_schema
 
-Quellenübergreifende Materialized Views für OLAP-Analysen. Genutzt von: UC1 (Landscape), UC3 (Competitive), UC6 (Geographic), UC8 (Temporal).
+Quellenübergreifende Tabellen und Materialized Views für OLAP-Analysen und RAG. Genutzt von: UC1 (Landscape), UC3 (Competitive), UC6 (Geographic), UC8 (Temporal).
+
+#### Tabellen
+
+| Tabelle | Zeilen | Größe | Beschreibung |
+|---|---|---|---|
+| `document_chunks` | 11.9M | 65 GB (davon 61 GB TOAST) | RAG-Dokumentchunks mit Vektor-Embeddings |
+
+**Spalten von `document_chunks`:** `id`, `source`, `source_id`, `chunk_index`, `chunk_text`, `embedding` (vector(1024))
+
+#### Materialized Views
 
 | Materialized View | Beschreibung |
 |---|---|

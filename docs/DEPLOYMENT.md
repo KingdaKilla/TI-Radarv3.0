@@ -6,7 +6,7 @@
 |---|---|---|
 | Docker Desktop | >= 4.x | `docker --version` |
 | Docker Compose Plugin | >= 2.x | `docker compose version` |
-| Externes Laufwerk | >= 600 GB | für PostgreSQL-Datenverzeichnis |
+| Externes Laufwerk | >= 400 GB | für PostgreSQL-Datenverzeichnis |
 | RAM | >= 16 GB empfohlen | PostgreSQL benötigt 8 GB (konfiguriert) |
 
 ## Schritt-für-Schritt-Setup
@@ -14,8 +14,8 @@
 ### 1. Repository klonen
 
 ```bash
-git clone https://github.com/<org>/ti-radar.git
-cd ti-radar
+git clone https://github.com/KingdaKilla/TI-Radarv3.0.git
+cd TI-Radarv3.0
 ```
 
 ### 2. Umgebungskonfiguration erstellen
@@ -72,7 +72,7 @@ Die PostgreSQL-Daten liegen standardmäßig auf einem externen Laufwerk. Der Pfa
 - Das Verzeichnis wird beim ersten Start automatisch erstellt
 - Beim Starten muss das externe Laufwerk angeschlossen sein
 - Bei Wechsel des Laufwerksbuchstabens (Windows) muss `TI_RADAR_DB_PATH` angepasst werden
-- Das Datenverzeichnis enthält die komplette PostgreSQL-Instanz (~590 GB)
+- Das Datenverzeichnis enthält die komplette PostgreSQL-Instanz (~298 GB)
 
 ```bash
 # Beispiel Windows
@@ -102,6 +102,53 @@ Für den Erst-Import der Patent- und CORDIS-Daten stehen Bulk-Import-Pfade zur V
    ```bash
    CORDIS_BULK_PATH=./data/bulk/CORDIS
    ```
+
+## Auto-Seeding (Demo-Daten)
+
+Beim ersten `docker compose up` werden automatisch CORDIS-Demo-Daten geladen. Dies ermöglicht eine funktionsfähige Demo-Umgebung ohne manuellen Import.
+
+| Datensatz | Anzahl |
+|---|---|
+| Projekte | 4.815 |
+| Organisationen | 4.034 |
+| Publikationen | 17.900 |
+| EuroSciVoc-Einträge | 1.062 |
+
+Nach dem Seed-Vorgang werden die Materialized Views automatisch aktualisiert. Der gesamte Prozess läuft im Hintergrund ab und erfordert keinen Benutzereingriff.
+
+## CI/CD & Container Registry
+
+Docker-Images werden über GitHub Actions automatisch gebaut und in der GitHub Container Registry veröffentlicht:
+
+- **Registry:** `ghcr.io/kingdakilla/ti-radar-*`
+- **Trigger:** Versionstags (`v*`), z. B. `v3.0.0`
+- **Nutzung vorgefertigter Images:** Statt lokal zu bauen, können die Images direkt aus GHCR gezogen werden:
+
+```bash
+docker pull ghcr.io/kingdakilla/ti-radar-orchestrator:latest
+docker pull ghcr.io/kingdakilla/ti-radar-frontend:latest
+# ... analog für alle weiteren Services
+```
+
+## Secret Management
+
+| Umgebung | Methode |
+|---|---|
+| Lokale Entwicklung | `.env`-Datei (siehe Abschnitt Umgebungskonfiguration) |
+| CI/CD (GitHub Actions) | GitHub Actions Secrets & Variables (automatisch injiziert) |
+
+Für den produktiven Betrieb werden Secrets ausschließlich über GitHub Actions Secrets verwaltet. Lokale `.env`-Dateien dürfen nicht ins Repository eingecheckt werden (`.gitignore`).
+
+## API-Caching
+
+Externe API-Antworten werden in der Datenbank zwischengespeichert, um Rate-Limits einzuhalten und die Antwortzeiten zu verbessern:
+
+| API | Cache-Tabelle | TTL |
+|---|---|---|
+| OpenAIRE | `research_schema.openaire_cache` | 7 Tage |
+| Semantic Scholar | `research_schema.papers` | 30 Tage |
+
+Abgelaufene Cache-Einträge werden bei der nächsten Abfrage automatisch aktualisiert.
 
 ## Docker Compose Befehle
 

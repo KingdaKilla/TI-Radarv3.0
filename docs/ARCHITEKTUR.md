@@ -2,7 +2,7 @@
 
 ## Systemübersicht
 
-TI-Radar ist als Microservice-Architektur mit 16 Python-Services aufgebaut. Das Next.js-Frontend kommuniziert über REST/JSON mit einem FastAPI-Orchestrator, der Anfragen parallel via gRPC an 12 spezialisierte Use-Case-Services verteilt. Alle Services greifen auf eine gemeinsame PostgreSQL-17-Datenbank zu.
+TI-Radar ist als Microservice-Architektur mit 15 Python-Microservices + 1 Next.js-Frontend (16 Services gesamt) aufgebaut. Das Next.js-Frontend kommuniziert über REST/JSON mit einem FastAPI-Orchestrator, der Anfragen parallel via gRPC an 12 spezialisierte Use-Case-Services verteilt. Alle Services greifen auf eine gemeinsame PostgreSQL-17-Datenbank zu.
 
 ```mermaid
 graph TB
@@ -183,3 +183,18 @@ Der Orchestrator nutzt `asyncio.gather` mit `return_exceptions=True` für parall
 | UC11 | actor-type-svc | Akteurstypen: Unternehmen, Hochschulen, Forschungseinrichtungen |
 | UC12 | patent-grant-svc | Erteilungsanalyse: Time-to-Grant, Erteilungsquoten |
 | UC-C | publication-svc | Publikationskette: CORDIS-Publikationen, Open Access |
+
+## CI/CD-Pipeline
+
+Docker-Images werden über GitHub Actions automatisch gebaut und in die GitHub Container Registry (`ghcr.io/kingdakilla/ti-radar-*`) publiziert. Der Workflow wird durch Versionstags (`v*`) ausgelöst und baut alle Service-Images parallel. Secrets (API-Keys, Datenbank-Passwörter) werden über GitHub Actions Secrets injiziert.
+
+## API-Caching-Schicht
+
+Für externe APIs (OpenAIRE, Semantic Scholar) existiert eine datenbankgestützte Caching-Schicht, um Rate-Limits einzuhalten und Antwortzeiten zu minimieren:
+
+| API | Cache-Tabelle | TTL |
+|---|---|---|
+| OpenAIRE | `research_schema.openaire_cache` | 7 Tage |
+| Semantic Scholar | `research_schema.papers` | 30 Tage |
+
+Bei Cache-Hits wird die gespeicherte Antwort direkt zurückgegeben. Abgelaufene Einträge werden bei der nächsten Abfrage transparent aktualisiert.

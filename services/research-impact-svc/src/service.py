@@ -89,6 +89,7 @@ class ResearchImpactServicer(_get_base_class()):  # type: ignore[misc]
             api_key=self._settings.semantic_scholar_api_key,
             timeout=self._settings.semantic_scholar_timeout_s,
             max_results=self._settings.semantic_scholar_max_results,
+            pool=pool,
         )
 
     async def AnalyzeResearchImpact(

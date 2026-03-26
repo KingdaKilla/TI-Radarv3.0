@@ -4,6 +4,10 @@ Migriert von v1.0 mit folgenden Verbesserungen:
 - Rate-Limit-Handling (HTTP 429) mit exponentiellem Backoff
 - Graceful Degradation: leere Liste bei Fehlern, Warning-Log
 - Modul-Level Token-Cache fuer parallele Year-Requests
+- DB-Caching: Ergebnisse werden in research_schema.openaire_cache
+  persistiert und bei erneutem Aufruf wiederverwendet (TTL 7 Tage).
+  Bei API-Fehler werden auch abgelaufene (stale) Cache-Eintraege
+  als Fallback zurueckgegeben.
 
 Der Adapter zaehlt Publikationen pro Jahr ueber parallele
 Requests gegen die OpenAIRE Search API. Der Gesamtcount
@@ -20,6 +24,7 @@ import json
 import time
 from typing import Any
 
+import asyncpg
 import httpx
 import structlog
 
@@ -48,6 +53,23 @@ _TOKEN_MARGIN_S = 60  # Refresh 60s vor Ablauf
 _MAX_RETRIES = 3
 _BACKOFF_BASE_S = 1.0  # Exponentielles Backoff: 1s, 2s, 4s
 _BACKOFF_FACTOR = 2.0
+
+# ---------------------------------------------------------------------------
+# Cache-Konfiguration
+# ---------------------------------------------------------------------------
+_CACHE_TTL_DAYS = 7
+
+
+def _normalize_query(query: str) -> str:
+    """Query-Key fuer den Cache normalisieren (lowercase, stripped).
+
+    Args:
+        query: Rohtext-Suchbegriff.
+
+    Returns:
+        Normalisierter String fuer eindeutigen Cache-Lookup.
+    """
+    return query.lower().strip()
 
 
 def _token_expiry(token: str) -> float:
@@ -82,6 +104,7 @@ class OpenAIREAdapter:
     - Automatischen Token-Refresh via Refresh-Token
     - Rate-Limit-Handling (HTTP 429) mit exponentiellem Backoff
     - Graceful Degradation: leere Liste bei Gesamtfehler, Warning-Log
+    - DB-Caching mit konfigurierbarem TTL und Stale-Fallback
 
     Wird vom LandscapeServicer als optionale externe Datenquelle genutzt.
     Fehler fuehren nicht zum Abbruch der gesamten Analyse, sondern
@@ -95,6 +118,7 @@ class OpenAIREAdapter:
         access_token: str = "",
         refresh_token: str = "",
         timeout: float = 10.0,
+        pool: asyncpg.Pool | None = None,
     ) -> None:
         """Adapter initialisieren.
 
@@ -105,10 +129,13 @@ class OpenAIREAdapter:
             refresh_token: OpenAIRE Refresh-Token fuer automatische
                 Token-Erneuerung (optional).
             timeout: HTTP-Timeout in Sekunden fuer einzelne Requests.
+            pool: asyncpg Connection Pool fuer DB-Caching (optional).
+                Ohne Pool wird kein Caching durchgefuehrt.
         """
         self._token = access_token
         self._refresh_token = refresh_token
         self._timeout = timeout
+        self._pool = pool
 
     # -----------------------------------------------------------------------
     # Token-Management
@@ -171,13 +198,176 @@ class OpenAIREAdapter:
         # 4. Fallback: altes Token verwenden (ggf. niedrigere Rate-Limits)
 
     # -----------------------------------------------------------------------
+    # DB-Cache-Methoden
+    # -----------------------------------------------------------------------
+
+    async def _read_cache(
+        self, query_key: str, start_year: int, end_year: int, *, allow_stale: bool = False,
+    ) -> list[dict[str, int]] | None:
+        """Gecachte Ergebnisse aus der Datenbank lesen.
+
+        Args:
+            query_key: Normalisierter Suchbegriff.
+            start_year: Erstes Jahr (inklusiv).
+            end_year: Letztes Jahr (inklusiv).
+            allow_stale: Auch abgelaufene Eintraege zurueckgeben (Fallback).
+
+        Returns:
+            Liste von Dicts mit 'year' und 'count', oder None bei Cache-Miss.
+            None wird zurueckgegeben wenn kein Pool vorhanden, bei DB-Fehler,
+            oder wenn nicht alle Jahre im Cache vorhanden sind.
+        """
+        if self._pool is None:
+            return None
+
+        try:
+            stale_clause = "" if allow_stale else "AND stale_after > now()"
+            sql = f"""
+                SELECT year, count
+                FROM research_schema.openaire_cache
+                WHERE query_key = $1
+                  AND year >= $2
+                  AND year <= $3
+                  {stale_clause}
+                ORDER BY year
+            """
+            async with self._pool.acquire() as conn:
+                rows = await conn.fetch(sql, query_key, start_year, end_year)
+
+            if not rows:
+                return None
+
+            # Vollstaendigkeitspruefung: alle Jahre muessen vorhanden sein
+            expected_years = set(range(start_year, end_year + 1))
+            cached_years = {row["year"] for row in rows}
+            if not expected_years.issubset(cached_years):
+                logger.debug(
+                    "openaire_cache_unvollstaendig",
+                    query_key=query_key,
+                    erwartet=len(expected_years),
+                    vorhanden=len(cached_years),
+                    fehlend=sorted(expected_years - cached_years),
+                )
+                return None
+
+            return [{"year": row["year"], "count": row["count"]} for row in rows]
+
+        except Exception as exc:
+            logger.warning("openaire_cache_lesefehler", fehler=str(exc))
+            return None
+
+    async def _write_cache(
+        self, query_key: str, yearly: list[dict[str, int]],
+    ) -> None:
+        """Ergebnisse in die Datenbank-Cache-Tabelle schreiben (Upsert).
+
+        Verwendet ON CONFLICT ... DO UPDATE, damit wiederholte Abfragen
+        den Cache aktualisieren statt Duplikate zu erzeugen.
+
+        Args:
+            query_key: Normalisierter Suchbegriff.
+            yearly: Liste von Dicts mit 'year' und 'count'.
+        """
+        if self._pool is None or not yearly:
+            return
+
+        sql = """
+            INSERT INTO research_schema.openaire_cache (query_key, year, count, fetched_at, stale_after)
+            VALUES ($1, $2, $3, now(), now() + INTERVAL '7 days')
+            ON CONFLICT (query_key, year) DO UPDATE
+                SET count = EXCLUDED.count,
+                    fetched_at = EXCLUDED.fetched_at,
+                    stale_after = EXCLUDED.stale_after
+        """
+
+        try:
+            async with self._pool.acquire() as conn:
+                # Batch-Upsert in einer Transaktion
+                async with conn.transaction():
+                    for entry in yearly:
+                        await conn.execute(
+                            sql, query_key, entry["year"], entry["count"],
+                        )
+            logger.debug(
+                "openaire_cache_geschrieben",
+                query_key=query_key,
+                eintraege=len(yearly),
+            )
+        except Exception as exc:
+            # Cache-Schreibfehler sind nicht kritisch — nur loggen
+            logger.warning("openaire_cache_schreibfehler", fehler=str(exc))
+
+    # -----------------------------------------------------------------------
     # Oeffentliche API
     # -----------------------------------------------------------------------
 
     async def count_by_year(
         self, query: str, start_year: int, end_year: int,
     ) -> list[dict[str, int]]:
-        """Publikationen pro Jahr zaehlen (parallele API-Abfragen).
+        """Publikationen pro Jahr zaehlen (mit DB-Cache).
+
+        Ablauf:
+        1. Cache-Lookup: frische Eintraege (stale_after > now()) pruefen
+        2. Cache-Hit: gecachte Ergebnisse direkt zurueckgeben
+        3. Cache-Miss: API-Abfrage durchfuehren, Ergebnisse cachen
+        4. API-Fehler: stale Cache als Fallback verwenden, sonst leere Liste
+
+        Args:
+            query: Freitext-Suchbegriff (z.B. 'quantum computing').
+            start_year: Erstes Jahr (inklusiv).
+            end_year: Letztes Jahr (inklusiv).
+
+        Returns:
+            Liste von Dicts mit 'year' (int) und 'count' (int),
+            sortiert aufsteigend nach Jahr. Leere Liste bei Fehler.
+        """
+        query_key = _normalize_query(query)
+
+        # 1. Cache-Lookup (nur frische Eintraege)
+        cached = await self._read_cache(query_key, start_year, end_year)
+        if cached is not None:
+            logger.info(
+                "openaire_cache_hit",
+                query_key=query_key,
+                start_year=start_year,
+                end_year=end_year,
+                eintraege=len(cached),
+            )
+            return cached
+
+        logger.info(
+            "openaire_cache_miss",
+            query_key=query_key,
+            start_year=start_year,
+            end_year=end_year,
+        )
+
+        # 2. API-Abfrage
+        yearly = await self._fetch_from_api(query, start_year, end_year)
+
+        if yearly:
+            # 3. Ergebnisse in Cache schreiben
+            await self._write_cache(query_key, yearly)
+            return yearly
+
+        # 4. API-Fehler: stale Cache als Fallback
+        stale = await self._read_cache(
+            query_key, start_year, end_year, allow_stale=True,
+        )
+        if stale is not None:
+            logger.warning(
+                "openaire_stale_cache_fallback",
+                query_key=query_key,
+                eintraege=len(stale),
+            )
+            return stale
+
+        return []
+
+    async def _fetch_from_api(
+        self, query: str, start_year: int, end_year: int,
+    ) -> list[dict[str, int]]:
+        """Publikationen pro Jahr von der OpenAIRE API abrufen (ohne Cache).
 
         Sendet pro Jahr einen Request an die OpenAIRE Search API
         und extrahiert den Gesamt-Count aus dem JSON-Response-Header.

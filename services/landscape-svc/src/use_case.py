@@ -300,17 +300,29 @@ def _get(item: Any, key: str) -> Any:
     return getattr(item, key) if hasattr(item, key) else item[key]
 
 
-def _safe_cagr(yearly_data: list, periods: int) -> float:
+def _safe_cagr(
+    yearly_data: list,
+    periods: int,
+    data_complete_year: int = 2024,
+) -> float:
     """CAGR sicher berechnen — gibt 0.0 bei unzureichenden Daten zurueck.
 
     Nimmt den ersten und letzten Datenpunkt (nicht den Zeitraum-Anfang/Ende),
     um CAGR nur ueber tatsaechlich vorhandene Daten zu berechnen.
     Unterstuetzt sowohl dict- als auch Attribut-basierte Eintraege.
+
+    Daten nach data_complete_year werden ignoriert, da unvollstaendige
+    Jahrgaenge die CAGR-Berechnung nach unten verzerren wuerden.
     """
     if not yearly_data or periods <= 0:
         return 0.0
 
-    sorted_data = sorted(yearly_data, key=lambda x: _get(x, "year"))
+    # Nur vollstaendige Jahre beruecksichtigen
+    filtered = [x for x in yearly_data if _get(x, "year") <= data_complete_year]
+    if not filtered:
+        return 0.0
+
+    sorted_data = sorted(filtered, key=lambda x: _get(x, "year"))
     first_val = _get(sorted_data[0], "count")
     last_val = _get(sorted_data[-1], "count")
     actual_periods = _get(sorted_data[-1], "year") - _get(sorted_data[0], "year")
@@ -325,15 +337,20 @@ def _compute_funding_cagr(
     funding_by_year: dict[int, float],
     start_year: int,
     end_year: int,
+    data_complete_year: int = 2024,
 ) -> float:
     """CAGR fuer Foerdervolumen berechnen.
 
     Ueberspringt Jahre ohne Foerderung am Anfang/Ende.
+    Daten nach data_complete_year werden ignoriert (unvollstaendig).
     """
     if not funding_by_year:
         return 0.0
 
-    sorted_years = sorted(y for y, v in funding_by_year.items() if v > 0)
+    sorted_years = sorted(
+        y for y, v in funding_by_year.items()
+        if v > 0 and y <= data_complete_year
+    )
     if len(sorted_years) < 2:
         return 0.0
 

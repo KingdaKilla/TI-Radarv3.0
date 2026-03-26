@@ -132,14 +132,14 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             rows = await self._repo.count_families_by_year(
                 technology, start_year=start_year, end_year=end_year,
             )
-            patent_years = {r["year"]: r["count"] for r in rows}
+            patent_years = {r.year: r.count for r in rows}
 
             # Fallback auf count_by_year falls keine family_id vorhanden
             if not patent_years:
                 rows = await self._repo.count_patents_by_year(
                     technology, start_year=start_year, end_year=end_year,
                 )
-                patent_years = {r["year"]: r["count"] for r in rows}
+                patent_years = {r.year: r.count for r in rows}
         except Exception as e:
             logger.warning("patent_abfrage_fehlgeschlagen", fehler=str(e))
             warnings.append({

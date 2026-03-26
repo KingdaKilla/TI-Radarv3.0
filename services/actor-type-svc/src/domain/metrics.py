@@ -1,4 +1,5 @@
-"""UC11-spezifische Metriken: Akteur-Typ-Verteilung.
+"""
+UC11-spezifische Metriken: Akteur-Typ-Verteilung.
 
 CORDIS activity_type Codes:
 - HES: Higher Education Establishment

@@ -62,14 +62,12 @@ class LandscapeServicer(_get_base_class()):  # type: ignore[misc]
         self._pool = pool
         self._settings = settings or Settings()
         repo = LandscapeRepository(pool)
-        openaire: OpenAIREAdapter | None = None
-        if self._settings.openaire_access_token or self._settings.openaire_refresh_token:
-            openaire = OpenAIREAdapter(
-                access_token=self._settings.openaire_access_token,
-                refresh_token=self._settings.openaire_refresh_token,
-                timeout=self._settings.openaire_timeout_s,
-                pool=pool,
-            )
+        openaire = OpenAIREAdapter(
+            access_token=self._settings.openaire_access_token,
+            refresh_token=self._settings.openaire_refresh_token,
+            timeout=self._settings.openaire_timeout_s,
+            pool=pool,
+        )
         self._use_case = AnalyzeLandscape(repo=repo, openaire=openaire)
 
     async def AnalyzeLandscape(

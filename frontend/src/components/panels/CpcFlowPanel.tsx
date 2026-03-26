@@ -8,6 +8,8 @@
 
 import PanelCard from "./PanelCard";
 import CpcHeatmap from "@/components/charts/CpcHeatmap";
+import InfoTooltip from "@/components/ui/InfoTooltip";
+import { METRIC_TOOLTIPS } from "@/lib/metric-tooltips";
 import type { CpcFlowPanel as CpcFlowPanelData } from "@/lib/types";
 
 interface CpcFlowPanelProps {
@@ -15,6 +17,7 @@ interface CpcFlowPanelProps {
   isLoading: boolean;
   error: string | null;
   onDetailClick?: () => void;
+  queryTimeSeconds?: number;
 }
 
 export default function CpcFlowPanel({
@@ -22,6 +25,7 @@ export default function CpcFlowPanel({
   isLoading,
   error,
   onDetailClick,
+  queryTimeSeconds,
 }: CpcFlowPanelProps) {
   const hasChordData =
     data && data.nodes.length >= 2 && data.links.length > 0;
@@ -30,9 +34,11 @@ export default function CpcFlowPanel({
     <PanelCard
       title="Cross-Tech Intelligence"
       ucNumber={5}
+      ucKey="cpc_flow"
       isLoading={isLoading}
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
+      queryTimeSeconds={queryTimeSeconds}
     >
       {data && (
         <div className="flex flex-col gap-4">
@@ -47,6 +53,7 @@ export default function CpcFlowPanel({
               return avg > 0 ? (
                 <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                   &#216; Jaccard: {avg.toFixed(3)}
+                  <InfoTooltip text={METRIC_TOOLTIPS.jaccard} />
                 </span>
               ) : null;
             })()}

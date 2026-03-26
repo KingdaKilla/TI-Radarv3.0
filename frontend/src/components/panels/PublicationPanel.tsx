@@ -23,6 +23,7 @@ interface PublicationPanelProps {
   isLoading: boolean;
   error: string | null;
   onDetailClick?: () => void;
+  queryTimeSeconds?: number;
 }
 
 export default function PublicationPanel({
@@ -30,15 +31,18 @@ export default function PublicationPanel({
   isLoading,
   error,
   onDetailClick,
+  queryTimeSeconds,
 }: PublicationPanelProps) {
   return (
     <PanelCard
       title="Publikations-Impact"
       ucNumber={13}
       ucLabel="C"
+      ucKey="publication"
       isLoading={isLoading}
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
+      queryTimeSeconds={queryTimeSeconds}
     >
       {data && (
         <div className="flex flex-col gap-4">

@@ -27,6 +27,7 @@ interface ResearchImpactPanelProps {
   error: string | null;
   onDetailClick?: () => void;
   dataCompleteYear?: number;
+  queryTimeSeconds?: number;
 }
 
 export default function ResearchImpactPanel({
@@ -35,14 +36,17 @@ export default function ResearchImpactPanel({
   error,
   onDetailClick,
   dataCompleteYear,
+  queryTimeSeconds,
 }: ResearchImpactPanelProps) {
   return (
     <PanelCard
       title="Forschungsimpact"
       ucNumber={7}
+      ucKey="research_impact"
       isLoading={isLoading}
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
+      queryTimeSeconds={queryTimeSeconds}
     >
       {data && (
         <div className="flex flex-col gap-4">

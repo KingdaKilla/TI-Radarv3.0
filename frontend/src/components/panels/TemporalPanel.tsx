@@ -28,6 +28,7 @@ interface TemporalPanelProps {
   error: string | null;
   onDetailClick?: () => void;
   dataCompleteYear?: number;
+  queryTimeSeconds?: number;
 }
 
 export default function TemporalPanel({
@@ -36,14 +37,17 @@ export default function TemporalPanel({
   error,
   onDetailClick,
   dataCompleteYear,
+  queryTimeSeconds,
 }: TemporalPanelProps) {
   return (
     <PanelCard
       title="Zeitliche Entwicklung"
       ucNumber={8}
+      ucKey="temporal"
       isLoading={isLoading}
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
+      queryTimeSeconds={queryTimeSeconds}
     >
       {data && (
         <div className="flex flex-col items-center justify-center gap-4 h-full">

@@ -18,6 +18,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import PanelCard from "./PanelCard";
+import InfoTooltip from "@/components/ui/InfoTooltip";
+import { METRIC_TOOLTIPS } from "@/lib/metric-tooltips";
 import { CHART_COLORS } from "@/lib/chart-colors";
 import type { LandscapePanel as LandscapePanelData } from "@/lib/types";
 
@@ -27,6 +29,7 @@ interface LandscapePanelProps {
   error: string | null;
   onDetailClick?: () => void;
   dataCompleteYear?: number;
+  queryTimeSeconds?: number;
 }
 
 function formatCAGR(value: number): string {
@@ -39,6 +42,7 @@ export default function LandscapePanel({
   error,
   onDetailClick,
   dataCompleteYear,
+  queryTimeSeconds,
 }: LandscapePanelProps) {
   const growthData =
     data && data.time_series.length > 1
@@ -67,9 +71,11 @@ export default function LandscapePanel({
     <PanelCard
       title="Technologie-Landschaft"
       ucNumber={1}
+      ucKey="landscape"
       isLoading={isLoading}
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
+      queryTimeSeconds={queryTimeSeconds}
     >
       {data && (
         <div className="flex flex-col gap-4">
@@ -77,9 +83,11 @@ export default function LandscapePanel({
           <div className="flex flex-wrap items-center justify-center gap-2">
             <span className="badge-patents" aria-label="Patent-CAGR">
               Patente CAGR: {formatCAGR(data.cagr_patents)}
+              <InfoTooltip text={METRIC_TOOLTIPS.cagr} />
             </span>
             <span className="badge-projects" aria-label="Projekt-CAGR">
               Projekte CAGR: {formatCAGR(data.cagr_projects)}
+              <InfoTooltip text={METRIC_TOOLTIPS.cagr} />
             </span>
             {data.total_publications > 0 && (
               <span className="badge-publications" aria-label="Publikationen-CAGR">

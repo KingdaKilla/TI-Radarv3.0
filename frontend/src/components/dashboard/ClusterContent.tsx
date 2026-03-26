@@ -66,6 +66,7 @@ export default function ClusterContent({
   function renderPanel(ucKey: UseCaseKey) {
     const err = panelError(ucKey);
     const detail = onDetailClick ? () => onDetailClick(ucKey) : undefined;
+    const qts = data.metadata?.query_time_seconds;
 
     switch (ucKey) {
       case "landscape":
@@ -76,6 +77,7 @@ export default function ClusterContent({
             error={err}
             onDetailClick={detail}
             dataCompleteYear={dataCompleteYear}
+            queryTimeSeconds={qts}
           />
         );
       case "maturity":
@@ -85,6 +87,7 @@ export default function ClusterContent({
             isLoading={false}
             error={err}
             onDetailClick={detail}
+            queryTimeSeconds={qts}
           />
         );
       case "cpc_flow":
@@ -94,6 +97,7 @@ export default function ClusterContent({
             isLoading={false}
             error={err}
             onDetailClick={detail}
+            queryTimeSeconds={qts}
           />
         );
       case "competitive":
@@ -103,6 +107,7 @@ export default function ClusterContent({
             isLoading={false}
             error={err}
             onDetailClick={detail}
+            queryTimeSeconds={qts}
           />
         );
       case "temporal":
@@ -113,6 +118,7 @@ export default function ClusterContent({
             error={err}
             onDetailClick={detail}
             dataCompleteYear={dataCompleteYear}
+            queryTimeSeconds={qts}
           />
         );
       case "actor_type":
@@ -122,6 +128,7 @@ export default function ClusterContent({
             isLoading={false}
             error={err}
             onDetailClick={detail}
+            queryTimeSeconds={qts}
           />
         );
       case "funding":
@@ -131,6 +138,7 @@ export default function ClusterContent({
             isLoading={false}
             error={err}
             onDetailClick={detail}
+            queryTimeSeconds={qts}
           />
         );
       case "research_impact":
@@ -141,6 +149,7 @@ export default function ClusterContent({
             error={err}
             onDetailClick={detail}
             dataCompleteYear={dataCompleteYear}
+            queryTimeSeconds={qts}
           />
         );
       case "publication":
@@ -150,6 +159,7 @@ export default function ClusterContent({
             isLoading={false}
             error={err}
             onDetailClick={detail}
+            queryTimeSeconds={qts}
           />
         );
       case "geographic":
@@ -159,6 +169,7 @@ export default function ClusterContent({
             isLoading={false}
             error={err}
             onDetailClick={detail}
+            queryTimeSeconds={qts}
           />
         );
       case "tech_cluster":
@@ -168,6 +179,7 @@ export default function ClusterContent({
             isLoading={false}
             error={err}
             onDetailClick={detail}
+            queryTimeSeconds={qts}
           />
         );
       case "euroscivoc":
@@ -177,6 +189,7 @@ export default function ClusterContent({
             isLoading={false}
             error={err}
             onDetailClick={detail}
+            queryTimeSeconds={qts}
           />
         );
       case "patent_grant":
@@ -187,6 +200,7 @@ export default function ClusterContent({
             error={err}
             onDetailClick={detail}
             dataCompleteYear={dataCompleteYear}
+            queryTimeSeconds={qts}
           />
         );
       default:

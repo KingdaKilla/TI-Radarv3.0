@@ -25,6 +25,7 @@ interface TechClusterPanelProps {
   isLoading: boolean;
   error: string | null;
   onDetailClick?: () => void;
+  queryTimeSeconds?: number;
 }
 
 const CLUSTER_COLORS = PALETTE.slice(0, 5);
@@ -79,6 +80,7 @@ export default function TechClusterPanel({
   isLoading,
   error,
   onDetailClick,
+  queryTimeSeconds,
 }: TechClusterPanelProps) {
   const topClusters = data?.clusters.slice(0, 5) ?? [];
   const radarData = data ? buildRadarData(topClusters) : [];
@@ -87,9 +89,11 @@ export default function TechClusterPanel({
     <PanelCard
       title="Technologie-Cluster"
       ucNumber={9}
+      ucKey="tech_cluster"
       isLoading={isLoading}
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
+      queryTimeSeconds={queryTimeSeconds}
     >
       {data && (
         <div className="flex flex-col gap-4">

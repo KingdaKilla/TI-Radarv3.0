@@ -8,6 +8,10 @@
 
 import { AlertTriangle, Loader2, Maximize2 } from "lucide-react";
 import type { ReactNode } from "react";
+import type { UseCaseKey } from "@/lib/types";
+import ExplainabilityBar from "@/components/ui/ExplainabilityBar";
+import { DATA_SOURCES } from "@/lib/data-sources";
+import { METHODOLOGY_TOOLTIPS } from "@/lib/methodology-tooltips";
 
 interface PanelCardProps {
   title: string;
@@ -18,6 +22,9 @@ interface PanelCardProps {
   children: ReactNode;
   className?: string;
   onDetailClick?: () => void;
+  ucKey?: UseCaseKey;
+  queryTimeSeconds?: number;
+  warnings?: string[];
 }
 
 export default function PanelCard({
@@ -29,6 +36,9 @@ export default function PanelCard({
   children,
   className = "",
   onDetailClick,
+  ucKey,
+  queryTimeSeconds,
+  warnings,
 }: PanelCardProps) {
   return (
     <section
@@ -114,6 +124,19 @@ export default function PanelCard({
           children
         )}
       </div>
+
+      {/* Explainability / Transparency Footer */}
+      {ucKey && !isLoading && !error && (
+        <div className="mt-auto px-4 pb-4">
+          <ExplainabilityBar
+            dataSources={DATA_SOURCES[ucKey].split(" · ")}
+            queryTimeSeconds={queryTimeSeconds ?? 0}
+            methodology={METHODOLOGY_TOOLTIPS[ucKey]}
+            deterministic={true}
+            warnings={warnings}
+          />
+        </div>
+      )}
     </section>
   );
 }

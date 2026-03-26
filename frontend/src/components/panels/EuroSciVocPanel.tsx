@@ -24,6 +24,7 @@ interface EuroSciVocPanelProps {
   isLoading: boolean;
   error: string | null;
   onDetailClick?: () => void;
+  queryTimeSeconds?: number;
 }
 
 function formatPercent(value: number): string {
@@ -35,6 +36,7 @@ export default function EuroSciVocPanel({
   isLoading,
   error,
   onDetailClick,
+  queryTimeSeconds,
 }: EuroSciVocPanelProps) {
   const chartData = data?.fields_of_science.map((f) => ({
     ...f,
@@ -45,9 +47,11 @@ export default function EuroSciVocPanel({
     <PanelCard
       title="Wissenschaftsdisziplinen"
       ucNumber={10}
+      ucKey="euroscivoc"
       isLoading={isLoading}
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
+      queryTimeSeconds={queryTimeSeconds}
     >
       {data && (
         <div className="flex flex-col gap-4">

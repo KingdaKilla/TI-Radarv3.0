@@ -51,3 +51,24 @@ export function downloadCsv(
   document.body.removeChild(anchor);
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Exportiert ein DOM-Element als PNG-Bild via html2canvas.
+ */
+export async function exportChartAsPng(
+  element: HTMLElement,
+  filename: string
+): Promise<void> {
+  const { default: html2canvas } = await import("html2canvas");
+  const canvas = await html2canvas(element, {
+    backgroundColor: null,
+    scale: 2,
+  });
+  const url = canvas.toDataURL("image/png");
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename.endsWith(".png") ? filename : `${filename}.png`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+}

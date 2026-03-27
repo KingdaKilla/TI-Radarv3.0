@@ -164,12 +164,14 @@ class TechClusterServicer(_get_base_class()):  # type: ignore[misc]
             cagr_val = 0.0
             yearly = section_year_counts.get(section, {})
             if yearly:
-                sorted_years = sorted(yearly.keys())
+                sorted_years = sorted(y for y in yearly.keys() if y <= 2024)
                 if len(sorted_years) >= 2:
                     first_val = float(yearly[sorted_years[0]])
                     last_val = float(yearly[sorted_years[-1]])
                     n_periods = sorted_years[-1] - sorted_years[0]
-                    cagr_val = cagr(first_val, last_val, n_periods)
+                    # cagr() returns percentage (e.g. 12.5 for 12.5%);
+                    # frontend expects fraction (0.125), so divide by 100
+                    cagr_val = cagr(first_val, last_val, n_periods) / 100.0
 
             clusters.append({
                 "cluster_id": idx,
@@ -179,7 +181,7 @@ class TechClusterServicer(_get_base_class()):  # type: ignore[misc]
                 "patent_count": patents_in_cluster,
                 "density": round(density_val, 4),
                 "coherence": round(coherence_val, 4),
-                "cagr": round(cagr_val, 2),
+                "cagr": round(cagr_val, 4),
             })
 
         total_actors = len({str(e["actor"]) for e in actor_cpc_data})

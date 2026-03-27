@@ -8,6 +8,7 @@ aus CORDIS-Projekten.
 from __future__ import annotations
 
 import asyncio
+import math
 import time
 from datetime import datetime, timezone
 from typing import Any, cast
@@ -127,6 +128,58 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
         # Baum bauen
         tree_roots = build_discipline_tree(disciplines)
 
+        # --- CAGR pro Feld aus Trenddaten berechnen ---
+        # Aggregiere Trenddaten: pro discipline_id -> {year: count}
+        disc_year_counts: dict[str, dict[int, int]] = {}
+        for t in trend:
+            did = str(t.get("discipline_id", ""))
+            if not did:
+                continue
+            yr = int(t["year"])
+            cnt = int(t.get("publication_count", 0))
+            if did not in disc_year_counts:
+                disc_year_counts[did] = {}
+            disc_year_counts[did][yr] = disc_year_counts[did].get(yr, 0) + cnt
+
+        # Fuer FIELD-level: Aufsummiere alle Kinder-Disziplinen
+        # Disziplinen mit parent_id == field_id gehoeren zum Feld
+        field_ids = {str(f["id"]) for f in fields}
+        field_year_counts: dict[str, dict[int, int]] = {fid: {} for fid in field_ids}
+
+        for d in disciplines:
+            did = str(d["id"])
+            parent = str(d.get("parent_id", ""))
+            # Direkte Treffer (Feld selbst)
+            if did in field_ids and did in disc_year_counts:
+                for yr, cnt in disc_year_counts[did].items():
+                    field_year_counts[did][yr] = field_year_counts[did].get(yr, 0) + cnt
+            # Kinder zuordnen (parent_id zeigt auf ein Feld)
+            if parent in field_ids and did in disc_year_counts:
+                for yr, cnt in disc_year_counts[did].items():
+                    field_year_counts[parent][yr] = field_year_counts[parent].get(yr, 0) + cnt
+
+        def _compute_field_cagr(yearly: dict[int, int]) -> float:
+            """CAGR fuer ein Feld aus jaehrlichen Projektzahlen."""
+            if len(yearly) < 2:
+                return 0.0
+            sorted_years = sorted(yearly.keys())
+            # Nur vollstaendige Datenjahre (<=2024)
+            sorted_years = [y for y in sorted_years if y <= 2024]
+            if len(sorted_years) < 2:
+                return 0.0
+            first_val = float(yearly[sorted_years[0]])
+            last_val = float(yearly[sorted_years[-1]])
+            n_periods = sorted_years[-1] - sorted_years[0]
+            if n_periods <= 0 or first_val <= 0 or last_val <= 0:
+                return 0.0
+            return (math.pow(last_val / first_val, 1.0 / n_periods) - 1.0)
+
+        # CAGR pro Feld berechnen und an fields anhaengen
+        for f in fields:
+            fid = str(f["id"])
+            yearly = field_year_counts.get(fid, {})
+            f["cagr"] = _compute_field_cagr(yearly)
+
         if disciplines:
             data_sources.append({"name": "CORDIS EuroSciVoc (PostgreSQL)", "type": "PROJECT", "record_count": total_mapped})
 
@@ -144,9 +197,30 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
 
     def _build_response(self, **kwargs: Any) -> Any:
         if uc10_euroscivoc_pb2 is None or common_pb2 is None:
+            # Fuer jedes FIELD-level Disziplin zaehle Unterdisziplinen
+            field_ids = {str(f["id"]) for f in kwargs["fields"]}
+            sub_field_counts: dict[str, int] = {fid: 0 for fid in field_ids}
+            for d in kwargs["disciplines"]:
+                parent = str(d.get("parent_id", ""))
+                if parent in sub_field_counts:
+                    sub_field_counts[parent] += 1
+
+            fields_of_science = [
+                {
+                    "id": str(f["id"]),
+                    "label": str(f.get("label", "")),
+                    "total_publications": 0,
+                    "total_projects": int(f.get("project_count", 0)),
+                    "share": float(f.get("share", 0.0)),
+                    "active_sub_fields": sub_field_counts.get(str(f["id"]), 0),
+                    "cagr": float(f.get("cagr", 0.0)),
+                }
+                for f in kwargs["fields"]
+            ]
+
             return {
                 "disciplines": kwargs["disciplines"],
-                "fields_of_science": kwargs["fields"],
+                "fields_of_science": fields_of_science,
                 "disciplinary_links": kwargs["links"],
                 "discipline_trend": kwargs["trend"],
                 "interdisciplinarity": {
@@ -211,9 +285,32 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
             is_interdisciplinary=kwargs["is_interdisciplinary"],
         )
 
+        # --- FieldOfScience mit CAGR ---
+        # Fuer jedes FIELD-level Disziplin zaehle Unterdisziplinen
+        field_ids = {str(f["id"]) for f in kwargs["fields"]}
+        sub_field_counts: dict[str, int] = {fid: 0 for fid in field_ids}
+        for d in kwargs["disciplines"]:
+            parent = str(d.get("parent_id", ""))
+            if parent in sub_field_counts:
+                sub_field_counts[parent] += 1
+
+        pb_fields = [
+            uc10_euroscivoc_pb2.FieldOfScience(
+                id=str(f["id"]),
+                label=str(f.get("label", "")),
+                total_publications=0,
+                total_projects=int(f.get("project_count", 0)),
+                share=float(f.get("share", 0.0)),
+                active_sub_fields=sub_field_counts.get(str(f["id"]), 0),
+                cagr=float(f.get("cagr", 0.0)),
+            )
+            for f in kwargs["fields"]
+        ]
+
         return uc10_euroscivoc_pb2.EuroSciVocResponse(
             disciplines=pb_disciplines, disciplinary_links=pb_links,
             discipline_trend=pb_trend, interdisciplinarity=pb_interdisciplinarity,
+            fields_of_science=pb_fields,
             total_mapped_publications=kwargs["total_mapped"], metadata=metadata,
         )
 

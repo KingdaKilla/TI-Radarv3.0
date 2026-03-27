@@ -292,6 +292,7 @@ def fit_gompertz(
 
         return {
             "L": round(sat_fit, 2),
+            "b": round(b_fit, 6),
             "k": round(k_fit, 6),
             "x0": round(x0_fit, 2),
             "r_squared": round(r_squared, 4),

@@ -298,19 +298,29 @@ def merge_country_data(
     Akzeptiert sowohl dict- als auch Attribut-basierte Eintraege (duck typing).
     """
 
+    # Bekannte Aliase auf ISO 3166-1 alpha-2 normalisieren
+    _COUNTRY_ALIASES: dict[str, str] = {
+        "UK": "GB",  # CORDIS nutzt UK, EPO nutzt GB
+        "EL": "GR",  # CORDIS nutzt EL fuer Griechenland
+    }
+
     def _get(item: Any, key: str) -> Any:
         return getattr(item, key) if hasattr(item, key) else item[key]
+
+    def _normalize(code: str) -> str:
+        code = code.strip().upper()
+        return _COUNTRY_ALIASES.get(code, code)
 
     data: dict[str, dict[str, int]] = {}
 
     for entry in patent_countries:
-        code = str(_get(entry, "country"))
+        code = _normalize(str(_get(entry, "country")))
         if code not in data:
             data[code] = {"patents": 0, "projects": 0}
         data[code]["patents"] = int(_get(entry, "count"))
 
     for entry in cordis_countries:
-        code = str(_get(entry, "country"))
+        code = _normalize(str(_get(entry, "country")))
         if code not in data:
             data[code] = {"patents": 0, "projects": 0}
         data[code]["projects"] = int(_get(entry, "count"))

@@ -58,7 +58,7 @@ export default function EuroSciVocPanel({
           {/* Badges */}
           <div className="flex flex-wrap items-center justify-center gap-2">
             <span className="badge-info">
-              {data.interdisciplinarity.active_fields} Felder
+              {data.interdisciplinarity.active_fields} {data.interdisciplinarity.active_fields === 1 ? "Feld" : "Felder"}
             </span>
             <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
               {data.total_mapped_publications.toLocaleString("de-DE")} Projekte

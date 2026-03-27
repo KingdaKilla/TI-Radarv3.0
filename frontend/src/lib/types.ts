@@ -61,6 +61,7 @@ export interface MaturityPanel {
   aicc_selected: number;
   aicc_alternative: number;
   delta_aicc: number;
+  confidence: number;
 }
 
 export interface CompetitorEntry {

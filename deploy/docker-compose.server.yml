@@ -1,15 +1,13 @@
 # ============================================================
-# TI-Radar — Docker Compose (16 Services)
+# TI-Radar — Docker Compose SERVER (GHCR Images)
 # ============================================================
-# Nutzung (vom Projekt-Root aus):
-#   docker compose -f deploy/docker-compose.yml up -d
-#   docker compose -f deploy/docker-compose.yml --profile monitoring up
+# Nutzung auf dem Server:
+#   docker compose --env-file .env -f deploy/docker-compose.server.yml up -d
+#
+# Voraussetzung: .env mit GHCR_OWNER (GitHub-User/Org) und IMAGE_TAG
 # ============================================================
 
 x-uc-service: &uc-service-defaults
-  build:
-    context: ..
-    dockerfile: services/uc-service.Dockerfile
   restart: unless-stopped
   depends_on:
     db:
@@ -33,16 +31,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ../database/sql/001_extensions.sql:/docker-entrypoint-initdb.d/001_extensions.sql
-      - ../database/sql/002_schema.sql:/docker-entrypoint-initdb.d/002_schema.sql
-      - ../database/sql/003_postgresql_tuning.sql:/docker-entrypoint-initdb.d/003_postgresql_tuning.sql
-      - ../database/sql/004_query_translation.sql:/docker-entrypoint-initdb.d/004_query_translation.sql
-      - ../database/sql/005_import_log.sql:/docker-entrypoint-initdb.d/005_import_log.sql
-      - ../database/sql/006_citation_schema.sql:/docker-entrypoint-initdb.d/006_citation_schema.sql
-      - ../database/sql/007_publication_role.sql:/docker-entrypoint-initdb.d/007_publication_role.sql
-      - ../database/sql/008_seed_cordis.sh:/docker-entrypoint-initdb.d/008_seed_cordis.sh
-      - ../database/mock_data:/docker-entrypoint-initdb.d/mock_data:ro
-      - ../database/sql/009_api_cache.sql:/docker-entrypoint-initdb.d/009_api_cache.sql
     shm_size: 1g
     ports:
       - "127.0.0.1:5432:5432"
@@ -61,9 +49,7 @@ services:
 
   # ==================== Orchestrator ====================
   orchestrator-svc:
-    build:
-      context: ..
-      dockerfile: services/orchestrator-svc/Dockerfile
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-orchestrator-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-orchestrator
     ports:
       - "8000:8000"
@@ -96,15 +82,11 @@ services:
       - backend
       - frontend
 
-  # ==================== UC-Services (12x) ====================
+  # ==================== UC-Services (13x) ====================
   landscape-svc:
     <<: *uc-service-defaults
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-landscape-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-uc1
-    build:
-      context: ..
-      dockerfile: services/uc-service.Dockerfile
-      args:
-        SERVICE_DIR: services/landscape-svc
     environment:
       DATABASE_URL: postgresql://svc_landscape:${SVC_LANDSCAPE_PW:-svc_landscape_pw}@db:5432/${POSTGRES_DB:-ti_radar}
       OPENAIRE_ACCESS_TOKEN: ${OPENAIRE_ACCESS_TOKEN:-}
@@ -113,48 +95,32 @@ services:
 
   maturity-svc:
     <<: *uc-service-defaults
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-maturity-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-uc2
-    build:
-      context: ..
-      dockerfile: services/uc-service.Dockerfile
-      args:
-        SERVICE_DIR: services/maturity-svc
     environment:
       DATABASE_URL: postgresql://svc_maturity:${SVC_MATURITY_PW:-svc_maturity_pw}@db:5432/${POSTGRES_DB:-ti_radar}
       SERVICE_PORT: "50051"
 
   competitive-svc:
     <<: *uc-service-defaults
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-competitive-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-uc3
-    build:
-      context: ..
-      dockerfile: services/uc-service.Dockerfile
-      args:
-        SERVICE_DIR: services/competitive-svc
     environment:
       DATABASE_URL: postgresql://svc_competitive:${SVC_COMPETITIVE_PW:-svc_competitive_pw}@db:5432/${POSTGRES_DB:-ti_radar}
       SERVICE_PORT: "50051"
 
   funding-svc:
     <<: *uc-service-defaults
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-funding-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-uc4
-    build:
-      context: ..
-      dockerfile: services/uc-service.Dockerfile
-      args:
-        SERVICE_DIR: services/funding-svc
     environment:
       DATABASE_URL: postgresql://svc_funding:${SVC_FUNDING_PW:-svc_funding_pw}@db:5432/${POSTGRES_DB:-ti_radar}
       SERVICE_PORT: "50051"
 
   cpc-flow-svc:
     <<: *uc-service-defaults
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-cpc-flow-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-uc5
-    build:
-      context: ..
-      dockerfile: services/uc-service.Dockerfile
-      args:
-        SERVICE_DIR: services/cpc-flow-svc
     environment:
       DATABASE_URL: postgresql://svc_cpc_flow:${SVC_CPC_FLOW_PW:-svc_cpc_flow_pw}@db:5432/${POSTGRES_DB:-ti_radar}
       SERVICE_PORT: "50051"
@@ -166,24 +132,16 @@ services:
 
   geographic-svc:
     <<: *uc-service-defaults
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-geographic-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-uc6
-    build:
-      context: ..
-      dockerfile: services/uc-service.Dockerfile
-      args:
-        SERVICE_DIR: services/geographic-svc
     environment:
       DATABASE_URL: postgresql://svc_geographic:${SVC_GEOGRAPHIC_PW:-svc_geographic_pw}@db:5432/${POSTGRES_DB:-ti_radar}
       SERVICE_PORT: "50051"
 
   research-impact-svc:
     <<: *uc-service-defaults
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-research-impact-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-uc7
-    build:
-      context: ..
-      dockerfile: services/uc-service.Dockerfile
-      args:
-        SERVICE_DIR: services/research-impact-svc
     environment:
       DATABASE_URL: postgresql://svc_research_impact:${SVC_RESEARCH_IMPACT_PW:-svc_research_impact_pw}@db:5432/${POSTGRES_DB:-ti_radar}
       SEMANTIC_SCHOLAR_API_KEY: ${SEMANTIC_SCHOLAR_API_KEY:-}
@@ -191,81 +149,55 @@ services:
 
   temporal-svc:
     <<: *uc-service-defaults
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-temporal-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-uc8
-    build:
-      context: ..
-      dockerfile: services/uc-service.Dockerfile
-      args:
-        SERVICE_DIR: services/temporal-svc
     environment:
       DATABASE_URL: postgresql://svc_temporal:${SVC_TEMPORAL_PW:-svc_temporal_pw}@db:5432/${POSTGRES_DB:-ti_radar}
       SERVICE_PORT: "50051"
 
   tech-cluster-svc:
     <<: *uc-service-defaults
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-tech-cluster-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-uc9
-    build:
-      context: ..
-      dockerfile: services/uc-service.Dockerfile
-      args:
-        SERVICE_DIR: services/tech-cluster-svc
     environment:
       DATABASE_URL: postgresql://svc_tech_cluster:${SVC_TECH_CLUSTER_PW:-svc_tech_cluster_pw}@db:5432/${POSTGRES_DB:-ti_radar}
       SERVICE_PORT: "50051"
 
   actor-type-svc:
     <<: *uc-service-defaults
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-actor-type-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-uc11
-    build:
-      context: ..
-      dockerfile: services/uc-service.Dockerfile
-      args:
-        SERVICE_DIR: services/actor-type-svc
     environment:
       DATABASE_URL: postgresql://svc_actor_type:${SVC_ACTOR_TYPE_PW:-svc_actor_type_pw}@db:5432/${POSTGRES_DB:-ti_radar}
       SERVICE_PORT: "50051"
 
   patent-grant-svc:
     <<: *uc-service-defaults
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-patent-grant-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-uc12
-    build:
-      context: ..
-      dockerfile: services/uc-service.Dockerfile
-      args:
-        SERVICE_DIR: services/patent-grant-svc
     environment:
       DATABASE_URL: postgresql://svc_patent_grant:${SVC_PATENT_GRANT_PW:-svc_patent_grant_pw}@db:5432/${POSTGRES_DB:-ti_radar}
       SERVICE_PORT: "50051"
 
   euroscivoc-svc:
     <<: *uc-service-defaults
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-euroscivoc-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-uc10
-    build:
-      context: ..
-      dockerfile: services/uc-service.Dockerfile
-      args:
-        SERVICE_DIR: services/euroscivoc-svc
     environment:
       DATABASE_URL: postgresql://svc_euroscivoc:${SVC_EUROSCIVOC_PW:-svc_euroscivoc_pw}@db:5432/${POSTGRES_DB:-ti_radar}
       SERVICE_PORT: "50051"
 
   publication-svc:
     <<: *uc-service-defaults
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-publication-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-uc-c
-    build:
-      context: ..
-      dockerfile: services/uc-service.Dockerfile
-      args:
-        SERVICE_DIR: services/publication-svc
     environment:
       DATABASE_URL: postgresql://svc_publication:${SVC_PUBLICATION_PW:-svc_publication_pw}@db:5432/${POSTGRES_DB:-ti_radar}
       SERVICE_PORT: "50051"
 
   # ==================== Import-Service ====================
   import-svc:
-    build:
-      context: ..
-      dockerfile: services/import-svc/Dockerfile
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-import-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-import
     volumes:
       - "${EPO_BULK_PATH:-./.empty}:/data/bulk/EPO:ro"
@@ -288,9 +220,7 @@ services:
 
   # ==================== Export-Service ====================
   export-svc:
-    build:
-      context: ..
-      dockerfile: services/export-svc/Dockerfile
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-export-svc:${IMAGE_TAG:-latest}
     container_name: ti-radar-export
     depends_on:
       db:
@@ -311,17 +241,13 @@ services:
 
   # ==================== Frontend ====================
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-frontend:${IMAGE_TAG:-latest}
     container_name: ti-radar-frontend
     ports:
       - "3000:3000"
     depends_on:
       - orchestrator-svc
     environment:
-      # NEXT_PUBLIC_* wird zur Build-Zeit gebacken (Dockerfile ARG).
-      # Runtime-Wert hier für SSR Server-Side Calls:
       INTERNAL_API_URL: http://orchestrator-svc:8000
     restart: unless-stopped
     deploy:
@@ -332,71 +258,8 @@ services:
     networks:
       - frontend
 
-  # ==================== Monitoring ====================
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: ti-radar-prometheus
-    volumes:
-      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro  # relativ zu deploy/
-      - prometheus_data:/prometheus
-    ports:
-      - "127.0.0.1:9090:9090"
-    restart: unless-stopped
-    profiles:
-      - monitoring
-      - full
-    networks:
-      - backend
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: ti-radar-grafana
-    volumes:
-      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro       # relativ zu deploy/
-      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro     # relativ zu deploy/
-      - grafana_data:/var/lib/grafana
-    ports:
-      - "127.0.0.1:3001:3000"
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
-    depends_on:
-      - prometheus
-    restart: unless-stopped
-    profiles:
-      - monitoring
-      - full
-    networks:
-      - backend
-
-  # ==================== pgAdmin ====================
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: ti-radar-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@ti-radar.local}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
-      PGADMIN_LISTEN_PORT: 5050
-    ports:
-      - "127.0.0.1:5050:5050"
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: unless-stopped
-    profiles:
-      - monitoring
-      - full
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    networks:
-      - backend
-
 volumes:
   pgdata:
-    external: true
-    name: mvp_v2_pgdata
-  prometheus_data:
-  grafana_data:
-  pgadmin_data:
 
 networks:
   backend:

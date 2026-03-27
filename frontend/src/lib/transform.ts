@@ -88,7 +88,7 @@ function transformLandscape(raw: any): LandscapePanel | null {
  * Backend shape:
  *   s_curve_data: [{year, cumulative, fitted, annual_count}]
  *   phase, r_squared, maturity_percent, cagr
- *   model_parameters: {saturation}
+ *   model_parameters: {carrying_capacity, growth_rate, inflection_year}
  *   fitted_on, aicc_selected, aicc_alternative, delta_aicc
  *   data_complete_year
  *
@@ -134,21 +134,12 @@ function transformMaturity(raw: any): MaturityPanel | null {
       }))
     : [];
 
-  // Derive inflection year from the S-curve fitted data:
-  // the inflection point is where saturation / 2 is reached.
-  const saturation = num(raw.model_parameters?.saturation);
-  let inflectionYear: number | null = null;
-  if (saturation > 0 && sCurveData.length > 0) {
-    const halfSat = saturation / 2;
-    const closest = sCurveData.reduce(
-      (best: any, pt: any) =>
-        Math.abs(pt.fitted - halfSat) < Math.abs(best.fitted - halfSat)
-          ? pt
-          : best,
-      sCurveData[0]
-    );
-    inflectionYear = closest.year ?? null;
-  }
+  // Read saturation (carrying_capacity) and inflection_year from model_parameters.
+  // Protobuf field name is "carrying_capacity", not "saturation".
+  const saturation = num(raw.model_parameters?.carrying_capacity);
+  // Inflection year comes directly from the logistic model parameters (x0).
+  const rawInflection = num(raw.model_parameters?.inflection_year);
+  const inflectionYear: number | null = rawInflection > 0 ? Math.round(rawInflection) : null;
 
   return {
     s_curve_data: sCurveData,
@@ -164,6 +155,7 @@ function transformMaturity(raw: any): MaturityPanel | null {
     aicc_selected: num(raw.aicc_selected),
     aicc_alternative: num(raw.aicc_alternative),
     delta_aicc: num(raw.delta_aicc),
+    confidence: num(raw.confidence?.confidence_level),
   };
 }
 

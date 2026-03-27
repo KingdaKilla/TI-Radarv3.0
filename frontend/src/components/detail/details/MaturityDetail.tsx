@@ -184,6 +184,13 @@ export default function MaturityDetail({ data }: MaturityDetailProps) {
           value={`${(data.cagr * 100).toFixed(1)}%`}
           trend={data.cagr > 0 ? "up" : data.cagr < 0 ? "down" : "neutral"}
         />
+        {data.confidence > 0 && (
+          <MetricCard
+            label="Konfidenz"
+            value={`${Math.round(data.confidence * 100)}%`}
+            unit={data.confidence >= 0.8 ? "Hoch" : data.confidence >= 0.5 ? "Mittel" : "Niedrig"}
+          />
+        )}
       </div>
 
       {/* ── Sektion 2: S-Kurve ── */}

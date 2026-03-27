@@ -53,17 +53,19 @@ export default function TemporalPanel({
         <div className="flex flex-col items-center justify-center gap-4 h-full">
           {/* Badges */}
           {data.entrant_trend.length > 0 && (() => {
+            // Use multi-year net change for trend label (last 3 years or all available)
+            const recentYears = data.entrant_trend.slice(-3);
+            const netRecent = recentYears.reduce((s, p) => s + p.new_entrants - p.exited_actors, 0);
             const last = data.entrant_trend[data.entrant_trend.length - 1];
-            const net = last.new_entrants - last.exited_actors;
-            const trend = net > 0 ? "Wachsend" : net < 0 ? "Schrumpfend" : "Stabil";
-            const trendClass = net > 0 ? "badge-success" : net < 0 ? "badge-error" : "badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+            const trend = netRecent > 0 ? "Wachsend" : netRecent < 0 ? "Schrumpfend" : "Stabil";
+            const trendClass = netRecent > 0 ? "badge-success" : netRecent < 0 ? "badge-error" : "badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
             return (
               <div className="flex flex-wrap items-center justify-center gap-2">
                 <span className="badge-info">
                   {last.total_active.toLocaleString("de-DE")} Akteure
                 </span>
                 <span className={trendClass}>
-                  {trend} ({net > 0 ? "+" : ""}{net.toLocaleString("de-DE")})
+                  {trend} ({netRecent > 0 ? "+" : ""}{netRecent.toLocaleString("de-DE")} netto)
                 </span>
               </div>
             );

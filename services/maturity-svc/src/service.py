@@ -164,7 +164,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         # EPO-Bulk-Daten vollstaendig bis August 2025,
         # CORDIS mit 1-2 Jahren Verzoegerung.
         # S-Curve-Fit nur auf vollstaendige Jahre anwenden.
-        data_complete_year = 2024
+        data_complete_year = 2025
 
         if end_year > data_complete_year:
             warnings.append({
@@ -382,7 +382,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         warnings: list[dict[str, str]],
         request_id: str,
         processing_time_ms: int,
-        data_complete_year: int = 2024,
+        data_complete_year: int = 2025,
         aicc_selected: float = 0.0,
         aicc_alternative: float = 0.0,
         delta_aicc: float = 0.0,
@@ -538,7 +538,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         warnings: list[dict[str, str]],
         request_id: str,
         processing_time_ms: int,
-        data_complete_year: int = 2024,
+        data_complete_year: int = 2025,
         aicc_selected: float = 0.0,
         aicc_alternative: float = 0.0,
         delta_aicc: float = 0.0,

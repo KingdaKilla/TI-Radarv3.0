@@ -126,7 +126,7 @@ function trendOf(v: number): "up" | "down" | "neutral" {
 /* ── Komponente ── */
 
 export default function FundingDetail({ data }: FundingDetailProps) {
-  const dataCompleteYear = 2024;
+  const dataCompleteYear = 2025;
 
   const avgPerProject =
     data.total_projects > 0 ? data.total_funding / data.total_projects : 0;

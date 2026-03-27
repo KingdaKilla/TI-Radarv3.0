@@ -29,7 +29,7 @@ interface PatentGrantDetailProps {
 }
 
 export default function PatentGrantDetail({ data }: PatentGrantDetailProps) {
-  const dataCompleteYear = 2024;
+  const dataCompleteYear = 2025;
 
   const chartData = data.year_trend.map((entry) => ({
     ...entry,

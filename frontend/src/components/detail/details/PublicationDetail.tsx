@@ -28,7 +28,7 @@ interface PublicationDetailProps {
 }
 
 export default function PublicationDetail({ data }: PublicationDetailProps) {
-  const dataCompleteYear = 2024;
+  const dataCompleteYear = 2025;
 
   /* ── Chart data: publication trend ── */
   const trendData = data.pub_trend.map((entry) => ({

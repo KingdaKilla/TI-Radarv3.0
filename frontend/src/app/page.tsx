@@ -40,7 +40,7 @@ export default function DashboardPage() {
   const panelLoading = isLoading || isFetching;
 
   /** Datenvollstaendigkeit: ab welchem Jahr sind Daten moeglicherweise unvollstaendig */
-  const dataCompleteYear = data?.maturity?.data_complete_year ?? 2024;
+  const dataCompleteYear = data?.maturity?.data_complete_year ?? 2025;
 
   /** Build cluster data from radar response */
   const clusterData = useMemo(

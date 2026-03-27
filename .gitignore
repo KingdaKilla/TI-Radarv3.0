@@ -39,3 +39,7 @@ desktop.ini
 coverage*.xml
 htmlcov/
 .coverage
+
+# Screenshots (Playwright)
+screenshots/
+*.png

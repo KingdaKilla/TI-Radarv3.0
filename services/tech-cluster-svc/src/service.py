@@ -164,7 +164,7 @@ class TechClusterServicer(_get_base_class()):  # type: ignore[misc]
             cagr_val = 0.0
             yearly = section_year_counts.get(section, {})
             if yearly:
-                sorted_years = sorted(y for y in yearly.keys() if y <= 2024)
+                sorted_years = sorted(y for y in yearly.keys() if y <= 2025)
                 if len(sorted_years) >= 2:
                     first_val = float(yearly[sorted_years[0]])
                     last_val = float(yearly[sorted_years[-1]])

@@ -163,8 +163,8 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
             if len(yearly) < 2:
                 return 0.0
             sorted_years = sorted(yearly.keys())
-            # Nur vollstaendige Datenjahre (<=2024)
-            sorted_years = [y for y in sorted_years if y <= 2024]
+            # Nur vollstaendige Datenjahre (<=2025)
+            sorted_years = [y for y in sorted_years if y <= 2025]
             if len(sorted_years) < 2:
                 return 0.0
             first_val = float(yearly[sorted_years[0]])

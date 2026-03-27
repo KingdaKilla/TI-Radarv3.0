@@ -29,7 +29,7 @@ interface TemporalDetailProps {
 }
 
 export default function TemporalDetail({ data }: TemporalDetailProps) {
-  const dataCompleteYear = 2024;
+  const dataCompleteYear = 2025;
 
   const latestYear =
     data.entrant_trend.length > 0

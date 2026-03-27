@@ -303,7 +303,7 @@ def _get(item: Any, key: str) -> Any:
 def _safe_cagr(
     yearly_data: list,
     periods: int,
-    data_complete_year: int = 2024,
+    data_complete_year: int = 2025,
 ) -> float:
     """CAGR sicher berechnen — gibt 0.0 bei unzureichenden Daten zurueck.
 
@@ -337,7 +337,7 @@ def _compute_funding_cagr(
     funding_by_year: dict[int, float],
     start_year: int,
     end_year: int,
-    data_complete_year: int = 2024,
+    data_complete_year: int = 2025,
 ) -> float:
     """CAGR fuer Foerdervolumen berechnen.
 

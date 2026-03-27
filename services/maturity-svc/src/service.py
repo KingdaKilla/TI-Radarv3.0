@@ -18,6 +18,8 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
+import numpy as np
+
 import asyncpg
 import structlog
 
@@ -40,7 +42,7 @@ except ImportError:
 
 # --- Shared Domain Metriken ---
 from shared.domain.metrics import cagr, classify_maturity_phase, detect_decline, s_curve_confidence
-from shared.domain.scurve import fit_best_model
+from shared.domain.scurve import fit_best_model, logistic_function, gompertz_function, richards_function
 
 from src.config import Settings
 from src.infrastructure.repository import MaturityRepository
@@ -226,9 +228,10 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         r_sq = 0.0
         fitted_on = "patents"
         s_curve_fitted: list[dict[str, Any]] = []
+        conf = 0.0
         confidence_lower = 0.0
         confidence_upper = 0.0
-        confidence_level = 0.95
+        confidence_level = 0.0
         years_to_next_phase = 0
         aicc_selected = 0.0
         aicc_alternative = 0.0
@@ -243,6 +246,23 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             s_curve_fitted = s_curve_result["fitted_values"]
             fitted_on = s_curve_result.get("model", "Logistic").lower()
 
+            # Extrapolate fitted values for years beyond data_complete_year
+            fitted_year_set = {fv["year"] for fv in s_curve_fitted}
+            extra_years = [y for y in all_years if y not in fitted_year_set]
+            if extra_years:
+                x_extra = np.array(extra_years, dtype=np.float64)
+                model_name = s_curve_result.get("model", "Logistic")
+                if model_name == "Gompertz":
+                    b_param = s_curve_result.get("b", 5.0)
+                    extrapolated = gompertz_function(x_extra, sat_level, b_param, growth_rate_k, inflection)
+                elif model_name == "Richards":
+                    m_param = s_curve_result.get("m", 1.0)
+                    extrapolated = richards_function(x_extra, sat_level, growth_rate_k, inflection, m_param)
+                else:
+                    extrapolated = logistic_function(x_extra, sat_level, growth_rate_k, inflection)
+                for i, yr in enumerate(extra_years):
+                    s_curve_fitted.append({"year": yr, "fitted": round(float(extrapolated[i]), 1)})
+
             # AICc-Werte (Modellselektion nach Burnham & Anderson 2002)
             raw_aicc = s_curve_result.get("aicc", 0.0)
             aicc_selected = raw_aicc if isinstance(raw_aicc, (int, float)) and math.isfinite(raw_aicc) else 0.0
@@ -252,6 +272,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
 
             # Gewichtete Konfidenz
             conf = s_curve_confidence(r_sq, len(all_years), cumulative[-1] if cumulative else 0)
+            confidence_level = conf
 
             # Phase via maturity_percent (Gao et al. 2013)
             phase_en, _phase_de, _ = classify_maturity_phase(
@@ -270,6 +291,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         else:
             # Fallback: Heuristik
             phase_en, _phase_de, conf = classify_maturity_phase(combined)
+            confidence_level = conf
             if cumulative and cumulative[-1] > 0 and cumulative[-1] >= min_patents:
                 warnings.append({
                     "message": "S-Curve-Fit fehlgeschlagen — Fallback auf Heuristik",

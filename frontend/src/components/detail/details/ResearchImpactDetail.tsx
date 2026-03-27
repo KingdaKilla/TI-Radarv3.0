@@ -47,8 +47,8 @@ export default function ResearchImpactDetail({ data }: ResearchImpactDetailProps
     ? data.top_institutions[0]
     : null;
 
-  /* Datenvollständigkeit: 2024 grau hinterlegen */
-  const dataCompleteYear = 2024;
+  /* Datenvollständigkeit: Semantic Scholar hat 2024 vollständig (Stand 2026) */
+  const dataCompleteYear = 2025;
   const lastYear = ct.length > 0 ? ct[ct.length - 1].year : 0;
 
   /* Lookup-Map für Tooltip */
@@ -180,7 +180,7 @@ export default function ResearchImpactDetail({ data }: ResearchImpactDetailProps
                 name="total_citations"
               />
 
-              {lastYear >= dataCompleteYear && (
+              {lastYear > dataCompleteYear && (
                 <ReferenceArea
                   x1={dataCompleteYear}
                   x2={lastYear}

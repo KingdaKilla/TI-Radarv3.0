@@ -78,10 +78,10 @@ def landscape_result_to_proto(
     cpc_entries = []
     total_for_share = result.total_patents or 1
     for cpc in result.top_cpc:
-        cpc_count = int(cpc.get("count", 0))
+        cpc_count = int(cpc.count if hasattr(cpc, "count") else cpc.get("count", 0))
         cpc_entries.append(uc1_landscape_pb2.CpcCodeCount(
-            code=str(cpc.get("code", "")),
-            description=str(cpc.get("description", "")),
+            code=str(cpc.code if hasattr(cpc, "code") else cpc.get("code", "")),
+            description=str(cpc.description if hasattr(cpc, "description") else cpc.get("description", "")),
             count=cpc_count,
             share=cpc_count / total_for_share,
         ))

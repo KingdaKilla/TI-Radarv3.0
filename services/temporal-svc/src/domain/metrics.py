@@ -207,10 +207,41 @@ def compute_dynamics_summary(
     else:
         median_lifespan = 0.0
 
+    # --- Aufkommende / Abnehmende Themen (Akteur-basiert) ---
+    # Akteure, die erst in den letzten 2 Jahren aufgetaucht sind => "emerging"
+    # Akteure, die in den letzten 2 Jahren verschwunden sind => "declining"
+    emerging: list[str] = []
+    declining: list[str] = []
+    if sorted_years := sorted(actors_by_year.keys()):
+        recent_cutoff = sorted_years[-1] - 1  # last 2 years
+        early_cutoff = sorted_years[-1] - 2   # years before that
+
+        for actor_name, years_list in all_actors.items():
+            min_y = min(years_list)
+            max_y = max(years_list)
+            if min_y >= recent_cutoff and len(years_list) >= 1:
+                # Actor appeared only recently
+                emerging.append(actor_name)
+            elif max_y <= early_cutoff and len(years_list) >= 2:
+                # Actor was active before but disappeared
+                declining.append(actor_name)
+
+        # Sort by activity count descending, keep top 10
+        emerging_set = set(emerging)
+        declining_set = set(declining)
+        emerging_counts = {a: sum(actors_by_year.get(y, {}).get(a, 0) for y in yrs)
+                          for a, yrs in all_actors.items() if a in emerging_set}
+        declining_counts = {a: sum(actors_by_year.get(y, {}).get(a, 0) for y in yrs)
+                           for a, yrs in all_actors.items() if a in declining_set}
+        emerging = sorted(emerging, key=lambda a: emerging_counts.get(a, 0), reverse=True)[:10]
+        declining = sorted(declining, key=lambda a: declining_counts.get(a, 0), reverse=True)[:10]
+
     return {
         "total_actors": total,
         "persistent_count": persistent,
         "one_timer_count": one_timers,
         "avg_lifespan_years": round(avg_lifespan, 2),
         "median_lifespan_years": round(median_lifespan, 2),
+        "emerging": emerging,
+        "declining": declining,
     }

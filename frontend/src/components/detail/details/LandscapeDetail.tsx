@@ -45,13 +45,8 @@ export default function LandscapeDetail({ data, dataCompleteYear }: LandscapeDet
   const ts = data.time_series;
   const hasPub = data.total_publications > 0;
 
-  // --- #6: Publikationen CAGR berechnen ---
-  const firstPub = ts.find((p) => p.publications > 0);
-  const lastPub = [...ts].reverse().find((p) => p.publications > 0);
-  const pubCagr =
-    firstPub && lastPub && firstPub !== lastPub && firstPub.publications > 0
-      ? Math.pow(lastPub.publications / firstPub.publications, 1 / (lastPub.year - firstPub.year)) - 1
-      : 0;
+  // --- #6: Publikationen CAGR aus Backend verwenden (gefiltert auf <= data_complete_year) ---
+  const pubCagr = data.cagr_publications;
 
   // --- #5: Berechnete Insights ---
   const totalActivity = data.total_patents + data.total_projects + data.total_publications;

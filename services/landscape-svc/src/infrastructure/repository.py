@@ -258,12 +258,12 @@ class LandscapeRepository:
         idx = 2
 
         if start_year is not None:
-            conditions.append(f"pc.pub_year >= ${idx}")
+            conditions.append(f"p.publication_year >= ${idx}")
             params.append(start_year)
             idx += 1
 
         if end_year is not None:
-            conditions.append(f"pc.pub_year <= ${idx}")
+            conditions.append(f"p.publication_year <= ${idx}")
             params.append(end_year)
             idx += 1
 
@@ -271,17 +271,27 @@ class LandscapeRepository:
         params.append(limit)
         limit_idx = idx
 
+        # Fallback: wenn patent_cpc leer ist, direkt aus patents.cpc_codes lesen.
+        # JOIN auf cpc_descriptions mit laengstem Praefix-Match (exact -> kuerzer).
         sql = f"""
-            SELECT pc.cpc_code AS code,
-                   COALESCE(cd.description_en, '') AS description,
-                   COUNT(DISTINCT pc.patent_id) AS count
-            FROM patent_schema.patents p
-            JOIN patent_schema.patent_cpc pc
-                ON pc.patent_id = p.id AND pc.pub_year = p.publication_year
-            LEFT JOIN patent_schema.cpc_descriptions cd
-                ON cd.code = pc.cpc_code
+            SELECT cpc.code,
+                   COALESCE(cd_exact.description_en,
+                            cd_prefix.description_en, '') AS description,
+                   COUNT(DISTINCT p.id) AS count
+            FROM patent_schema.patents p,
+                 LATERAL unnest(p.cpc_codes) AS cpc(code)
+            LEFT JOIN patent_schema.cpc_descriptions cd_exact
+                ON cd_exact.code = cpc.code
+            LEFT JOIN LATERAL (
+                SELECT description_en FROM patent_schema.cpc_descriptions
+                WHERE cpc.code LIKE code || '%'
+                ORDER BY length(code) DESC
+                LIMIT 1
+            ) cd_prefix ON cd_exact.code IS NULL
             WHERE {where}
-            GROUP BY pc.cpc_code, cd.description_en
+              AND p.cpc_codes IS NOT NULL
+              AND array_length(p.cpc_codes, 1) > 0
+            GROUP BY cpc.code, COALESCE(cd_exact.description_en, cd_prefix.description_en, '')
             ORDER BY count DESC
             LIMIT ${limit_idx}
         """

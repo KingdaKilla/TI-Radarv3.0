@@ -51,6 +51,10 @@ class ResearchImpactRepository:
         """
         # Build a tsquery from the technology search term.
         # plainto_tsquery handles multi-word terms safely.
+        # Filter to research-relevant activity types:
+        #   HES = Higher Education, REC = Research Organisation, PRC = Private Company
+        # Excludes PUB (Public Body) and OTH (Other) which include
+        # media outlets, government agencies, etc.
         sql = """
             SELECT o.name,
                    o.country,
@@ -61,6 +65,7 @@ class ResearchImpactRepository:
             WHERE p.search_vector @@ plainto_tsquery('english', $1)
               AND o.name IS NOT NULL
               AND o.name != ''
+              AND o.activity_type IN ('HES', 'REC', 'PRC')
             GROUP BY o.name, o.country, o.activity_type
             ORDER BY project_count DESC
             LIMIT $2

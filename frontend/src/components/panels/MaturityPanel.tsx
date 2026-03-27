@@ -105,6 +105,14 @@ export default function MaturityPanel({
                 <InfoTooltip text={METRIC_TOOLTIPS.inflection_year} />
               </span>
             )}
+            {data.confidence > 0 && (
+              <span
+                className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                aria-label={`Konfidenz: ${Math.round(data.confidence * 100)}%`}
+              >
+                Konfidenz: {Math.round(data.confidence * 100)}%
+              </span>
+            )}
           </div>
 
           {/* S-Curve Chart */}

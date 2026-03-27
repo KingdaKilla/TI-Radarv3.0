@@ -16,7 +16,7 @@ from typing import Any
 # Menschenlesbare Labels fuer Organisationstypen
 ACTIVITY_TYPE_LABELS: dict[str, str] = {
     "HES": "Higher Education",
-    "PRC": "Private Company",
+    "PRC": "KMU / Unternehmen",
     "REC": "Research Organisation",
     "OTH": "Other",
     "PUB": "Public Body",

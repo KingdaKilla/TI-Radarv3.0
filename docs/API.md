@@ -278,7 +278,7 @@ curl -X POST http://localhost:8000/api/v1/import/epo \
 
 ### POST /api/v1/import/cordis
 
-Importiert CORDIS-Projektdaten (EU-Forschungsprojekte) in die `project_schema`-Tabellen.
+Importiert CORDIS-Projektdaten (EU-Forschungsprojekte) in die `cordis_schema`-Tabellen.
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/import/cordis \

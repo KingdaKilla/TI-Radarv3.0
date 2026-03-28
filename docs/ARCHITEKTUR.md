@@ -2,12 +2,12 @@
 
 ## Systemübersicht
 
-TI-Radar ist als Microservice-Architektur mit 15 Python-Microservices + 1 Next.js-Frontend (16 Services gesamt) aufgebaut. Das Next.js-Frontend kommuniziert über REST/JSON mit einem FastAPI-Orchestrator, der Anfragen parallel via gRPC an 12 spezialisierte Use-Case-Services verteilt. Alle Services greifen auf eine gemeinsame PostgreSQL-17-Datenbank zu.
+TI-Radar ist als Microservice-Architektur mit 16 Python-Services + 1 Next.js-Frontend (17 Services gesamt) aufgebaut. Das Next.js-Frontend kommuniziert über REST/JSON mit einem FastAPI-Orchestrator, der Anfragen parallel via gRPC an 13 spezialisierte Use-Case-Services (UC1-UC12 + UC-C Publication) verteilt. Alle Services greifen auf eine gemeinsame PostgreSQL-17-Datenbank zu.
 
 ```mermaid
 graph TB
     subgraph "Frontend"
-        NextJS["Next.js 14<br/>TypeScript / Recharts / D3"]
+        NextJS["Next.js 14<br/>TypeScript / Recharts / Nivo"]
     end
 
     subgraph "API Gateway"
@@ -108,8 +108,8 @@ mappers/            Protobuf-zu-Dict- und Dict-zu-Response-Konvertierung
 
 ### Schicht 3: mappers/ (Konvertierung)
 
-- `proto_mapper.py`: Protobuf-Nachrichten zu Domain-Objekten
-- `response_mapper.py`: Domain-Objekte zu Protobuf-Responses
+- `protobuf.py`: Domain-Objekte zu Protobuf-Responses
+- `dict_response.py`: Fallback-Konvertierung zu Dict, wenn Protobuf-Stubs nicht verfügbar
 - CAGR-Normalisierung (Division durch 100) erfolgt in der Mapper-Schicht
 
 ### Konventionen
@@ -122,7 +122,7 @@ mappers/            Protobuf-zu-Dict- und Dict-zu-Response-Konvertierung
 
 ### Intern: gRPC
 
-- Alle 12 UC-Services exponieren Port `50051`
+- Alle 13 UC-Services exponieren Port `50051`
 - Protobuf-Definitionen in `proto/` (je eine `.proto`-Datei pro UC + `common.proto`)
 - Gemeinsamer `AnalysisRequest` (Technologie, Zeitraum, Filter)
 - Pro-UC-spezifische Response-Typen
@@ -153,11 +153,10 @@ Der Orchestrator nutzt `asyncio.gather` mit `return_exceptions=True` für parall
 |---|---|
 | Next.js 14 | Framework (App Router) |
 | TypeScript | Typsicherheit |
-| Recharts | Balken-, Linien-, Flächendiagramme |
-| Nivo | AreaBump-Diagramme (UC8 Temporal) |
-| D3.js | Spezialvisualisierungen |
+| Recharts | Balken-, Linien-, Flächen-, ComposedCharts |
+| Nivo | Heatmaps (UC5 CPC-Flow), TreeMaps (UC4 Funding) |
+| react-force-graph | Netzwerk-Visualisierungen (UC3 Competitive) |
 | Tailwind CSS | Styling |
-| Zod | Runtime-Validierung der API-Responses (13 Schemas) |
 
 ### Frontend-Konventionen
 

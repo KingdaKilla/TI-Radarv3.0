@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Detail Chart Section
+ * TI-Radar v3 -- Detail Chart Section
  * Enlarged chart container for detail views
  * with optional PNG export
  * ────────────────────────────────────────────── */

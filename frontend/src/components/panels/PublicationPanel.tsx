@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC-C: Publikations-Impact Chain
+ * TI-Radar v3 -- UC-C: Publikations-Impact Chain
  * Bar chart showing publication trend per year
  * with summary metrics (total pubs, pubs/project)
  * ────────────────────────────────────────────── */
@@ -84,10 +84,10 @@ export default function PublicationPanel({
                       <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-panel)] px-3 py-2 text-xs shadow-lg">
                         <p className="font-semibold text-[var(--color-text-primary)]">{label}</p>
                         <p className="text-[var(--color-text-muted)]">
-                          {d.publication_count.toLocaleString("de-DE")} Publikationen
+                          {(d.publication_count ?? 0).toLocaleString("de-DE")} Publikationen
                         </p>
                         <p className="text-[var(--color-text-muted)]">
-                          {d.project_count.toLocaleString("de-DE")} Projekte
+                          {(d.project_count ?? 0).toLocaleString("de-DE")} Projekte
                         </p>
                       </div>
                     );

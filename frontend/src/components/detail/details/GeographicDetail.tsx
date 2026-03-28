@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC6: Geographische Verteilung (Detailansicht)
+ * TI-Radar v3 -- UC6: Geographische Verteilung (Detailansicht)
  * 5 Sektionen: MetricCards, Balkendiagramm, Auto-Analyse,
  * Kooperationspaare, Ländertabelle
  * ────────────────────────────────────────────── */

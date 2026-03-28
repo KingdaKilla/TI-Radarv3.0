@@ -133,7 +133,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             hint="Suggestions-Endpoint nicht verfuegbar",
         )
 
-    logger.info("orchestrator_bereit", version="2.0.0")
+    logger.info("orchestrator_bereit", version="3.0.0")
 
     yield
 
@@ -183,11 +183,11 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="TI-Radar Orchestrator",
         description=(
-            "Technology Intelligence Radar v2 — API-Gateway mit gRPC-Fan-Out "
-            "zu 12 UC-Microservices. Implementiert Graceful Degradation, "
+            "Technology Intelligence Radar v3 — API-Gateway mit gRPC-Fan-Out "
+            "zu 13 UC-Microservices. Implementiert Graceful Degradation, "
             "Per-UC-Timeouts und Prometheus-Metriken."
         ),
-        version="2.0.0",
+        version="3.0.0",
         lifespan=lifespan,
         docs_url="/docs" if _debug else None,
         redoc_url="/redoc" if _debug else None,

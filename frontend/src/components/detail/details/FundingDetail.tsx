@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC4: Förderungsanalyse (Detailansicht)
+ * TI-Radar v3 -- UC4: Förderungsanalyse (Detailansicht)
  * 6 Sektionen: MetricCards, Treemap, Förder-Trend-Chart,
  * Auto-Analyse, Top-Organisationen, Programm-Tabelle
  * ────────────────────────────────────────────── */
@@ -126,7 +126,7 @@ function trendOf(v: number): "up" | "down" | "neutral" {
 /* ── Komponente ── */
 
 export default function FundingDetail({ data }: FundingDetailProps) {
-  const dataCompleteYear = 2025;
+  const dataCompleteYear = 2024; // CORDIS-Foerderdaten 2025 noch unvollstaendig
 
   const avgPerProject =
     data.total_projects > 0 ? data.total_funding / data.total_projects : 0;

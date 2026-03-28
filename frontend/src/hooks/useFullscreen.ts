@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Fullscreen Hook
+ * TI-Radar v3 -- Fullscreen Hook
  * Toggles fullscreen mode on a referenced element
  * using the Fullscreen API
  * ────────────────────────────────────────────── */

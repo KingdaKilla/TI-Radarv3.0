@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Detail Analysis Section
+ * TI-Radar v3 -- Detail Analysis Section
  * Zeigt LLM-generierte Analyse-Texte oder
  * Placeholder wenn kein Text vorhanden ist.
  * ────────────────────────────────────────────── */

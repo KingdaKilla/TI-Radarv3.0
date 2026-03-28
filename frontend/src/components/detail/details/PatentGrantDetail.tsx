@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC12: Erteilungsquoten (Detailansicht)
+ * TI-Radar v3 -- UC12: Erteilungsquoten (Detailansicht)
  * Enlarged composed chart + full year trend table
  * ────────────────────────────────────────────── */
 

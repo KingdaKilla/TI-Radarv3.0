@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Detail View Router
+ * TI-Radar v3 -- Detail View Router
  * Maps active UC key to the correct detail
  * component and wraps it in DetailOverlay
  * ────────────────────────────────────────────── */
@@ -36,7 +36,7 @@ export default function DetailViewRouter({
   onClose,
 }: DetailViewRouterProps) {
   const detailComponents: Record<UseCaseKey, React.ReactNode | null> = {
-    landscape:       data.landscape       ? <LandscapeDetail data={data.landscape} dataCompleteYear={data.maturity?.data_complete_year ?? 2025} /> : null,
+    landscape:       data.landscape       ? <LandscapeDetail data={data.landscape} dataCompleteYear={data.maturity?.data_complete_year ?? 2024} /> : null,
     maturity:        data.maturity        ? <MaturityDetail data={data.maturity} />                : null,
     competitive:     data.competitive     ? <CompetitiveDetail data={data.competitive} />          : null,
     funding:         data.funding         ? <FundingDetail data={data.funding} />                  : null,

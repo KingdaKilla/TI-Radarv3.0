@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC11: Akteurs-Typverteilung (Detailansicht)
+ * TI-Radar v3 -- UC11: Akteurs-Typverteilung (Detailansicht)
  * Enlarged donut chart + full type breakdown table
  * with dynamic columns + type explanations
  * ────────────────────────────────────────────── */

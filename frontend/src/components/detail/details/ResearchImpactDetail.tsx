@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC7: Forschungsimpact (Detailansicht)
+ * TI-Radar v3 -- UC7: Forschungsimpact (Detailansicht)
  * 5 Sektionen: MetricCards, Zitations-Trend, Auto-Analyse,
  * Top Journals-Tabelle
  * ────────────────────────────────────────────── */

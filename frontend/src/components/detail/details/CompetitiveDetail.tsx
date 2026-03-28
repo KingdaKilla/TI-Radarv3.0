@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC3: Wettbewerbsanalyse (Detailansicht)
+ * TI-Radar v3 -- UC3: Wettbewerbsanalyse (Detailansicht)
  * 6 Kennzahlen, Akteurs-Balkendiagramm, HHI-Trend,
  * Kollaborationsnetzwerk (react-force-graph-2d), Analyse-Text, Akteurs-Tabelle
  * ────────────────────────────────────────────── */

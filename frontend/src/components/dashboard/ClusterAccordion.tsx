@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Cluster Accordion
+ * TI-Radar v3 -- Cluster Accordion
  * Expandable sections for thematic UC clusters
  * Collapsed state shows summary metrics badges
  * ────────────────────────────────────────────── */

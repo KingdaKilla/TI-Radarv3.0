@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC13: Publikations-Impact (Detailansicht)
+ * TI-Radar v3 -- UC13: Publikations-Impact (Detailansicht)
  * Publication trend bar chart + top projects horizontal bar
  * + full publications table + auto-generated analysis
  * ────────────────────────────────────────────── */
@@ -28,7 +28,7 @@ interface PublicationDetailProps {
 }
 
 export default function PublicationDetail({ data }: PublicationDetailProps) {
-  const dataCompleteYear = 2025;
+  const dataCompleteYear = 2025; // CORDIS-Publikationen 2026 noch unvollstaendig
 
   /* ── Chart data: publication trend ── */
   const trendData = data.pub_trend.map((entry) => ({
@@ -102,12 +102,11 @@ export default function PublicationDetail({ data }: PublicationDetailProps) {
                   borderRadius: "8px",
                   fontSize: "13px",
                 }}
-                formatter={(value: number, name: string) => {
-                  if (name === "publication_count")
-                    return [value.toLocaleString("de-DE"), "Publikationen"];
-                  if (name === "project_count")
-                    return [value.toLocaleString("de-DE"), "Projekte"];
-                  return [value, name];
+                formatter={(value, name) => {
+                  const v = typeof value === "number" ? value.toLocaleString("de-DE") : String(value ?? "–");
+                  if (name === "publication_count") return [v, "Publikationen"];
+                  if (name === "project_count") return [v, "Projekte"];
+                  return [v, name];
                 }}
               />
               <Bar
@@ -172,10 +171,10 @@ export default function PublicationDetail({ data }: PublicationDetailProps) {
                   borderRadius: "8px",
                   fontSize: "13px",
                 }}
-                formatter={(value: number, name: string) => {
+                formatter={(value, name) => {
                   if (name === "publications_per_million_eur")
-                    return [value.toFixed(1), "Pub. / Mio. EUR"];
-                  return [value, name];
+                    return [typeof value === "number" ? value.toFixed(1) : String(value ?? "–"), "Pub. / Mio. EUR"];
+                  return [typeof value === "number" ? value.toLocaleString("de-DE") : String(value ?? "–"), name];
                 }}
               />
               <Bar

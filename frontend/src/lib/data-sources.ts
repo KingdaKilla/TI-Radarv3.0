@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Data Source Mappings
+ * TI-Radar v3 -- Data Source Mappings
  * UC-Key → data source attribution for
  * ExplainabilityBar panel footer.
  * ────────────────────────────────────────────── */

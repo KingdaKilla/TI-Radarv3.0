@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC5: CPC-Technologiefluss (Detailansicht)
+ * TI-Radar v3 -- UC5: CPC-Technologiefluss (Detailansicht)
  * 5 Sektionen: MetricCards, Heatmap, Auto-Analyse,
  * Kombinationstabelle
  * ────────────────────────────────────────────── */

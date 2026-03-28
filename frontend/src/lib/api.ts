@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- API Client
+ * TI-Radar v3 -- API Client
  * Communicates with the FastAPI backend
  * ────────────────────────────────────────────── */
 

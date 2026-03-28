@@ -102,7 +102,7 @@ async def health_check(
     return HealthResponse(
         healthy=overall_healthy,
         services=services,
-        version="2.0.0",
+        version="3.0.0",
         timestamp=datetime.now().isoformat(),
         database_healthy=db_healthy,
     )

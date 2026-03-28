@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Reusable KPI Metric Card
+ * TI-Radar v3 -- Reusable KPI Metric Card
  * Displays a single key metric with optional
  * trend indicator
  * ────────────────────────────────────────────── */

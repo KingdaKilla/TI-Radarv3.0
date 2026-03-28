@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Client-Side CSV Export
+ * TI-Radar v3 -- Client-Side CSV Export
  * Generates and triggers download of CSV files
  * ────────────────────────────────────────────── */
 

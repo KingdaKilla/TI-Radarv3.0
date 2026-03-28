@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC12: Erteilungsquoten
+ * TI-Radar v3 -- UC12: Erteilungsquoten
  * Composed chart with bars for counts and line
  * for grant rate, dual Y-axes
  * ────────────────────────────────────────────── */
@@ -165,7 +165,7 @@ export default function PatentGrantPanel({
                       fill="#9ca3af"
                       fillOpacity={0.15}
                       label={{
-                        value: "Daten unvollständig",
+                        value: "Daten ggf. unvollständig",
                         position: "insideTop",
                         fontSize: 9,
                         fill: "#9ca3af",

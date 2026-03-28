@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Metric Tooltip Mappings
+ * TI-Radar v3 -- Metric Tooltip Mappings
  * Central mapping of metric keys to German
  * tooltip descriptions for InfoTooltip usage.
  * ────────────────────────────────────────────── */

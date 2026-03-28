@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- API Proxy: /api/suggestions
+ * TI-Radar v3 -- API Proxy: /api/suggestions
  * Proxies GET requests for autocomplete
  * suggestions to the FastAPI backend
  * ────────────────────────────────────────────── */

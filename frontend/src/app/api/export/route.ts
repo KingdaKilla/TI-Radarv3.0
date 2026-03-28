@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- API Proxy: /api/export
+ * TI-Radar v3 -- API Proxy: /api/export
  * Proxies POST export requests (CSV/PDF/Excel)
  * to the FastAPI backend and streams the binary
  * response back to the client

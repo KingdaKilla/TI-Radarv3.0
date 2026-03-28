@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC1: Technologie-Landschaft
+ * TI-Radar v3 -- UC1: Technologie-Landschaft
  * Line chart showing patents + projects over time
  * with CAGR badge and top CPC codes
  * ────────────────────────────────────────────── */
@@ -227,7 +227,7 @@ export default function LandscapePanel({
                           fill="#9ca3af"
                           fillOpacity={0.15}
                           label={{
-                            value: "Daten unvollständig",
+                            value: "Daten ggf. unvollständig",
                             position: "insideTop",
                             fontSize: 9,
                             fill: "#9ca3af",

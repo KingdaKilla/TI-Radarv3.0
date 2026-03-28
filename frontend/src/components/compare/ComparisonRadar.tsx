@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Vergleichs-Radar
+ * TI-Radar v3 -- Vergleichs-Radar
  * Recharts RadarChart mit zwei Technologien als
  * ueberlagerte Polygone (normalisierte Achsen)
  * ────────────────────────────────────────────── */

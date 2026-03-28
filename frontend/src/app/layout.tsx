@@ -33,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="de" className={`${inter.variable} dark`} suppressHydrationWarning>
       <head>
-        <title>TI-Radar v2 | Technologie-Intelligence Dashboard</title>
+        <title>TI-Radar v3 | Technologie-Intelligence Dashboard</title>
         <meta
           name="description"
           content="Technologie-Intelligence Radar -- Analyse von Patenten, Forschungsprojekten und Marktdaten"

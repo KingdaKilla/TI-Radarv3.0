@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Technologie-Vergleich
+ * TI-Radar v3 -- Technologie-Vergleich
  * Zwei Technologien nebeneinander analysieren
  * und Kennzahlen in Tabelle + Radar vergleichen
  * ────────────────────────────────────────────── */
@@ -14,7 +14,10 @@ import {
   Search,
   Loader2,
   AlertTriangle,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
+import clsx from "clsx";
 import { useRadarQuery } from "@/hooks/useRadarQuery";
 import ComparisonTable from "@/components/compare/ComparisonTable";
 import ComparisonRadar from "@/components/compare/ComparisonRadar";
@@ -22,13 +25,14 @@ import type { RadarRequest } from "@/lib/types";
 import { USE_CASES } from "@/lib/types";
 
 /** Baut ein RadarRequest aus einem Technologienamen */
-function buildRequest(technology: string): RadarRequest {
+function buildRequest(technology: string, useMock: boolean): RadarRequest {
   return {
     technology: technology.trim(),
     time_range: 10,
     european_only: false,
     use_cases: [...USE_CASES],
     top_n: 10,
+    use_mock: useMock,
   };
 }
 
@@ -36,6 +40,12 @@ export default function ComparePage() {
   // Eingabefelder
   const [inputA, setInputA] = useState("");
   const [inputB, setInputB] = useState("");
+  const [useMock, setUseMock] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("ti-radar-mock") === "true";
+    }
+    return false;
+  });
 
   // Abfrage-Parameter (null = noch nicht gesucht)
   const [paramsA, setParamsA] = useState<RadarRequest | null>(null);
@@ -48,10 +58,10 @@ export default function ComparePage() {
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      if (inputA.trim()) setParamsA(buildRequest(inputA));
-      if (inputB.trim()) setParamsB(buildRequest(inputB));
+      if (inputA.trim()) setParamsA(buildRequest(inputA, useMock));
+      if (inputB.trim()) setParamsB(buildRequest(inputB, useMock));
     },
-    [inputA, inputB]
+    [inputA, inputB, useMock]
   );
 
   const isAnyLoading =
@@ -145,6 +155,37 @@ export default function ComparePage() {
                   autoComplete="off"
                 />
               </div>
+            </div>
+
+            {/* Mock-Toggle */}
+            <div className="shrink-0">
+              <span className="mb-1.5 block text-sm font-medium text-[var(--color-text-secondary)]">
+                Datenquelle
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={useMock}
+                aria-label="Mock-Datenbank verwenden"
+                onClick={() => setUseMock((prev) => {
+                  const next = !prev;
+                  localStorage.setItem("ti-radar-mock", String(next));
+                  return next;
+                })}
+                className={clsx(
+                  "flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-colors",
+                  useMock
+                    ? "border-[var(--color-accent-gold)] bg-[var(--color-accent-gold)]/10 text-[var(--color-accent-gold)]"
+                    : "border-[var(--color-border)] text-[var(--color-text-secondary)]"
+                )}
+              >
+                {useMock ? (
+                  <ToggleRight className="h-5 w-5" aria-hidden="true" />
+                ) : (
+                  <ToggleLeft className="h-5 w-5" aria-hidden="true" />
+                )}
+                <span className="hidden sm:inline">{useMock ? "Mock" : "Live"}</span>
+              </button>
             </div>
 
             {/* Absenden */}
@@ -272,7 +313,7 @@ export default function ComparePage() {
 
       {/* Footer */}
       <footer className="border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)] py-4 text-center text-xs text-[var(--color-text-muted)]">
-        TI-Radar v2 &mdash; Bachelorarbeit Technologie-Intelligence &mdash; HWR
+        TI-Radar v3 &mdash; Bachelorarbeit Technologie-Intelligence &mdash; HWR
         Berlin
       </footer>
     </div>

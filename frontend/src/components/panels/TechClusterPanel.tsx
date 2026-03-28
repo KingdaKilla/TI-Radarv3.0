@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC9: Technologie-Cluster
+ * TI-Radar v3 -- UC9: Technologie-Cluster
  * Radar chart showing cluster fingerprints across
  * 5 normalized dimensions
  * ────────────────────────────────────────────── */

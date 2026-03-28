@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Detail View Overlay Shell
+ * TI-Radar v3 -- Detail View Overlay Shell
  * Full-viewport CSS overlay with sticky header,
  * scrollable content area, and print support
  * ────────────────────────────────────────────── */

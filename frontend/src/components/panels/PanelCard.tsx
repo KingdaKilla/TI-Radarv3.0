@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Reusable Panel Card Wrapper
+ * TI-Radar v3 -- Reusable Panel Card Wrapper
  * Provides consistent styling, loading, and
  * error states for all UC panels
  * ────────────────────────────────────────────── */

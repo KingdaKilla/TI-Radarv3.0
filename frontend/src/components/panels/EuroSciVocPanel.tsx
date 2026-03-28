@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC10: Wissenschaftsdisziplinen
+ * TI-Radar v3 -- UC10: Wissenschaftsdisziplinen
  * EuroSciVoc taxonomy mapping showing scientific
  * discipline distribution and interdisciplinarity
  * ────────────────────────────────────────────── */

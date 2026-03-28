@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC2: Reifegrad-Analyse
+ * TI-Radar v3 -- UC2: Reifegrad-Analyse
  * S-Curve visualization with maturity phase
  * indicator and R-squared confidence score
  * ────────────────────────────────────────────── */
@@ -176,7 +176,7 @@ export default function MaturityPanel({
                       fill="#9ca3af"
                       fillOpacity={0.15}
                       label={{
-                        value: "Daten unvollständig",
+                        value: "Daten ggf. unvollständig",
                         position: "insideTop",
                         fontSize: 9,
                         fill: "#9ca3af",

@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Search Bar Component
+ * TI-Radar v3 -- Search Bar Component
  * Technology input with autocomplete, time range
  * selector and European-only toggle
  * ────────────────────────────────────────────── */
@@ -23,7 +23,12 @@ export default function SearchBar({ onSubmit, isLoading }: SearchBarProps) {
   const [technology, setTechnology] = useState("");
   const [timeRange, setTimeRange] = useState(10);
   const [europeanOnly, setEuropeanOnly] = useState(true);
-  const [useMock, setUseMock] = useState(false);
+  const [useMock, setUseMock] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("ti-radar-mock") === "true";
+    }
+    return false;
+  });
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
@@ -227,7 +232,11 @@ export default function SearchBar({ onSubmit, isLoading }: SearchBarProps) {
             role="switch"
             aria-checked={useMock}
             aria-label="Mock-Datenbank verwenden"
-            onClick={() => setUseMock((prev) => !prev)}
+            onClick={() => setUseMock((prev) => {
+              const next = !prev;
+              localStorage.setItem("ti-radar-mock", String(next));
+              return next;
+            })}
             className={clsx(
               "flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-colors",
               useMock

@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC8: Zeitliche Entwicklung (Detailansicht)
+ * TI-Radar v3 -- UC8: Zeitliche Entwicklung (Detailansicht)
  * Enlarged actor dynamics chart + topic lists
  * ────────────────────────────────────────────── */
 
@@ -29,7 +29,7 @@ interface TemporalDetailProps {
 }
 
 export default function TemporalDetail({ data }: TemporalDetailProps) {
-  const dataCompleteYear = 2025;
+  const dataCompleteYear = 2024; // CORDIS-Daten 2025 noch ~90% vollstaendig
 
   const latestYear =
     data.entrant_trend.length > 0

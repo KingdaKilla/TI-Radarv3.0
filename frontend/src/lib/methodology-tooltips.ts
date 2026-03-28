@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Methodology Tooltip Mappings
+ * TI-Radar v3 -- Methodology Tooltip Mappings
  * UC-Key → methodology description for
  * ExplainabilityBar panel footer tooltips.
  * ────────────────────────────────────────────── */

@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Number Formatting Utilities
+ * TI-Radar v3 -- Number Formatting Utilities
  * German locale number formatting for KPI display
  * ────────────────────────────────────────────── */
 

@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- EU Country Codes
+ * TI-Radar v3 -- EU Country Codes
  * EU-27 member states + associated countries
  * (German labels for UI display)
  * ────────────────────────────────────────────── */

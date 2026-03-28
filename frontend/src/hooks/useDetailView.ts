@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Detail View State Hook
+ * TI-Radar v3 -- Detail View State Hook
  * Manages overlay state, URL params, keyboard
  * and browser-back support for UC detail views
  * ────────────────────────────────────────────── */

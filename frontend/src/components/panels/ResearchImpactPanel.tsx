@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC7: Forschungsimpact
+ * TI-Radar v3 -- UC7: Forschungsimpact
  * Citation trend chart + top institutions list
  * ────────────────────────────────────────────── */
 
@@ -156,7 +156,7 @@ export default function ResearchImpactPanel({
                         fill="#9ca3af"
                         fillOpacity={0.15}
                         label={{
-                          value: "Daten unvollständig",
+                          value: "Daten ggf. unvollständig",
                           position: "insideTop",
                           fontSize: 9,
                           fill: "#9ca3af",

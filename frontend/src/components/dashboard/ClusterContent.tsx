@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Cluster Content Renderer
+ * TI-Radar v3 -- Cluster Content Renderer
  * Tab navigation within each cluster, renders
  * existing UC panel components
  * ────────────────────────────────────────────── */

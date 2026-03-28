@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- TypeScript Type Definitions
+ * TI-Radar v3 -- TypeScript Type Definitions
  * Mirrors the FastAPI backend Pydantic schemas
  * ────────────────────────────────────────────── */
 

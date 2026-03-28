@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- InfoTooltip
+ * TI-Radar v3 -- InfoTooltip
  * Reusable tooltip component that shows an info
  * icon with explanatory text on hover/focus.
  * ────────────────────────────────────────────── */

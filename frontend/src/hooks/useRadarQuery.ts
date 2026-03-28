@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- TanStack Query Hook
+ * TI-Radar v3 -- TanStack Query Hook
  * Wraps the radar analysis endpoint
  * ────────────────────────────────────────────── */
 

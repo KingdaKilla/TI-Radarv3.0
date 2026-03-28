@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC1: Technologie-Landschaft (Detailansicht)
+ * TI-Radar v3 -- UC1: Technologie-Landschaft (Detailansicht)
  * Dual-Y-Axes Zeitreihe, Aktivitaetsverteilung,
  * berechnete Insights, vollstaendige CPC-Tabelle
  * ────────────────────────────────────────────── */
@@ -235,7 +235,7 @@ export default function LandscapeDetail({ data, dataCompleteYear }: LandscapeDet
                   x2={ts[ts.length - 1].year}
                   fill="#9ca3af"
                   fillOpacity={0.15}
-                  label={{ value: "Daten unvollständig", position: "insideTop", fontSize: 10, fill: "#9ca3af" }}
+                  label={{ value: "Daten ggf. unvollständig", position: "insideTop", fontSize: 10, fill: "#9ca3af" }}
                 />
               )}
             </ComposedChart>

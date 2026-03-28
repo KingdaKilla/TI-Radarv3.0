@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC3: Wettbewerbsanalyse
+ * TI-Radar v3 -- UC3: Wettbewerbsanalyse
  * Top assignees bar chart, HHI concentration
  * ────────────────────────────────────────────── */
 

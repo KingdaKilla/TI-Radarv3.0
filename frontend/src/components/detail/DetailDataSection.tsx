@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Detail Data Section
+ * TI-Radar v3 -- Detail Data Section
  * Container for additional data tables/lists
  * ────────────────────────────────────────────── */
 

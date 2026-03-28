@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC8: Zeitliche Entwicklung
+ * TI-Radar v3 -- UC8: Zeitliche Entwicklung
  * Actor entrant/persistence trend chart +
  * emerging/declining topics
  * ────────────────────────────────────────────── */
@@ -171,7 +171,7 @@ export default function TemporalPanel({
                         fill="#9ca3af"
                         fillOpacity={0.15}
                         label={{
-                          value: "Daten unvollständig",
+                          value: "Daten ggf. unvollständig",
                           position: "insideTop",
                           fontSize: 9,
                           fill: "#9ca3af",

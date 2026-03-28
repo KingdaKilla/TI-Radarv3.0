@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC2: Reifegrad-Analyse (Detailansicht)
+ * TI-Radar v3 -- UC2: Reifegrad-Analyse (Detailansicht)
  * S-Kurve mit Phasengrenzen, jährliche Wachstumsrate,
  * Modellvergleich (AICc) und berechnete Insights
  * ────────────────────────────────────────────── */
@@ -283,7 +283,7 @@ export default function MaturityDetail({ data }: MaturityDetailProps) {
                   fill="#9ca3af"
                   fillOpacity={0.15}
                   label={{
-                    value: "Daten unvollständig",
+                    value: "Daten ggf. unvollständig",
                     position: "insideTop",
                     fontSize: 10,
                     fill: "#9ca3af",

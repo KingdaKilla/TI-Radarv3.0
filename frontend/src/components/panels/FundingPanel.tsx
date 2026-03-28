@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC4: Förderungsanalyse
+ * TI-Radar v3 -- UC4: Förderungsanalyse
  * Funding by program, total funding, trends
  * ────────────────────────────────────────────── */
 

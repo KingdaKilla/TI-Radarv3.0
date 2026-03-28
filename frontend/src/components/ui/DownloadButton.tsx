@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Export / Download Button
+ * TI-Radar v3 -- Export / Download Button
  * Triggers backend export endpoint and saves
  * the response as a file download
  * ────────────────────────────────────────────── */

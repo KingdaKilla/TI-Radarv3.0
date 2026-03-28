@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC10: Wissenschaftsdisziplinen (Detailansicht)
+ * TI-Radar v3 -- UC10: Wissenschaftsdisziplinen (Detailansicht)
  * Full horizontal bar chart + complete fields table
  * with dynamic columns + index explanations
  * ────────────────────────────────────────────── */

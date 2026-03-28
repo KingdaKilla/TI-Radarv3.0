@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Vergleichstabelle
+ * TI-Radar v3 -- Vergleichstabelle
  * Zeigt Kennzahlen zweier Technologien
  * nebeneinander in einer Tabelle
  * ────────────────────────────────────────────── */

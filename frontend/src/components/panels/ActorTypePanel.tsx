@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC11: Akteurs-Typverteilung
+ * TI-Radar v3 -- UC11: Akteurs-Typverteilung
  * Pie chart showing organisation type distribution
  * (HES, PRC, REC, OTH, PUB) with coverage badges
  * ────────────────────────────────────────────── */

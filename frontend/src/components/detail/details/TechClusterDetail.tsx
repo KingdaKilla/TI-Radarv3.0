@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC9: Technologie-Cluster (Detailansicht)
+ * TI-Radar v3 -- UC9: Technologie-Cluster (Detailansicht)
  * Enlarged radar chart + full cluster table with
  * dominant topics + expandable rows
  * ────────────────────────────────────────────── */

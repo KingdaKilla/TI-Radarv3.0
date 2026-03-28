@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- ExplainabilityBar
+ * TI-Radar v3 -- ExplainabilityBar
  * Collapsible transparency bar for EU AI Act
  * compliance. Shows data sources, methodology,
  * confidence and processing time.

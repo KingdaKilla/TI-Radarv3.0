@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Panel Barrel Export
+ * TI-Radar v3 -- Panel Barrel Export
  * Re-exports all UC panel components
  * ────────────────────────────────────────────── */
 

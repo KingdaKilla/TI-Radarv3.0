@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC6: Geographische Verteilung
+ * TI-Radar v3 -- UC6: Geographische Verteilung
  * Country-level patent and project distribution
  * ────────────────────────────────────────────── */
 

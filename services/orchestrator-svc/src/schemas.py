@@ -216,7 +216,7 @@ class HealthResponse(BaseModel):
 
     healthy: bool
     services: list[ServiceHealthStatus] = Field(default_factory=list)
-    version: str = "2.0.0"
+    version: str = "3.0.0"
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
     database_healthy: bool = False
 

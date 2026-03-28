@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- Backend → Frontend Transform
+ * TI-Radar v3 -- Backend → Frontend Transform
  * Converts raw gRPC backend response shapes into
  * the frontend RadarResponse type definitions.
  * ────────────────────────────────────────────── */

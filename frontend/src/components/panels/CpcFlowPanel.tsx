@@ -1,7 +1,7 @@
 "use client";
 
 /* ──────────────────────────────────────────────
- * TI-Radar v2 -- UC5: CPC-Technologiefluss
+ * TI-Radar v3 -- UC5: CPC-Technologiefluss
  * Chord diagram showing CPC code relationships
  * with fallback to combination list
  * ────────────────────────────────────────────── */

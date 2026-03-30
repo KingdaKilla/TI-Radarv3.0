@@ -83,10 +83,24 @@ Entity Resolution für quellenübergreifendes Akteurs-Matching (EPO + CORDIS + G
 |---|---|---|
 | `unified_actors` | 983K | Vereinheitlichte Akteure mit UUID |
 | `actor_source_mappings` | variabel | Zuordnung zu Quellsystem-IDs |
-| `gleif_cache` | variabel | GLEIF Legal Entity Identifier Cache |
+| `gleif_cache` | variabel | GLEIF Legal Entity Identifier Cache (90-Tage-TTL) |
 | `resolution_runs` | variabel | Audit-Log der Entity-Resolution-Läufe |
 
 - pg_trgm Fuzzy-Matching für Namensabgleich
+
+#### gleif_cache -- Spaltenstruktur
+
+| Spalte | Typ | Beschreibung |
+|---|---|---|
+| `raw_name` | `TEXT` (PK) | Originaler Abfragename |
+| `lei` | `CHAR(20)` | 20-stelliger LEI oder NULL (Negativ-Ergebnis) |
+| `legal_name` | `TEXT` | Offizieller Name laut GLEIF |
+| `country` | `CHAR(2)` | ISO 3166-1 Alpha-2 Laendercode |
+| `entity_status` | `VARCHAR(20)` | GLEIF Entity Status |
+| `resolved_at` | `TIMESTAMPTZ` | Zeitstempel der Cache-Aufloesung |
+
+- **TTL:** 90 Tage. Negativ-Ergebnisse (kein LEI gefunden) werden mit `lei = NULL` gecacht.
+- **Bereinigung:** `entity_schema.purge_stale_gleif()` entfernt abgelaufene Eintraege.
 
 ### cross_schema
 

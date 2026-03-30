@@ -15,6 +15,7 @@ Der Orchestrator stellt eine REST/JSON-API auf Port 8000 bereit. Alle Analyse-En
 | `POST` | `/api/v1/import/euroscivoc` | EuroSciVoc-Taxonomie-Import |
 | `POST` | `/api/v1/import/refresh-views` | Materialized Views aktualisieren |
 | `GET` | `/api/v1/import/status` | Import-Status abfragen |
+| `GET` | `/api/v1/import/schedule` | Scheduler-Status abfragen |
 
 ---
 
@@ -313,6 +314,38 @@ Gibt den aktuellen Import-Status zurück (laufende und abgeschlossene Imports, A
 ```bash
 curl http://localhost:8000/api/v1/import/status \
   -H "X-API-Key: <api-key>"
+```
+
+### GET /api/v1/import/schedule
+
+Gibt den Status des woechentlichen Import-Schedulers zurueck (naechster Lauf, letzter Lauf, Ergebnis).
+
+```bash
+curl http://localhost:8000/api/v1/import/schedule \
+  -H "X-Admin-Key: <admin-key>"
+```
+
+#### Response (200)
+
+```json
+{
+  "enabled": true,
+  "next_run": "2026-04-05T02:00:00+00:00",
+  "last_run": {
+    "started_at": "2026-03-29T02:00:00.000000",
+    "duration_seconds": 42.5,
+    "results": {"euroscivoc": "ok", "cordis": "ok", "epo": "ok"}
+  }
+}
+```
+
+### Authentifizierung der Import-Endpunkte
+
+Die Import-Endpunkte (`POST /epo`, `/cordis`, `/euroscivoc`, `/enrich-epo`, `/refresh-views` sowie `GET /schedule` und `/status`) erfordern den Header `X-Admin-Key`, wenn die Umgebungsvariable `TI_RADAR_ADMIN_KEY` gesetzt ist. Ohne gesetzten Key laeuft das System im MVP-Modus (kein Auth).
+
+```bash
+curl -X POST http://localhost:8000/api/v1/import/epo \
+  -H "X-Admin-Key: mein_geheimes_token"
 ```
 
 ### Auto-Seeding (Demo-Daten)

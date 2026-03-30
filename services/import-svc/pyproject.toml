@@ -30,6 +30,9 @@ dependencies = [
 
     # XML-Parsing (EPO DOCDB)
     "lxml>=5.0,<6.0",
+
+    # Scheduler (woechentlicher Bulk-Import)
+    "apscheduler>=3.10,<4.0",
 ]
 
 [project.optional-dependencies]

@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: str = "http://localhost:3000,http://localhost:5173"
 
+    # Scheduler (woechentlicher Bulk-Import)
+    import_schedule: str = "0 2 * * 0"  # Cron: Sonntag 02:00 UTC
+    scheduler_enabled: bool = True
+    scheduler_timezone: str = "UTC"
+
     @property
     def cors_origin_list(self) -> list[str]:
         """CORS-Origins als Liste aufsplitten."""

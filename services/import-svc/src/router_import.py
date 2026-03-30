@@ -394,58 +394,8 @@ async def start_cordis_import(request: Request) -> ImportResponse:
     logger.info("cordis_import_angefordert", bulk_data_dir=settings.bulk_data_dir)
 
     try:
-        result: CordisResult = await import_cordis_bulk(
-            pool=pool,
-            data_dir=settings.bulk_data_dir,
-            batch_size=settings.batch_size,
-        )
-
-        _state.cordis_result = asdict(result)
-
-        if result.errors:
-            _state.cordis_status = ImportStatus.COMPLETED
-            message = (
-                f"CORDIS-Import abgeschlossen mit {len(result.errors)} Warnungen. "
-                f"{result.records_imported} Datensaetze importiert."
-            )
-        else:
-            _state.cordis_status = ImportStatus.COMPLETED
-            message = (
-                f"CORDIS-Import erfolgreich. {result.records_imported} Datensaetze "
-                f"aus {result.files_processed} Dateien importiert."
-            )
-
-        logger.info("cordis_import_ergebnis", status=_state.cordis_status.value)
-
-        # Automatischer MV-Refresh nach erfolgreichem CORDIS-Import
-        mv_refresh_duration = 0.0
-        if result.records_imported > 0:
-            try:
-                mv_refresh_duration = await _refresh_materialized_views(
-                    pool, views=_CORDIS_VIEWS, source="cordis",
-                )
-            except Exception as refresh_exc:
-                logger.error(
-                    "cordis_mv_refresh_fehlgeschlagen",
-                    error=str(refresh_exc),
-                )
-
-        details = result.details.copy()
-        if mv_refresh_duration > 0:
-            details["mv_refresh_duration"] = mv_refresh_duration
-
-        return ImportResponse(
-            status=_state.cordis_status,
-            source="CORDIS",
-            message=message,
-            files_processed=result.files_processed,
-            records_imported=result.records_imported,
-            records_skipped=result.records_skipped,
-            errors=result.errors[:50],
-            duration_seconds=result.duration_seconds,
-            details=details,
-            started_at=_state.cordis_started_at,
-        )
+        response = await _run_cordis_import(pool, settings)
+        return response
 
     except Exception as exc:
         _state.cordis_status = ImportStatus.FAILED
@@ -455,6 +405,61 @@ async def start_cordis_import(request: Request) -> ImportResponse:
             status_code=500,
             detail="Import fehlgeschlagen. Siehe Server-Logs.",
         ) from exc
+
+
+async def _run_cordis_import(pool: Any, settings: Any) -> ImportResponse:
+    """CORDIS-Import als standalone Funktion (aufrufbar von Endpoint und Scheduler)."""
+    result: CordisResult = await import_cordis_bulk(
+        pool=pool,
+        data_dir=settings.bulk_data_dir,
+        batch_size=settings.batch_size,
+    )
+
+    _state.cordis_result = asdict(result)
+
+    if result.errors:
+        _state.cordis_status = ImportStatus.COMPLETED
+        message = (
+            f"CORDIS-Import abgeschlossen mit {len(result.errors)} Warnungen. "
+            f"{result.records_imported} Datensaetze importiert."
+        )
+    else:
+        _state.cordis_status = ImportStatus.COMPLETED
+        message = (
+            f"CORDIS-Import erfolgreich. {result.records_imported} Datensaetze "
+            f"aus {result.files_processed} Dateien importiert."
+        )
+
+    logger.info("cordis_import_ergebnis", status=_state.cordis_status.value)
+
+    mv_refresh_duration = 0.0
+    if result.records_imported > 0:
+        try:
+            mv_refresh_duration = await _refresh_materialized_views(
+                pool, views=_CORDIS_VIEWS, source="cordis",
+            )
+        except Exception as refresh_exc:
+            logger.error(
+                "cordis_mv_refresh_fehlgeschlagen",
+                error=str(refresh_exc),
+            )
+
+    details = result.details.copy()
+    if mv_refresh_duration > 0:
+        details["mv_refresh_duration"] = mv_refresh_duration
+
+    return ImportResponse(
+        status=_state.cordis_status,
+        source="CORDIS",
+        message=message,
+        files_processed=result.files_processed,
+        records_imported=result.records_imported,
+        records_skipped=result.records_skipped,
+        errors=result.errors[:50],
+        duration_seconds=result.duration_seconds,
+        details=details,
+        started_at=_state.cordis_started_at,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -490,37 +495,7 @@ async def start_euroscivoc_import(request: Request) -> ImportResponse:
     logger.info("euroscivoc_import_angefordert", bulk_data_dir=settings.bulk_data_dir)
 
     try:
-        result: EuroscivocResult = await import_euroscivoc_bulk(
-            pool=pool,
-            data_dir=settings.bulk_data_dir,
-            batch_size=settings.batch_size,
-        )
-
-        status = ImportStatus.COMPLETED
-        if result.errors:
-            message = (
-                f"EuroSciVoc-Import abgeschlossen mit {len(result.errors)} Warnungen. "
-                f"{result.records_imported} Datensaetze importiert."
-            )
-        else:
-            message = (
-                f"EuroSciVoc-Import erfolgreich. {result.records_imported} Datensaetze "
-                f"aus {result.files_processed} ZIPs importiert."
-            )
-
-        logger.info("euroscivoc_import_ergebnis", status=status.value)
-
-        return ImportResponse(
-            status=status,
-            source="EUROSCIVOC",
-            message=message,
-            files_processed=result.files_processed,
-            records_imported=result.records_imported,
-            records_skipped=result.records_skipped,
-            errors=result.errors[:50],
-            duration_seconds=result.duration_seconds,
-            details=result.details,
-        )
+        return await _run_euroscivoc_import(pool, settings)
 
     except Exception as exc:
         logger.error("euroscivoc_import_fehlgeschlagen", error=str(exc))
@@ -528,6 +503,41 @@ async def start_euroscivoc_import(request: Request) -> ImportResponse:
             status_code=500,
             detail="Import fehlgeschlagen. Siehe Server-Logs.",
         ) from exc
+
+
+async def _run_euroscivoc_import(pool: Any, settings: Any) -> ImportResponse:
+    """EuroSciVoc-Import als standalone Funktion (aufrufbar von Endpoint und Scheduler)."""
+    result: EuroscivocResult = await import_euroscivoc_bulk(
+        pool=pool,
+        data_dir=settings.bulk_data_dir,
+        batch_size=settings.batch_size,
+    )
+
+    status = ImportStatus.COMPLETED
+    if result.errors:
+        message = (
+            f"EuroSciVoc-Import abgeschlossen mit {len(result.errors)} Warnungen. "
+            f"{result.records_imported} Datensaetze importiert."
+        )
+    else:
+        message = (
+            f"EuroSciVoc-Import erfolgreich. {result.records_imported} Datensaetze "
+            f"aus {result.files_processed} ZIPs importiert."
+        )
+
+    logger.info("euroscivoc_import_ergebnis", status=status.value)
+
+    return ImportResponse(
+        status=status,
+        source="EUROSCIVOC",
+        message=message,
+        files_processed=result.files_processed,
+        records_imported=result.records_imported,
+        records_skipped=result.records_skipped,
+        errors=result.errors[:50],
+        duration_seconds=result.duration_seconds,
+        details=result.details,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -708,3 +718,21 @@ async def refresh_views(request: Request) -> RefreshResponse:
             status_code=500,
             detail="Import fehlgeschlagen. Siehe Server-Logs.",
         ) from exc
+
+
+# ---------------------------------------------------------------------------
+# Scheduler-Status Endpoint
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/schedule",
+    summary="Import-Schedule-Status abfragen",
+    description="Gibt den aktuellen Scheduler-Status, naechste Ausfuehrung und letztes Ergebnis zurueck.",
+)
+async def get_schedule_status_endpoint(request: Request) -> dict[str, Any]:
+    """Scheduler-Status zurueckgeben."""
+    from src.scheduler import get_schedule_status
+
+    scheduler = getattr(request.app.state, "scheduler", None)
+    return get_schedule_status(scheduler)

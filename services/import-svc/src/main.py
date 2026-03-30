@@ -25,6 +25,7 @@ from fastapi.responses import JSONResponse
 
 from src.config import Settings
 from src.router_import import router as import_router
+from src.scheduler import create_scheduler
 
 logger = structlog.get_logger(__name__)
 
@@ -129,12 +130,35 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # Settings in app.state speichern fuer Router-Zugriff
     app.state.settings = settings
 
+    # --- Scheduler starten ---
+    app.state.scheduler = None
+    if settings.scheduler_enabled:
+        try:
+            scheduler = create_scheduler(
+                app,
+                cron_expression=settings.import_schedule,
+                timezone_str=settings.scheduler_timezone,
+            )
+            scheduler.start()
+            app.state.scheduler = scheduler
+            logger.info(
+                "scheduler_gestartet",
+                schedule=settings.import_schedule,
+                timezone=settings.scheduler_timezone,
+            )
+        except Exception as exc:
+            logger.error("scheduler_start_fehler", error=str(exc))
+
     logger.info("import_svc_bereit", version="2.0.0")
 
     yield
 
     # --- Shutdown ---
     logger.info("import_svc_shutdown_gestartet")
+
+    if app.state.scheduler is not None:
+        app.state.scheduler.shutdown(wait=False)
+        logger.info("scheduler_gestoppt")
 
     if app.state.db_pool is not None:
         await app.state.db_pool.close()

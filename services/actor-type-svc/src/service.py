@@ -30,6 +30,7 @@ except ImportError:
 
 from src.config import Settings
 from src.domain.metrics import compute_sme_share, compute_type_breakdown
+from src.infrastructure.gleif_adapter import GLEIFAdapter
 from src.infrastructure.repository import ActorTypeRepository
 
 logger = structlog.get_logger(__name__)
@@ -48,6 +49,15 @@ class ActorTypeServicer(_get_base_class()):  # type: ignore[misc]
         self._pool = pool
         self._settings = settings or Settings()
         self._repo = ActorTypeRepository(pool)
+        self._gleif: GLEIFAdapter | None = (
+            GLEIFAdapter(
+                pool=pool,
+                timeout=self._settings.gleif_timeout_s,
+                rate_limit_rpm=self._settings.gleif_rate_limit_rpm,
+            )
+            if self._settings.gleif_enabled
+            else None
+        )
 
     async def AnalyzeActorTypes(self, request: Any, context: Any) -> Any:
         """UC11: Akteur-Typ-Verteilung analysieren."""
@@ -121,6 +131,20 @@ class ActorTypeServicer(_get_base_class()):  # type: ignore[misc]
                 total += trend_by_year[year].get(t, 0)
             entry["total"] = total
             year_entries.append(entry)
+
+        # GLEIF-Enrichment: Top-Akteure mit LEI-Daten anreichern
+        if self._gleif and top_actors:
+            try:
+                actor_names = [a["name"] for a in top_actors if a.get("name")]
+                gleif_results = await self._gleif.resolve_batch(actor_names)
+                for actor in top_actors:
+                    gleif = gleif_results.get(actor.get("name", ""))
+                    if gleif and gleif.lei:
+                        actor["gleif_lei"] = gleif.lei
+                        actor["gleif_legal_name"] = gleif.legal_name
+            except Exception as exc:
+                logger.warning("gleif_enrichment_fehlgeschlagen", error=str(exc))
+                warnings.append({"message": f"GLEIF-Enrichment fehlgeschlagen: {exc}", "severity": "LOW", "code": "GLEIF_ENRICHMENT_FAILED"})
 
         total_classified = sum(int(b.get("actor_count", 0)) for b in type_breakdown)
 

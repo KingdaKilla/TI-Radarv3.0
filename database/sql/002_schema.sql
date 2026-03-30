@@ -1491,7 +1491,7 @@ GRANT USAGE ON SCHEMA patent_schema  TO svc_landscape, svc_maturity, svc_competi
     importer_epo, tip_admin, tip_readonly;
 
 GRANT USAGE ON SCHEMA cordis_schema  TO svc_landscape, svc_competitive, svc_funding,
-    svc_geographic, svc_temporal, svc_tech_cluster, svc_euroscivoc,
+    svc_geographic, svc_temporal, svc_tech_cluster, svc_actor_type, svc_euroscivoc,
     svc_export, svc_entity_resolution,
     importer_cordis, tip_admin, tip_readonly;
 
@@ -1504,7 +1504,7 @@ GRANT USAGE ON SCHEMA research_schema TO svc_research_impact, svc_landscape, svc
     tip_admin, tip_readonly;
 
 GRANT USAGE ON SCHEMA entity_schema  TO svc_competitive, svc_geographic, svc_temporal,
-    svc_entity_resolution, svc_export, tip_admin, tip_readonly;
+    svc_actor_type, svc_entity_resolution, svc_export, tip_admin, tip_readonly;
 
 GRANT USAGE ON SCHEMA export_schema  TO svc_export, svc_landscape, svc_maturity,
     svc_competitive, svc_funding, svc_cpc_flow, svc_geographic,
@@ -1553,6 +1553,13 @@ GRANT USAGE ON ALL SEQUENCES IN SCHEMA research_schema TO svc_research_impact;
 GRANT SELECT ON ALL TABLES IN SCHEMA patent_schema TO svc_temporal;
 GRANT SELECT ON ALL TABLES IN SCHEMA cordis_schema TO svc_temporal;
 GRANT SELECT ON ALL TABLES IN SCHEMA cross_schema TO svc_temporal;
+
+-- UC11 Actor Type: reads CORDIS + patents + cross-schema + entity (GLEIF cache write)
+GRANT SELECT ON ALL TABLES IN SCHEMA patent_schema TO svc_actor_type;
+GRANT SELECT ON ALL TABLES IN SCHEMA cordis_schema TO svc_actor_type;
+GRANT SELECT ON ALL TABLES IN SCHEMA cross_schema TO svc_actor_type;
+GRANT SELECT ON ALL TABLES IN SCHEMA entity_schema TO svc_actor_type;
+GRANT INSERT, UPDATE ON entity_schema.gleif_cache TO svc_actor_type;
 
 -- Export service: reads everything, writes to export_schema
 GRANT SELECT ON ALL TABLES IN SCHEMA patent_schema TO svc_export;

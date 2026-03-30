@@ -20,6 +20,11 @@ class Settings(BaseSettings):
 
     db_query_timeout_s: float = 30.0
 
+    # GLEIF LEI Lookup
+    gleif_enabled: bool = True
+    gleif_timeout_s: float = 10.0
+    gleif_rate_limit_rpm: int = 55
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",

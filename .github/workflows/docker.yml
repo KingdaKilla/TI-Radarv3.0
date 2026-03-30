@@ -77,6 +77,11 @@ jobs:
             dockerfile: services/uc-service.Dockerfile
             context: .
             build-args: SERVICE_DIR=services/publication-svc
+          # Datenbank (eigenes Image mit Init-Skripten)
+          - service: db
+            dockerfile: database/Dockerfile
+            context: .
+            build-args: ""
           # Eigenstaendige Services
           - service: orchestrator-svc
             dockerfile: services/orchestrator-svc/Dockerfile

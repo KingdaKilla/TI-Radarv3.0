@@ -23,7 +23,7 @@ x-uc-service: &uc-service-defaults
 services:
   # ==================== Datenbank ====================
   db:
-    image: pgvector/pgvector:pg17
+    image: ghcr.io/${GHCR_OWNER:-bensc}/ti-radar-db:${IMAGE_TAG:-latest}
     container_name: ti-radar-db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-ti_radar}

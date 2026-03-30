@@ -31,6 +31,10 @@ Folgende Werte müssen in `.env` eingetragen werden:
 | `POSTGRES_PASSWORD` | ja | Datenbank-Passwort | `mein_sicheres_pw` |
 | `EPO_OPS_CONSUMER_KEY` | nein | EPO API Key (für Live-Abfragen) | |
 | `EPO_OPS_CONSUMER_SECRET` | nein | EPO API Secret | |
+| `IMPORT_SCHEDULE` | nein | Cron-Ausdruck fuer woechentlichen Bulk-Import | `0 2 * * 0` |
+| `SCHEDULER_ENABLED` | nein | Import-Scheduler aktivieren/deaktivieren | `true` |
+| `GLEIF_ENABLED` | nein | GLEIF LEI Lookup im Actor-Type-Service | `true` |
+| `TI_RADAR_ADMIN_KEY` | nein | Admin-Key fuer Import-Endpunkte (leer = kein Auth) | |
 | `GRAFANA_ADMIN_PASSWORD` | nein | Grafana-Passwort (nur mit Monitoring-Profil) | `admin` |
 
 ### 3. Setup-Skript ausführen
@@ -47,9 +51,23 @@ Das Skript:
 
 ### 4. Stack starten
 
+**Lokale Entwicklung** (baut Images lokal):
+
 ```bash
 docker compose -f deploy/docker-compose.yml --env-file .env up -d
 ```
+
+**Server-Deployment** (zieht vorgefertigte GHCR-Images):
+
+```bash
+docker compose -f deploy/docker-compose.server.yml --env-file .env up -d
+```
+
+`docker-compose.server.yml` unterscheidet sich von der lokalen Variante:
+- Alle Service-Images werden aus `ghcr.io/${GHCR_OWNER}/ti-radar-*:${IMAGE_TAG}` gezogen statt lokal gebaut.
+- Die Datenbank nutzt das Custom-Image `ghcr.io/${GHCR_OWNER}/ti-radar-db:${IMAGE_TAG}` (statt `pgvector/pgvector:pg17`), in das die Init-Skripte (`database/sql/`, `database/mock_data/`) eingebrannt sind.
+
+**Hinweis:** Die Init-Skripte (`/docker-entrypoint-initdb.d/`) werden nur beim ersten Start ausgefuehrt (leeres pgdata-Volume). Bei bestehenden Datenbanken muessen Schema-Aenderungen und Grants manuell angewandt werden.
 
 Beim ersten Start werden automatisch das Datenbankschema angelegt und CORDIS-Demodaten geladen.
 
@@ -111,6 +129,7 @@ Nach dem Seed-Vorgang werden die Materialized Views automatisch aktualisiert. De
 Docker-Images werden über GitHub Actions automatisch gebaut und in der GitHub Container Registry veröffentlicht:
 
 - **Registry:** `ghcr.io/kingdakilla/ti-radar-*`
+- **Images:** 18 Docker-Images (17 Service-Images + 1 Datenbank-Image `ti-radar-db`)
 - **Trigger:** Versionstags (`v*`), z. B. `v3.0.0`
 - **Nutzung vorgefertigter Images:** Statt lokal zu bauen, können die Images direkt aus GHCR gezogen werden:
 

@@ -30,7 +30,7 @@ graph TB
     end
 
     subgraph "Hilfs-Services"
-        Import["import-svc<br/>EPO + CORDIS Bulk"]
+        Import["import-svc<br/>EPO + CORDIS Bulk<br/>+ Scheduler"]
         Export["export-svc<br/>CSV/PNG Export"]
         Pub["publication-svc<br/>Publikationskette"]
     end
@@ -179,13 +179,30 @@ Der Orchestrator nutzt `asyncio.gather` mit `return_exceptions=True` für parall
 | UC8 | temporal-svc | Zeitliche Trends: Emerging/Declining Technologies |
 | UC9 | tech-cluster-svc | Themencluster: NLP-basierte Gruppierung von Patenten |
 | UC10 | euroscivoc-svc | EuroSciVoc-Taxonomie: Wissenschaftliche Klassifikation |
-| UC11 | actor-type-svc | Akteurstypen: Unternehmen, Hochschulen, Forschungseinrichtungen |
+| UC11 | actor-type-svc | Akteurstypen: Unternehmen, Hochschulen, Forschungseinrichtungen; GLEIF LEI Lookup |
 | UC12 | patent-grant-svc | Erteilungsanalyse: Time-to-Grant, Erteilungsquoten |
 | UC-C | publication-svc | Publikationskette: CORDIS-Publikationen, Open Access |
 
+## Woechentlicher Import-Scheduler
+
+Der `import-svc` enthaelt einen integrierten Scheduler (APScheduler), der woechentlich einen vollstaendigen Datenimport ausfuehrt:
+
+- **Reihenfolge:** EuroSciVoc -> CORDIS -> EPO -> Materialized Views Refresh
+- **Zeitplan:** Jeden Sonntag um 02:00 UTC (konfigurierbar via `IMPORT_SCHEDULE`, Cron-Syntax)
+- **Steuerung:** `SCHEDULER_ENABLED=true|false`, `SCHEDULER_TIMEZONE=UTC`
+- **Status-Endpunkt:** `GET /api/v1/import/schedule` liefert naechsten Lauf, letzten Lauf und Ergebnisse
+
+## GLEIF LEI Integration (UC11)
+
+Der `actor-type-svc` (UC11) nutzt die kostenlose GLEIF API (`api.gleif.org`) fuer Legal Entity Identifier (LEI) Lookups. Damit koennen Organisationen anhand ihres LEI eindeutig identifiziert und mit offiziellen Registerdaten angereichert werden.
+
+- **Aktivierung:** `GLEIF_ENABLED=true` (Default)
+- **Cache:** `entity_schema.gleif_cache` mit 90-Tage-TTL (auch Negativ-Ergebnisse werden gecacht)
+- **Bereinigung:** `entity_schema.purge_stale_gleif()` entfernt abgelaufene Eintraege
+
 ## CI/CD-Pipeline
 
-Docker-Images werden über GitHub Actions automatisch gebaut und in die GitHub Container Registry (`ghcr.io/kingdakilla/ti-radar-*`) publiziert. Der Workflow wird durch Versionstags (`v*`) ausgelöst und baut alle Service-Images parallel. Secrets (API-Keys, Datenbank-Passwörter) werden über GitHub Actions Secrets injiziert.
+Docker-Images werden über GitHub Actions automatisch gebaut und in die GitHub Container Registry (`ghcr.io/kingdakilla/ti-radar-*`) publiziert. Der Workflow wird durch Versionstags (`v*`) ausgelöst und baut 18 Images parallel (17 Service-Images + 1 Datenbank-Image `ti-radar-db` mit eingebrannten Init-Skripten). Secrets (API-Keys, Datenbank-Passwörter) werden über GitHub Actions Secrets injiziert.
 
 ## API-Caching-Schicht
 
@@ -195,5 +212,6 @@ Für externe APIs (OpenAIRE, Semantic Scholar) existiert eine datenbankgestützt
 |---|---|---|
 | OpenAIRE | `research_schema.openaire_cache` | 7 Tage |
 | Semantic Scholar | `research_schema.papers` | 30 Tage |
+| GLEIF | `entity_schema.gleif_cache` | 90 Tage |
 
 Bei Cache-Hits wird die gespeicherte Antwort direkt zurückgegeben. Abgelaufene Einträge werden bei der nächsten Abfrage transparent aktualisiert.

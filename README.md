@@ -128,7 +128,7 @@ Das Projekt nutzt **6 GitHub Actions Workflows**:
 | Backend CI | Lint + Unit-Tests für alle Python-Services |
 | Frontend CI | Build + Lint des Next.js-Frontends |
 | Proto CI | Protobuf-Kompilierung und Kompatibilitätsprüfung |
-| Docker Build | Bau aller Docker-Images |
+| Docker Build | Bau aller 18 Docker-Images (17 Services + 1 DB) |
 | Integration Tests | End-to-End-Tests gegen den laufenden Stack |
 | PR Quality Gate | Zusammenfassung aller Checks als Merge-Voraussetzung |
 
@@ -140,6 +140,8 @@ Docker-Images werden in der **GitHub Container Registry** (`ghcr.io`) publiziert
 
 - **Auto-Seeding:** Beim ersten Start werden automatisch CORDIS-Demodaten (4.815 Projekte, 4.034 Organisationen, 17.900 Publikationen) geladen.
 - **API-Caching:** OpenAIRE- und Semantic-Scholar-Antworten werden in der Datenbank gecacht (7 bzw. 30 Tage TTL).
+- **Woechentlicher Import-Scheduler:** APScheduler im Import-Service fuehrt jeden Sonntag 02:00 UTC einen vollstaendigen Datenimport durch (konfigurierbar).
+- **GLEIF LEI Integration:** Actor-Type-Service (UC11) reichert Organisationen ueber die kostenlose GLEIF API mit Legal Entity Identifiern an (90-Tage-Cache).
 
 ## Dokumentation
 

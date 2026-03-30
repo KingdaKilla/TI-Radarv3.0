@@ -25,6 +25,9 @@ x-uc-service: &uc-service-defaults
 services:
   # ==================== Datenbank ====================
   db:
+    build:
+      context: ..
+      dockerfile: database/Dockerfile
     image: pgvector/pgvector:pg17
     container_name: ti-radar-db
     environment:

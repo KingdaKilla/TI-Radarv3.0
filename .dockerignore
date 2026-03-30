@@ -1,6 +1,8 @@
 .git
 .github
 database
+!database/sql
+!database/mock_data
 deploy
 docs
 tests

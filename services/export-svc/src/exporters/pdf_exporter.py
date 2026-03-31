@@ -74,13 +74,13 @@ _STYLES_CSS_PATH = _TEMPLATE_DIR / "report_styles.css"
 
 UC_DISPLAY_META: dict[str, tuple[str, str, int]] = {
     "landscape": (
-        "Technologie-Uebersicht",
-        "Patent- und Projektaktivitaet im Zeitverlauf mit CAGR-Wachstumsrate",
+        "Technologie-Übersicht",
+        "Patent- und Projektaktivität im Zeitverlauf mit CAGR-Wachstumsrate",
         3,
     ),
     "maturity": (
         "Reifegrad-Analyse",
-        "S-Kurve, Reifephase, Bestimmtheitsmass R² und AICc",
+        "S-Kurve, Reifephase, Bestimmtheitsmaß R² und AICc",
         4,
     ),
     "competitive": (
@@ -89,8 +89,8 @@ UC_DISPLAY_META: dict[str, tuple[str, str, int]] = {
         5,
     ),
     "funding": (
-        "Foerderungsanalyse",
-        "EU-Foerderprogramme, Instrumente und Foerdervolumen",
+        "Förderungsanalyse",
+        "EU-Förderprogramme, Instrumente und Fördervolumen",
         6,
     ),
     "cpc_flow": (
@@ -100,7 +100,7 @@ UC_DISPLAY_META: dict[str, tuple[str, str, int]] = {
     ),
     "geographic": (
         "Geographische Verteilung",
-        "Laenderverteilung, EU-Anteil und Kooperationspaare",
+        "Länderverteilung, EU-Anteil und Kooperationspaare",
         8,
     ),
     "research_impact": (
@@ -120,7 +120,7 @@ UC_DISPLAY_META: dict[str, tuple[str, str, int]] = {
     ),
     "euroscivoc": (
         "Wissenschaftsdisziplinen",
-        "EuroSciVoc-Taxonomie und Shannon-Diversitaetsindex",
+        "EuroSciVoc-Taxonomie und Shannon-Diversitätsindex",
         12,
     ),
     "actor_type": (
@@ -140,28 +140,60 @@ COLUMN_LABELS_DE: dict[str, str] = {
     "year": "Jahr",
     "patent_count": "Patente",
     "project_count": "Projekte",
+    "publication_count": "Publikationen",
+    "funding_eur": "Förderung (€)",
     "cagr": "CAGR (%)",
+    "cumulative": "Kumuliert",
+    "fitted": "S-Kurve (Fit)",
+    "annual_count": "Jährlich",
     "cumulative_patents": "Kumulierte Patente",
     "maturity_phase": "Reifephase",
-    "s_curve_r2": "S-Kurve R\u00b2",
+    "s_curve_r2": "S-Kurve R²",
     "actor_name": "Akteur",
+    "name": "Name",
     "country": "Land",
+    "country_code": "Ländercode",
+    "country_name": "Land",
     "hhi_share": "HHI-Anteil",
+    "share": "Anteil",
     "framework": "Rahmenprogramm",
-    "ec_funding": "EC-Foerderung (\u20ac)",
-    "funding_scheme": "Foerderinstrument",
+    "ec_funding": "EC-Förderung (€)",
+    "funding_scheme": "Förderinstrument",
+    "avg_project_size": "Ø Projektgröße (€)",
+    "participant_count": "Teilnehmer",
     "code_a": "CPC-Code A",
     "code_b": "CPC-Code B",
+    "description_a": "Beschreibung A",
+    "description_b": "Beschreibung B",
+    "similarity": "Ähnlichkeit",
     "jaccard_index": "Jaccard-Index",
     "co_occurrence_count": "Co-Occurrence",
     "collaboration_pairs": "Kooperationspaare",
+    "title": "Titel",
     "paper_title": "Publikationstitel",
+    "citation_count": "Zitationen",
     "citations": "Zitationen",
     "venue": "Zeitschrift/Konferenz",
+    "doi": "DOI",
     "h_index_contribution": "h-Index Beitrag",
+    "persistence_type": "Persistenz-Typ",
     "first_year": "Erstes Jahr",
     "last_year": "Letztes Jahr",
+    "first_active_year": "Erstes aktives Jahr",
+    "last_active_year": "Letztes aktives Jahr",
+    "active_years_count": "Aktive Jahre",
     "persistence_years": "Persistenz (Jahre)",
+    "label": "Bezeichnung",
+    "actor_count": "Akteure",
+    "density": "Dichte",
+    "coherence": "Kohärenz",
+    "total_projects": "Projekte gesamt",
+    "type": "Typ",
+    "actor_share": "Akteursanteil",
+    "application_count": "Anmeldungen",
+    "grant_count": "Erteilungen",
+    "grant_rate": "Erteilungsquote",
+    "pending_count": "Ausstehend",
 }
 
 
@@ -234,7 +266,7 @@ async def generate_pdf(
     table_html_map = _build_all_tables(analysis_data, uc_keys)
 
     # Explainability-Sektion (falls im Response vorhanden)
-    explainability_html = _build_explainability(analysis_data)
+    explainability_html = Markup(_build_explainability(analysis_data))
 
     # Executive Summary Text (falls vorhanden)
     executive_summary_text = analysis_data.get("executive_summary", "")
@@ -272,13 +304,13 @@ async def generate_pdf(
             panel_data.get("landscape", {}), "time_series", "year", "patent_count", "Patente pro Jahr"
         )),
         "funding_chart": Markup(_build_bar_chart_svg(
-            panel_data.get("funding", {}), "time_series", "year", "funding_eur", "Foerderung pro Jahr (EUR)", divisor=1_000_000, suffix="M"
+            panel_data.get("funding", {}), "time_series", "year", "funding_eur", "Förderung pro Jahr (EUR)", divisor=1_000_000, suffix="M"
         )),
         "competitive_chart": Markup(_build_horizontal_bar_svg(
             panel_data.get("competitive", {}), "top_actors", "name", "patent_count", "Top-Akteure nach Patenten", limit=8
         )),
         "geographic_chart": Markup(_build_horizontal_bar_svg(
-            panel_data.get("geographic", {}), "country_distribution", "country_name", "patent_count", "Top-Laender nach Patenten", limit=10
+            panel_data.get("geographic", {}), "country_distribution", "country_name", "patent_count", "Top-Länder nach Patenten", limit=10
         )),
         "maturity_chart": Markup(_build_bar_chart_svg(
             panel_data.get("maturity", {}), "s_curve_data", "year", "cumulative", "Kumulative Patente (S-Kurve)"
@@ -379,13 +411,13 @@ def _get_quality_section_number(uc_keys: list[str]) -> int:
 # ---------------------------------------------------------------------------
 
 
-def _build_all_tables(data: dict[str, Any], uc_keys: list[str]) -> dict[str, str]:
+def _build_all_tables(data: dict[str, Any], uc_keys: list[str]) -> dict[str, Markup]:
     """Baut HTML-Datentabellen fuer alle angeforderten Use-Cases.
 
     Returns:
         Dict mit UC-Key -> HTML-String der Datentabelle.
     """
-    tables: dict[str, str] = {}
+    tables: dict[str, Markup] = {}
 
     for uc_key in uc_keys:
         panel_data = data.get(uc_key, {})
@@ -394,7 +426,7 @@ def _build_all_tables(data: dict[str, Any], uc_keys: list[str]) -> dict[str, str
 
         table_html = _build_data_table(uc_key, panel_data)
         if table_html:
-            tables[uc_key] = table_html
+            tables[uc_key] = Markup(table_html)
 
     return tables
 
@@ -425,7 +457,7 @@ def _build_data_table(uc_key: str, panel_data: dict[str, Any]) -> str:
         parts.append(f"    <th>{_esc(label)}</th>")
     parts.append("  </tr></thead>")
 
-    # Body (maximal 50 Zeilen im PDF fuer Lesbarkeit)
+    # Body (maximal 50 Zeilen im PDF für Lesbarkeit)
     max_rows = 50
     parts.append("  <tbody>")
     for row in rows[:max_rows]:
@@ -445,7 +477,7 @@ def _build_data_table(uc_key: str, panel_data: dict[str, Any]) -> str:
         parts.append(
             f'<p class="text-muted text-small">'
             f"Hinweis: {len(rows)} Zeilen gesamt — hier werden die ersten {max_rows} angezeigt. "
-            f"Vollstaendige Daten im CSV- oder Excel-Export."
+            f"Vollständige Daten im CSV- oder Excel-Export."
             f"</p>"
         )
 
@@ -531,7 +563,7 @@ def _extract_generic_rows(
         return columns, rows
 
     # Fallback: Key-Value-Paare
-    columns = ["Schluessel", "Wert"]
+    columns = ["Schlüssel", "Wert"]
     rows = []
     for key, value in panel_data.items():
         if key in ("metadata", "data", "result", "summary"):

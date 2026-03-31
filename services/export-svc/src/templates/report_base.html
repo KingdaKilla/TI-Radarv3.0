@@ -83,7 +83,7 @@
         {# Abschliessende Sektionen #}
         <li class="toc-item toc-item-appendix">
             <span class="toc-number">{{ toc_quality_number }}.</span>
-            <span class="toc-title">Datenqualitaetshinweise</span>
+            <span class="toc-title">Datenqualitätshinweise</span>
         </li>
         <li class="toc-sub">Truncation Bias, Abdeckung, Limitierungen</li>
 
@@ -103,7 +103,7 @@
         <span class="section-number">1</span>
         <div class="section-title-group">
             <h2 class="section-title">Executive Summary</h2>
-            <p class="section-subtitle">Zusammenfassung der wichtigsten Erkenntnisse fuer {{ technology }}</p>
+            <p class="section-subtitle">Zusammenfassung der wichtigsten Erkenntnisse für {{ technology }}</p>
         </div>
     </div>
 
@@ -152,7 +152,7 @@
             <h4>Kernergebnisse</h4>
             {% if landscape and landscape.cagr is defined %}
             <p><strong>Wachstum:</strong> Die Technologie {{ technology }} zeigt eine durchschnittliche
-               jaehrliche Wachstumsrate (CAGR) von {{ "%.1f" | format(landscape.cagr) }}% im Analysezeitraum
+               jährliche Wachstumsrate (CAGR) von {{ "%.1f" | format(landscape.cagr) }}% im Analysezeitraum
                {{ analysis_period }}.</p>
             {% endif %}
             {% if maturity and maturity.maturity_phase is defined %}
@@ -165,8 +165,8 @@
                {% if competitive.hhi_index < 1500 %}einen fragmentierten Markt{% elif competitive.hhi_index < 2500 %}eine moderate Konzentration{% else %}eine hohe Marktkonzentration{% endif %} hin.</p>
             {% endif %}
             {% if funding and funding.total_funding is defined %}
-            <p><strong>Foerderung:</strong> Im Analysezeitraum wurden insgesamt
-               {{ funding.total_funding | format_currency }} an EU-Foerdermitteln vergeben.</p>
+            <p><strong>Förderung:</strong> Im Analysezeitraum wurden insgesamt
+               {{ funding.total_funding | format_currency }} an EU-Fördermitteln vergeben.</p>
             {% endif %}
         </div>
 
@@ -192,10 +192,10 @@
     </div>
 
     <h3>2.1 Suchstrategie</h3>
-    <p>Die Analyse basiert auf einer kombinierten Suche ueber europaeische Patent- und
+    <p>Die Analyse basiert auf einer kombinierten Suche über europäische Patent- und
        Forschungsdatenbanken. Der Suchbegriff <strong>"{{ technology }}"</strong> wurde in
        Titeln, Abstracts und Klassifikationsfeldern gesucht. Die Ergebnisse wurden
-       ueber CPC-Klassifikationen (Cooperative Patent Classification) verfeinert.</p>
+       über CPC-Klassifikationen (Cooperative Patent Classification) verfeinert.</p>
 
     <h3>2.2 Datenbanken und Quellen</h3>
     <table class="data-table">
@@ -210,42 +210,42 @@
         <tbody>
             <tr>
                 <td><strong>EPO OPS</strong></td>
-                <td>Europaeisches Patentamt — Open Patent Services</td>
+                <td>Europäisches Patentamt — Open Patent Services</td>
                 <td>Patentanalyse, CPC-Klassifikation, Familien</td>
-                <td>Woechentlich</td>
+                <td>Wöchentlich</td>
             </tr>
             <tr>
                 <td><strong>CORDIS</strong></td>
                 <td>EU-Forschungsprojektdatenbank (Horizon Europe, FP7, H2020)</td>
-                <td>Projekte, Foerdermittel, Akteure, Laender</td>
-                <td>Taeglich</td>
+                <td>Projekte, Fördermittel, Akteure, Länder</td>
+                <td>Täglich</td>
             </tr>
             <tr>
                 <td><strong>OpenAIRE</strong></td>
                 <td>Open Access Infrastructure for Research in Europe</td>
                 <td>Publikationszahlen, Open-Access-Trends</td>
-                <td>Taeglich</td>
+                <td>Täglich</td>
             </tr>
             <tr>
                 <td><strong>Semantic Scholar</strong></td>
-                <td>AI-gestuetzte akademische Suchmaschine</td>
+                <td>AI-gestützte akademische Suchmaschine</td>
                 <td>Zitationsanalyse, h-Index, Top-Paper</td>
-                <td>Taeglich</td>
+                <td>Täglich</td>
             </tr>
             <tr>
                 <td><strong>GLEIF</strong></td>
                 <td>Global Legal Entity Identifier Foundation</td>
                 <td>Entity Resolution, Unternehmensstrukturen</td>
-                <td>Taeglich</td>
+                <td>Täglich</td>
             </tr>
         </tbody>
     </table>
 
     <h3>2.3 Analysezeitraum</h3>
     <p>Alle Analysen beziehen sich auf den Zeitraum <strong>{{ analysis_period }}</strong>.
-       Patentdaten unterliegen einer Veroeffentlichungsverzoegerung von 18 Monaten
-       (Publication Lag), daher sind die juengsten Jahre moeglicherweise unvollstaendig.
-       Dies wird in den Diagrammen als "unvollstaendige Daten" gekennzeichnet.</p>
+       Patentdaten unterliegen einer Veröffentlichungsverzögerung von 18 Monaten
+       (Publication Lag), daher sind die jüngsten Jahre möglicherweise unvollständig.
+       Dies wird in den Diagrammen als "unvollständige Daten" gekennzeichnet.</p>
 
     <h3>2.4 Verwendete Metriken</h3>
     <table class="data-table">
@@ -262,13 +262,13 @@
                 <td><strong>CAGR</strong></td>
                 <td class="formula-cell">((V<sub>final</sub> / V<sub>initial</sub>)<sup>1/n</sup> - 1) &times; 100%</td>
                 <td>UC1</td>
-                <td>Durchschnittliche jaehrliche Wachstumsrate</td>
+                <td>Durchschnittliche jährliche Wachstumsrate</td>
             </tr>
             <tr>
                 <td><strong>S-Kurve</strong></td>
                 <td class="formula-cell">f(t) = L / (1 + e<sup>-k(t-t<sub>0</sub>)</sup>)</td>
                 <td>UC2</td>
-                <td>Technologie-Reifegrad (Entstehung bis Saettigung)</td>
+                <td>Technologie-Reifegrad (Entstehung bis Sättigung)</td>
             </tr>
             <tr>
                 <td><strong>HHI</strong></td>
@@ -280,7 +280,7 @@
                 <td><strong>Jaccard-Index</strong></td>
                 <td class="formula-cell">|A &cap; B| / |A &cup; B|</td>
                 <td>UC5</td>
-                <td>Aehnlichkeit zweier CPC-Klassen (0 = keine, 1 = identisch)</td>
+                <td>Ähnlichkeit zweier CPC-Klassen (0 = keine, 1 = identisch)</td>
             </tr>
             <tr>
                 <td><strong>h-Index</strong></td>
@@ -292,14 +292,14 @@
                 <td><strong>Shannon-Index</strong></td>
                 <td class="formula-cell">H = -&sum; p<sub>i</sub> ln(p<sub>i</sub>)</td>
                 <td>UC10</td>
-                <td>Diversitaet der Wissenschaftsdisziplinen</td>
+                <td>Diversität der Wissenschaftsdisziplinen</td>
             </tr>
         </tbody>
     </table>
 </div>
 
 {# ======================================================================
-   Sektion 5 — UC1: Technologie-Uebersicht (Landschaft)
+   Sektion 5 — UC1: Technologie-Übersicht (Landschaft)
    WIPO Pub. 946: Patent Landscape Overview
    ====================================================================== #}
 {% if "landscape" in uc_keys %}
@@ -307,8 +307,8 @@
     <div class="section-header">
         <span class="section-number">3</span>
         <div class="section-title-group">
-            <h2 class="section-title">Technologie-Uebersicht</h2>
-            <p class="section-subtitle">UC1 — Patent- und Projektaktivitaet im Zeitverlauf mit CAGR-Wachstumsrate</p>
+            <h2 class="section-title">Technologie-Übersicht</h2>
+            <p class="section-subtitle">UC1 — Patent- und Projektaktivität im Zeitverlauf mit CAGR-Wachstumsrate</p>
         </div>
     </div>
 
@@ -335,22 +335,15 @@
         {% endif %}
     </div>
 
-    {# Chart-Platzhalter #}
-    <div class="chart-placeholder">
-        <div class="chart-placeholder-icon">&#x1F4C8;</div>
-        <p>Zeitreihendiagramm: Patent- und Projektaktivitaet {{ analysis_period }}</p>
-        <p class="text-small text-muted">Interaktives Diagramm im Web-Frontend verfuegbar</p>
-    </div>
-
-    {# SVG-Visualisierung #}
     {% if landscape_chart %}
+    <p class="chart-title">Patent- und Projektaktivität {{ analysis_period }}</p>
     {{ landscape_chart }}
     {% endif %}
 
     {# Datentabelle #}
     {% if landscape_table %}
     <h3>Detaildaten</h3>
-    {{ landscape_table }}
+    {{ landscape_table | safe }}
     {% endif %}
 
     {% if landscape.summary %}
@@ -361,7 +354,7 @@
     {% endif %}
     {% else %}
     <div class="no-data-box">
-        <p>Fuer diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
     </div>
     {% endif %}
 </div>
@@ -377,7 +370,7 @@
         <span class="section-number">4</span>
         <div class="section-title-group">
             <h2 class="section-title">Reifegrad-Analyse</h2>
-            <p class="section-subtitle">UC2 — S-Kurve, Reifephase, Bestimmtheitsmass R² und AICc</p>
+            <p class="section-subtitle">UC2 — S-Kurve, Reifephase, Bestimmtheitsmaß R² und AICc</p>
         </div>
     </div>
 
@@ -403,31 +396,26 @@
         {% endif %}
     </div>
 
-    <div class="chart-placeholder">
-        <div class="chart-placeholder-icon">&#x1F4C9;</div>
-        <p>S-Kurven-Diagramm: Kumulative Patententwicklung mit logistischer Regression</p>
-        <p class="text-small text-muted">Phasen: Entstehung &rarr; Wachstum &rarr; Reife &rarr; Saettigung</p>
-    </div>
-
     {% if maturity_chart %}
+    <p class="chart-title">Kumulative Patententwicklung (S-Kurve)</p>
     {{ maturity_chart }}
     {% endif %}
 
     {% if maturity_table %}
     <h3>Detaildaten</h3>
-    {{ maturity_table }}
+    {{ maturity_table | safe }}
     {% endif %}
 
     <div class="summary-box">
         <h4>Methodischer Hinweis</h4>
         <p>Die kumulative Patententwicklung wird mittels logistischer Regression
            (Levenberg-Marquardt-Algorithmus) an eine S-Kurve f(t) = L / (1 + e<sup>-k(t-t<sub>0</sub>)</sup>)
-           angepasst. Dabei ist L die Saettigungsgrenze, k die Wachstumsrate und t<sub>0</sub> der
+           angepasst. Dabei ist L die Sättigungsgrenze, k die Wachstumsrate und t<sub>0</sub> der
            Wendepunkt. Daraus werden vier Reifephasen abgeleitet.</p>
     </div>
     {% else %}
     <div class="no-data-box">
-        <p>Fuer diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
     </div>
     {% endif %}
 </div>
@@ -469,19 +457,14 @@
         {% endif %}
     </div>
 
-    <div class="chart-placeholder">
-        <div class="chart-placeholder-icon">&#x1F3E2;</div>
-        <p>Balkendiagramm: Top-Akteure nach Patenten und Projekten (horizontal, gestapelt)</p>
-        <p class="text-small text-muted">Interaktives Diagramm im Web-Frontend verfuegbar</p>
-    </div>
-
     {% if competitive_chart %}
+    <p class="chart-title">Top-Akteure nach Patenten und Projekten</p>
     {{ competitive_chart }}
     {% endif %}
 
     {% if competitive_table %}
     <h3>Top-Akteure</h3>
-    {{ competitive_table }}
+    {{ competitive_table | safe }}
     {% endif %}
 
     <div class="summary-box">
@@ -493,14 +476,14 @@
     </div>
     {% else %}
     <div class="no-data-box">
-        <p>Fuer diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
     </div>
     {% endif %}
 </div>
 {% endif %}
 
 {# ======================================================================
-   Sektion 8 — UC4: Foerderungsanalyse
+   Sektion 8 — UC4: Förderungsanalyse
    WIPO Pub. 946: Funding Analysis
    ====================================================================== #}
 {% if "funding" in uc_keys %}
@@ -508,8 +491,8 @@
     <div class="section-header">
         <span class="section-number">6</span>
         <div class="section-title-group">
-            <h2 class="section-title">Foerderungsanalyse</h2>
-            <p class="section-subtitle">UC4 — EU-Foerderprogramme, Instrumente und Foerdervolumen</p>
+            <h2 class="section-title">Förderungsanalyse</h2>
+            <p class="section-subtitle">UC4 — EU-Förderprogramme, Instrumente und Fördervolumen</p>
         </div>
     </div>
 
@@ -518,7 +501,7 @@
         {% if funding.total_funding is defined %}
         <div class="kpi-card kpi-card-primary">
             <div class="kpi-value">{{ funding.total_funding | format_currency }}</div>
-            <div class="kpi-label">Foerdersumme gesamt</div>
+            <div class="kpi-label">Fördersumme gesamt</div>
         </div>
         {% endif %}
         {% if funding.project_count is defined %}
@@ -529,30 +512,25 @@
         {% endif %}
     </div>
 
-    <div class="chart-placeholder">
-        <div class="chart-placeholder-icon">&#x1F4B0;</div>
-        <p>Treemap: Foerdervolumen nach Rahmenprogramm und Foerderinstrument</p>
-        <p class="text-small text-muted">Programme: FP7, Horizon 2020, Horizon Europe | Instrumente: RIA, IA, CSA</p>
-    </div>
-
     {% if funding_chart %}
+    <p class="chart-title">Fördervolumen im Zeitverlauf</p>
     {{ funding_chart }}
     {% endif %}
 
     {% if funding_table %}
-    <h3>Foerderdetails</h3>
-    {{ funding_table }}
+    <h3>Förderdetails</h3>
+    {{ funding_table | safe }}
     {% endif %}
 
     <div class="summary-box">
-        <h4>EU-Foerderinstrumente</h4>
+        <h4>EU-Förderinstrumente</h4>
         <p><strong>RIA (Research and Innovation Action):</strong> Grundlagenforschung und angewandte Forschung.
            <strong>IA (Innovation Action):</strong> Marktnahe Innovation und Pilotierung.
            <strong>CSA (Coordination and Support Action):</strong> Koordination, Vernetzung und Verbreitung.</p>
     </div>
     {% else %}
     <div class="no-data-box">
-        <p>Fuer diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
     </div>
     {% endif %}
 </div>
@@ -573,31 +551,26 @@
     </div>
 
     {% if cpc_flow %}
-    <div class="chart-placeholder chart-placeholder-wide">
-        <div class="chart-placeholder-icon">&#x1F50D;</div>
-        <p>Heatmap: Jaccard-Aehnlichkeitsmatrix der CPC-Klassifikationen</p>
-        <p class="text-small text-muted">Hohe Jaccard-Werte deuten auf Technologiekonvergenz hin</p>
-    </div>
-
     {% if cpc_flow_chart %}
+    <p class="chart-title">Top CPC-Code-Paare (Co-Occurrence)</p>
     {{ cpc_flow_chart }}
     {% endif %}
 
     {% if cpc_flow_table %}
     <h3>Top CPC-Paare</h3>
-    {{ cpc_flow_table }}
+    {{ cpc_flow_table | safe }}
     {% endif %}
 
     <div class="summary-box">
         <h4>Interpretation</h4>
-        <p>Der Jaccard-Index misst die Aehnlichkeit zweier CPC-Klassifikationen basierend auf
+        <p>Der Jaccard-Index misst die Ähnlichkeit zweier CPC-Klassifikationen basierend auf
            gemeinsam auftretenden Patentklassen. Ein hoher Wert (nahe 1) bedeutet, dass Patente
-           haeufig beiden Klassen gleichzeitig zugeordnet werden — ein Indikator fuer
+           häufig beiden Klassen gleichzeitig zugeordnet werden — ein Indikator für
            Technologiekonvergenz.</p>
     </div>
     {% else %}
     <div class="no-data-box">
-        <p>Fuer diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
     </div>
     {% endif %}
 </div>
@@ -613,7 +586,7 @@
         <span class="section-number">8</span>
         <div class="section-title-group">
             <h2 class="section-title">Geographische Verteilung</h2>
-            <p class="section-subtitle">UC6 — Laenderverteilung, EU-Anteil und Kooperationspaare</p>
+            <p class="section-subtitle">UC6 — Länderverteilung, EU-Anteil und Kooperationspaare</p>
         </div>
     </div>
 
@@ -622,34 +595,29 @@
         {% if geographic.total_countries is defined %}
         <div class="kpi-card kpi-card-primary">
             <div class="kpi-value">{{ geographic.total_countries }}</div>
-            <div class="kpi-label">Laender</div>
+            <div class="kpi-label">Länder</div>
         </div>
         {% endif %}
         {% if geographic.country_count is defined %}
         <div class="kpi-card kpi-card-primary">
             <div class="kpi-value">{{ geographic.country_count }}</div>
-            <div class="kpi-label">Laender</div>
+            <div class="kpi-label">Länder</div>
         </div>
         {% endif %}
     </div>
 
-    <div class="chart-placeholder chart-placeholder-wide">
-        <div class="chart-placeholder-icon">&#x1F30D;</div>
-        <p>Laenderverteilung: Patent- und Projektaktivitaet nach Land (Europa-Fokus)</p>
-        <p class="text-small text-muted">Sortiert nach Gesamtaktivitaet, Top-Kooperationspaare hervorgehoben</p>
-    </div>
-
     {% if geographic_chart %}
+    <p class="chart-title">Länderverteilung nach Patenten</p>
     {{ geographic_chart }}
     {% endif %}
 
     {% if geographic_table %}
-    <h3>Laender-Ranking</h3>
-    {{ geographic_table }}
+    <h3>Länder-Ranking</h3>
+    {{ geographic_table | safe }}
     {% endif %}
     {% else %}
     <div class="no-data-box">
-        <p>Fuer diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
     </div>
     {% endif %}
 </div>
@@ -685,31 +653,26 @@
         {% endif %}
     </div>
 
-    <div class="chart-placeholder">
-        <div class="chart-placeholder-icon">&#x1F4DA;</div>
-        <p>Zitations-Trend und h-Index-Entwicklung im Zeitverlauf</p>
-        <p class="text-small text-muted">Quelle: Semantic Scholar API</p>
-    </div>
-
     {% if research_impact_chart %}
+    <p class="chart-title">Zitations-Trend im Zeitverlauf</p>
     {{ research_impact_chart }}
     {% endif %}
 
     {% if research_impact_table %}
     <h3>Top-Publikationen</h3>
-    {{ research_impact_table }}
+    {{ research_impact_table | safe }}
     {% endif %}
 
     <div class="summary-box">
         <h4>Methodischer Hinweis</h4>
         <p>Der h-Index nach Hirsch (2005): Ein Forschungsfeld hat h-Index h, wenn
            h Publikationen mindestens h-mal zitiert wurden. Zitationsdaten stammen
-           aus Semantic Scholar und koennen von anderen Quellen (Web of Science, Scopus)
+           aus Semantic Scholar und können von anderen Quellen (Web of Science, Scopus)
            abweichen.</p>
     </div>
     {% else %}
     <div class="no-data-box">
-        <p>Fuer diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
     </div>
     {% endif %}
 </div>
@@ -730,23 +693,18 @@
     </div>
 
     {% if temporal %}
-    <div class="chart-placeholder">
-        <div class="chart-placeholder-icon">&#x23F3;</div>
-        <p>Stacked Area Chart: Akteur-Dynamik und thematische Entwicklung ueber die Zeit</p>
-        <p class="text-small text-muted">Zeigt Persistenz von Akteuren und Verschiebung thematischer Schwerpunkte</p>
-    </div>
-
     {% if temporal_chart %}
+    <p class="chart-title">Aktive Akteure im Zeitverlauf</p>
     {{ temporal_chart }}
     {% endif %}
 
     {% if temporal_table %}
     <h3>Akteur-Persistenz</h3>
-    {{ temporal_table }}
+    {{ temporal_table | safe }}
     {% endif %}
     {% else %}
     <div class="no-data-box">
-        <p>Fuer diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
     </div>
     {% endif %}
 </div>
@@ -776,23 +734,18 @@
         {% endif %}
     </div>
 
-    <div class="chart-placeholder chart-placeholder-wide">
-        <div class="chart-placeholder-icon">&#x1F3AF;</div>
-        <p>Radar-Diagramm: 5 normalisierte Dimensionen (Patente, Akteure, Dichte, Kohaerenz, Wachstum)</p>
-        <p class="text-small text-muted">Interaktives Diagramm mit expandierbaren Cluster-Details im Web-Frontend</p>
-    </div>
-
     {% if tech_cluster_chart %}
+    <p class="chart-title">Cluster nach Patentanzahl</p>
     {{ tech_cluster_chart }}
     {% endif %}
 
     {% if tech_cluster_table %}
-    <h3>Cluster-Uebersicht</h3>
-    {{ tech_cluster_table }}
+    <h3>Cluster-Übersicht</h3>
+    {{ tech_cluster_table | safe }}
     {% endif %}
     {% else %}
     <div class="no-data-box">
-        <p>Fuer diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
     </div>
     {% endif %}
 </div>
@@ -808,7 +761,7 @@
         <span class="section-number">12</span>
         <div class="section-title-group">
             <h2 class="section-title">Wissenschaftsdisziplinen</h2>
-            <p class="section-subtitle">UC10 — EuroSciVoc-Taxonomie und Shannon-Diversitaetsindex</p>
+            <p class="section-subtitle">UC10 — EuroSciVoc-Taxonomie und Shannon-Diversitätsindex</p>
         </div>
     </div>
 
@@ -822,23 +775,18 @@
         {% endif %}
     </div>
 
-    <div class="chart-placeholder">
-        <div class="chart-placeholder-icon">&#x1F52C;</div>
-        <p>EuroSciVoc-Verteilung: Wissenschaftsdisziplinen nach europaeischer Taxonomie</p>
-        <p class="text-small text-muted">Shannon-Index H = -&sum; p<sub>i</sub> ln(p<sub>i</sub>): hoehere Werte = groessere Disziplin-Vielfalt</p>
-    </div>
-
     {% if euroscivoc_chart %}
+    <p class="chart-title">Wissenschaftsfelder nach Projekten</p>
     {{ euroscivoc_chart }}
     {% endif %}
 
     {% if euroscivoc_table %}
     <h3>Disziplin-Verteilung</h3>
-    {{ euroscivoc_table }}
+    {{ euroscivoc_table | safe }}
     {% endif %}
     {% else %}
     <div class="no-data-box">
-        <p>Fuer diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
     </div>
     {% endif %}
 </div>
@@ -859,31 +807,27 @@
     </div>
 
     {% if actor_type %}
-    <div class="chart-placeholder">
-        <div class="chart-placeholder-icon">&#x1F3DB;</div>
-        <p>Donut-Diagramm: Verteilung der Akteure nach Organisationstyp</p>
-    </div>
-
     {% if actor_type_chart %}
+    <p class="chart-title">Akteurs-Typen</p>
     {{ actor_type_chart }}
     {% endif %}
 
     {% if actor_type_table %}
     <h3>Typ-Verteilung</h3>
-    {{ actor_type_table }}
+    {{ actor_type_table | safe }}
     {% endif %}
 
     <div class="summary-box">
         <h4>Akteurs-Typen (CORDIS-Klassifikation)</h4>
-        <p><strong>HES</strong> — Higher Education Sector (Hochschulen und Universitaeten)<br>
+        <p><strong>HES</strong> — Higher Education Sector (Hochschulen und Universitäten)<br>
            <strong>PRC</strong> — Private Commercial (Industrie und privatwirtschaftliche Unternehmen)<br>
-           <strong>REC</strong> — Research Organisations (Oeffentliche Forschungseinrichtungen)<br>
+           <strong>REC</strong> — Research Organisations (Öffentliche Forschungseinrichtungen)<br>
            <strong>OTH</strong> — Other (Sonstige Organisationen)<br>
-           <strong>PUB</strong> — Public Body (Oeffentliche Einrichtungen)</p>
+           <strong>PUB</strong> — Public Body (Öffentliche Einrichtungen)</p>
     </div>
     {% else %}
     <div class="no-data-box">
-        <p>Fuer diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
     </div>
     {% endif %}
 </div>
@@ -904,97 +848,93 @@
     </div>
 
     {% if patent_grant %}
-    <div class="chart-placeholder">
-        <div class="chart-placeholder-icon">&#x2705;</div>
-        <p>Composed Chart: Anmeldungen und Erteilungen (Balken) mit Erteilungsquote (Linie, sekundaere Y-Achse)</p>
-    </div>
-
     {% if patent_grant_chart %}
+    <p class="chart-title">Erteilte Patente im Zeitverlauf</p>
     {{ patent_grant_chart }}
     {% endif %}
 
     {% if patent_grant_table %}
     <h3>Erteilungsdetails</h3>
-    {{ patent_grant_table }}
+    {{ patent_grant_table | safe }}
     {% endif %}
 
     <div class="summary-box">
-        <h4>Datenqualitaets-Hinweis</h4>
-        <p>Erteilungsquoten sind nur fuer abgeschlossene Verfahren zuverlaessig interpretierbar.
-           Juengere Anmeldejahre weisen naturbedingt niedrigere Erteilungsquoten auf,
-           da die durchschnittliche Verfahrensdauer beim EPA ca. 3-5 Jahre betraegt.</p>
+        <h4>Datenqualitäts-Hinweis</h4>
+        <p>Erteilungsquoten sind nur für abgeschlossene Verfahren zuverlässig interpretierbar.
+           Jüngere Anmeldejahre weisen naturbedingt niedrigere Erteilungsquoten auf,
+           da die durchschnittliche Verfahrensdauer beim EPA ca. 3-5 Jahre beträgt.</p>
     </div>
     {% else %}
     <div class="no-data-box">
-        <p>Fuer diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
     </div>
     {% endif %}
 </div>
 {% endif %}
 
 {# ======================================================================
-   Sektion 17 — Datenqualitaetshinweise
+   Sektion 17 — Datenqualitätshinweise
    WIPO Pub. 946: Data Quality and Limitations
    ====================================================================== #}
 <div class="section section-portrait" id="sec-data-quality">
     <div class="section-header">
         <span class="section-number">{{ toc_quality_number }}</span>
         <div class="section-title-group">
-            <h2 class="section-title">Datenqualitaetshinweise</h2>
+            <h2 class="section-title">Datenqualitätshinweise</h2>
             <p class="section-subtitle">Limitierungen, Truncation Bias und Abdeckungshinweise</p>
         </div>
     </div>
 
     <div class="quality-grid">
         <div class="quality-card quality-warning">
-            <h4>Truncation Bias (Veroeffentlichungsverzoegerung)</h4>
-            <p>Patentdaten unterliegen einer Veroeffentlichungsverzoegerung von 18 Monaten.
-               Daten der letzten 2 Anmeldejahre sind daher strukturell unvollstaendig.
-               In den Diagrammen werden diese Jahre als "unvollstaendige Daten" gekennzeichnet.</p>
+            <h4>Truncation Bias (Veröffentlichungsverzögerung)</h4>
+            <p>Patentdaten unterliegen einer Veröffentlichungsverzögerung von 18 Monaten.
+               Daten der letzten 2 Anmeldejahre sind daher strukturell unvollständig.
+               In den Diagrammen werden diese Jahre als "unvollständige Daten" gekennzeichnet.</p>
         </div>
 
         <div class="quality-card quality-info">
             <h4>Datenabdeckung</h4>
-            <p>Die Analyse umfasst ausschliesslich europaeische Datenquellen (EPO, CORDIS, OpenAIRE).
-               Patentfamilien anderer Patentaemter (USPTO, CNIPA, JPO) sind nur ueber
-               EP-Familienmitglieder enthalten. Fuer eine globale Perspektive sollten
-               zusaetzliche Datenquellen herangezogen werden.</p>
+            <p>Die Analyse umfasst ausschließlich europäische Datenquellen (EPO, CORDIS, OpenAIRE).
+               Patentfamilien anderer Patentämter (USPTO, CNIPA, JPO) sind nur über
+               EP-Familienmitglieder enthalten. Für eine globale Perspektive sollten
+               zusätzliche Datenquellen herangezogen werden.</p>
         </div>
 
         <div class="quality-card quality-info">
             <h4>Entity Resolution</h4>
-            <p>Akteursnamen werden ueber GLEIF-Daten normalisiert und zusammengefuehrt.
-               Trotz Entity Resolution koennen Namenvarianten (z.B. Abkuerzungen,
-               Landesgesellschaften) zu Doppelzaehlungen oder fehlenden Zuordnungen fuehren.</p>
+            <p>Akteursnamen werden über GLEIF-Daten normalisiert und zusammengeführt.
+               Trotz Entity Resolution können Namenvarianten (z.B. Abkürzungen,
+               Landesgesellschaften) zu Doppelzählungen oder fehlenden Zuordnungen führen.</p>
         </div>
 
         <div class="quality-card quality-warning">
             <h4>Zitationsdaten</h4>
             <p>Zitationsanalysen (UC7) basieren auf Semantic Scholar. Die Abdeckung
                variiert nach Fachgebiet und kann von anderen Zitationsdatenbanken
-               (Web of Science, Scopus) abweichen. Der h-Index ist ausserdem
-               altersabhaengig und beguenstigt etablierte Forschungsfelder.</p>
+               (Web of Science, Scopus) abweichen. Der h-Index ist außerdem
+               altersabhängig und begünstigt etablierte Forschungsfelder.</p>
         </div>
 
         <div class="quality-card quality-info">
             <h4>CPC-Klassifikation</h4>
             <p>Die CPC-Analyse (UC5) basiert auf der Hauptklassifikation und bis zu
-               5 Nebenklassifikationen pro Patent. Aenderungen der CPC-Taxonomie ueber
-               den Analysezeitraum koennen zu Diskontinuitaeten fuehren.</p>
+               5 Nebenklassifikationen pro Patent. Änderungen der CPC-Taxonomie über
+               den Analysezeitraum können zu Diskontinuitäten führen.</p>
         </div>
 
         <div class="quality-card quality-info">
             <h4>Deterministische Berechnung</h4>
             <p>Alle Metriken werden deterministisch berechnet — es wird keine generative
-               KI fuer Zahlenwerte verwendet. Die Ergebnisse sind reproduzierbar und
+               KI für Zahlenwerte verwendet. Die Ergebnisse sind reproduzierbar und
                auditierbar. Textuelle Zusammenfassungen (sofern vorhanden) dienen
-               ausschliesslich der Lesbarkeit.</p>
+               ausschließlich der Lesbarkeit.</p>
         </div>
     </div>
 
     {# Explainability / Auditierungsinformationen #}
     {% if explainability_html %}
-    {{ explainability_html }}
+    {{ explainability_html | safe }}
     {% endif %}
 </div>
 
@@ -1006,24 +946,24 @@
     <h2>Anhang A — Berechnungsgrundlagen</h2>
 
     <h3>A.1 CAGR (Compound Annual Growth Rate)</h3>
-    <p>Die durchschnittliche jaehrliche Wachstumsrate wird ueber den Analysezeitraum
-       berechnet und gibt an, wie stark die Technologie-Aktivitaet pro Jahr waechst.</p>
+    <p>Die durchschnittliche jährliche Wachstumsrate wird über den Analysezeitraum
+       berechnet und gibt an, wie stark die Technologie-Aktivität pro Jahr wächst.</p>
     <div class="formula">CAGR = ((V_final / V_initial)^(1/n) - 1) &times; 100 %</div>
 
     <h3>A.2 S-Kurven-Analyse (Technologie-Reifegrad)</h3>
     <p>Die kumulative Patententwicklung wird mittels logistischer Regression
        (Levenberg-Marquardt-Algorithmus) an eine S-Kurve angepasst. Daraus
-       werden Reifephasen abgeleitet: Entstehung, Wachstum, Reife, Saettigung.</p>
+       werden Reifephasen abgeleitet: Entstehung, Wachstum, Reife, Sättigung.</p>
     <div class="formula">f(t) = L / (1 + e^(-k &times; (t - t0)))</div>
-    <p>wobei L = Saettigungsgrenze, k = Wachstumsrate, t0 = Wendepunkt.</p>
+    <p>wobei L = Sättigungsgrenze, k = Wachstumsrate, t0 = Wendepunkt.</p>
 
     <h3>A.3 HHI (Herfindahl-Hirschman-Index)</h3>
-    <p>Mass fuer die Marktkonzentration im Technologiefeld. Werte &lt; 1.500
-       deuten auf fragmentierte Maerkte hin, &gt; 2.500 auf hohe Konzentration.</p>
+    <p>Maß für die Marktkonzentration im Technologiefeld. Werte &lt; 1.500
+       deuten auf fragmentierte Märkte hin, &gt; 2.500 auf hohe Konzentration.</p>
     <div class="formula">HHI = &sum;(s_i^2), wobei s_i = Marktanteil des Akteurs i (in %)</div>
 
     <h3>A.4 Jaccard-Index (CPC-Flow)</h3>
-    <p>Mass fuer die Aehnlichkeit zweier CPC-Klassifikationen basierend auf
+    <p>Maß für die Ähnlichkeit zweier CPC-Klassifikationen basierend auf
        gemeinsam auftretenden Patentklassen.</p>
     <div class="formula">J(A, B) = |A &cap; B| / |A &cup; B|</div>
 
@@ -1031,9 +971,9 @@
     <p>Kennzahl nach Hirsch (2005): Ein Forscher/Feld hat h-Index h, wenn
        h Publikationen mindestens h-mal zitiert wurden.</p>
 
-    <h3>A.6 Shannon-Index (Diversitaet)</h3>
-    <p>Mass fuer die Diversitaet der Wissenschaftsdisziplinen innerhalb eines Technologiefelds.
-       Hoehere Werte zeigen eine breitere interdisziplinaere Aufstellung an.</p>
+    <h3>A.6 Shannon-Index (Diversität)</h3>
+    <p>Maß für die Diversität der Wissenschaftsdisziplinen innerhalb eines Technologiefelds.
+       Höhere Werte zeigen eine breitere interdisziplinäre Aufstellung an.</p>
     <div class="formula">H = -&sum; p_i &times; ln(p_i)</div>
 
     <h2 class="mt-2">Anhang B — Datenquellen-Details</h2>
@@ -1051,58 +991,58 @@
         <tbody>
             <tr>
                 <td><strong>EPO OPS</strong></td>
-                <td>Europaeisches Patentamt — Open Patent Services</td>
+                <td>Europäisches Patentamt — Open Patent Services</td>
                 <td>Patente, CPC-Klassifikation, Patentfamilien, Anmelder</td>
-                <td>EP + WO Veroeffentlichungen</td>
-                <td>Woechentlich</td>
+                <td>EP + WO Veröffentlichungen</td>
+                <td>Wöchentlich</td>
             </tr>
             <tr>
                 <td><strong>CORDIS</strong></td>
                 <td>EU-Forschungsprojektdatenbank</td>
-                <td>Projekte, Foerdermittel, Akteure, Laender, Programme</td>
+                <td>Projekte, Fördermittel, Akteure, Länder, Programme</td>
                 <td>FP7, H2020, Horizon Europe</td>
-                <td>Taeglich</td>
+                <td>Täglich</td>
             </tr>
             <tr>
                 <td><strong>OpenAIRE</strong></td>
                 <td>Open Access Infrastructure for Research in Europe</td>
                 <td>Publikationszahlen, Open-Access-Status</td>
-                <td>EU-gefoerderte Publikationen</td>
-                <td>Taeglich</td>
+                <td>EU-geförderte Publikationen</td>
+                <td>Täglich</td>
             </tr>
             <tr>
                 <td><strong>Semantic Scholar</strong></td>
-                <td>AI-gestuetzte akademische Suchmaschine (Allen AI)</td>
+                <td>AI-gestützte akademische Suchmaschine (Allen AI)</td>
                 <td>Zitationen, h-Index, Abstracts, Venues</td>
                 <td>~200 Mio. Paper weltweit</td>
-                <td>Taeglich</td>
+                <td>Täglich</td>
             </tr>
             <tr>
                 <td><strong>GLEIF</strong></td>
                 <td>Global Legal Entity Identifier Foundation</td>
                 <td>LEI-Codes, Unternehmensstrukturen</td>
                 <td>~2.5 Mio. juristische Personen</td>
-                <td>Taeglich</td>
+                <td>Täglich</td>
             </tr>
         </tbody>
     </table>
 
-    <h2 class="mt-2">Anhang C — Transparenz und EU AI Act Konformitaet</h2>
+    <h2 class="mt-2">Anhang C — Transparenz und EU AI Act Konformität</h2>
 
     <div class="disclaimer">
         <strong>Hinweis zur Datenverarbeitung (EU AI Act Art. 52)</strong>
         Dieser Report wurde durch das TI-Radar System automatisiert erstellt.
-        Saemtliche Berechnungen basieren auf deterministischen Algorithmen
-        (keine generative KI fuer Zahlenwerte). Die zugrunde liegenden Rohdaten
-        stammen ausschliesslich aus oeffentlich zugaenglichen europaeischen
+        Sämtliche Berechnungen basieren auf deterministischen Algorithmen
+        (keine generative KI für Zahlenwerte). Die zugrunde liegenden Rohdaten
+        stammen ausschließlich aus öffentlich zugänglichen europäischen
         Datenquellen. Ergebnisse sind reproduzierbar und auditierbar.
         <br><br>
         <strong>Haftungsausschluss:</strong>
-        Die Analyseergebnisse dienen ausschliesslich der Information und
-        stellen keine Beratung dar. Trotz sorgfaeltiger Verarbeitung kann
-        keine Gewaehr fuer die Vollstaendigkeit und Richtigkeit der Daten
-        uebernommen werden. Strategische Entscheidungen sollten stets durch
-        Fachexpertise ergaenzt werden.
+        Die Analyseergebnisse dienen ausschließlich der Information und
+        stellen keine Beratung dar. Trotz sorgfältiger Verarbeitung kann
+        keine Gewähr für die Vollständigkeit und Richtigkeit der Daten
+        übernommen werden. Strategische Entscheidungen sollten stets durch
+        Fachexpertise ergänzt werden.
     </div>
 
     <div class="report-generation-info mt-2">

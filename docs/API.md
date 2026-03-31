@@ -378,6 +378,103 @@ Alle externen API-Zugriffe folgen demselben Ablauf:
 
 ---
 
+## Export-Endpunkte
+
+Der Export-Service (`export-svc`, Port 8020) stellt Endpunkte fuer den Datenexport in verschiedenen Formaten bereit. Alle Export-Endpunkte erfordern den `X-Admin-Key`-Header (wenn `TI_RADAR_ADMIN_KEY` gesetzt ist).
+
+### Endpunkt-Uebersicht
+
+| Methode | Pfad | Beschreibung |
+|---|---|---|
+| `POST` | `/api/v1/export/csv` | CSV-Export (StreamingResponse) |
+| `POST` | `/api/v1/export/xlsx` | Excel-Export (openpyxl) |
+| `POST` | `/api/v1/export/json` | JSON-Export |
+| `POST` | `/api/v1/export/pdf` | PDF-Report (WeasyPrint + Matplotlib-Charts) |
+| `POST` | `/api/v1/export/batch` | ZIP-Batch-Export (mehrere Technologien) |
+| `GET` | `/api/v1/export/history` | Export-Historie / Audit-Log |
+| `DELETE` | `/api/v1/export/cache` | Abgelaufene Cache-Eintraege bereinigen |
+
+### POST /api/v1/export/{format}
+
+Exportiert Analyseergebnisse im gewuenschten Format. Der Export-Service ruft intern die Orchestrator-API auf, fuehrt die Analyse durch und formatiert die Ergebnisse.
+
+#### Request (identisch fuer CSV, XLSX, JSON, PDF)
+
+```bash
+curl -X POST http://localhost:8020/api/v1/export/pdf \
+  -H "Content-Type: application/json" \
+  -H "X-Admin-Key: <admin-key>" \
+  -d '{
+    "technology": "solid-state batteries",
+    "years": 10,
+    "european_only": false,
+    "use_cases": []
+  }' \
+  --output report.pdf
+```
+
+#### Request-Parameter
+
+| Feld | Typ | Pflicht | Default | Beschreibung |
+|---|---|---|---|---|
+| `technology` | `string` | ja | -- | Technologie-Suchbegriff |
+| `years` | `int` | nein | `10` | Analysezeitraum in Jahren (3-30) |
+| `european_only` | `bool` | nein | `false` | Nur EU-27 + assoziierte Laender |
+| `use_cases` | `string[]` | nein | `[]` | Selektive UC-Ausfuehrung (leer = alle) |
+
+#### Response-Formate
+
+| Format | Content-Type | Beschreibung |
+|---|---|---|
+| CSV | `text/csv` | Tabellarische Daten, ein Sheet pro UC |
+| XLSX | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` | Excel-Datei mit mehreren Worksheets |
+| JSON | `application/json` | Strukturierte JSON-Ausgabe |
+| PDF | `application/pdf` | WIPO-konformer Report mit 18 Sektionen und Matplotlib-Charts |
+
+### POST /api/v1/export/batch
+
+Batch-Export fuer mehrere Technologien als ZIP-Archiv.
+
+```bash
+curl -X POST http://localhost:8020/api/v1/export/batch \
+  -H "Content-Type: application/json" \
+  -H "X-Admin-Key: <admin-key>" \
+  -d '{
+    "technologies": ["quantum computing", "solid-state batteries"],
+    "format": "pdf",
+    "years": 10
+  }' \
+  --output batch_reports.zip
+```
+
+### GET /api/v1/export/history
+
+Gibt die Export-Historie als Audit-Log zurueck (letzte Exporte mit Technologie, Format, Dateigroesse, Dauer).
+
+```bash
+curl http://localhost:8020/api/v1/export/history \
+  -H "X-Admin-Key: <admin-key>"
+```
+
+### DELETE /api/v1/export/cache
+
+Bereinigt abgelaufene Cache-Eintraege in `export_schema.analysis_cache`.
+
+```bash
+curl -X DELETE http://localhost:8020/api/v1/export/cache \
+  -H "X-Admin-Key: <admin-key>"
+```
+
+### Analyse-Caching
+
+Der Export-Service cached Analyseergebnisse in `export_schema.analysis_cache`:
+
+- **Cache-Key:** SHA-256 ueber `(technology, start_year, end_year, use_cases, european_only)`
+- **TTL:** 24 Stunden (konfigurierbar)
+- Wiederholte Exporte derselben Analyse werden aus dem Cache bedient (kein erneuter Orchestrator-Aufruf)
+
+---
+
 ## HTTP-Status-Codes
 
 | Code | Beschreibung |

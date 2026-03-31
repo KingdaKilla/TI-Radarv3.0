@@ -133,7 +133,18 @@
       "Bash(dot -Tsvg erm_ti_radar.gv -o erm_ti_radar_gv.svg)",
       "Bash(find /c/Users/bensc/OneDrive/HWR/6. Semester/Bachelor/07_Prototypen/mvp_v3.0_new/services -name \"service.py\" -exec head -30 {} +)",
       "Bash(find /c/Users/bensc/OneDrive/HWR/6 Semester/Bachelor/07_Prototypen/mvp_v3.0_new/deploy -name *.css -o -name *.html)",
-      "mcp__ide__executeCode"
+      "mcp__ide__executeCode",
+      "Bash(rm -f /d/ti_radar_dump_v3.1.1.backup)",
+      "Bash(split -b 24G -d --additional-suffix=.backup /d/ti_radar_dump.backup /d/ti_radar_dump_v3.1.1.part-)",
+      "Bash(ls -lh /d/ti_radar_dump_v3.1.1.part-*)",
+      "Bash(wmic cpu:*)",
+      "Bash(wmic OS get TotalVisibleMemorySize /format:list)",
+      "Bash(find 'C:\\\\Users\\\\bensc\\\\OneDrive\\\\HWR\\\\6. Semester\\\\Bachelor\\\\07_Prototypen\\\\mvp_v3.0_new' -type f -name *.md -o -name CLAUDE* -o -name *README*)",
+      "Bash(find 'C:\\\\Users\\\\bensc\\\\OneDrive\\\\HWR\\\\6. Semester\\\\Bachelor' -maxdepth 2 -type f \\\\\\(-name *.pptx -o -name *.docx -o -name *UC* -o -name *use*case* \\\\\\))",
+      "Bash(find 'C:\\\\Users\\\\bensc\\\\OneDrive\\\\HWR\\\\6. Semester\\\\Bachelor' -type f \\\\\\(-name *thesis* -o -name *hypothesis* -o -name *Hypothese* -o -name *findings* -o -name *Findings* \\\\\\))",
+      "Bash(echo $OPENROUTER_API_KEY)",
+      "Bash(find /c/Users/bensc/OneDrive/HWR/6. Semester/Bachelor/07_Prototypen/mvp_v3.0_new -name schema.sql -o -name *migration*.sql)",
+      "Bash(find /c/Users/bensc/OneDrive/HWR/6. Semester/Bachelor/07_Prototypen/mvp_v3.0_new/services -type d -name *research* -o -name *publication* -o -name *citation*)"
     ]
   }
 }

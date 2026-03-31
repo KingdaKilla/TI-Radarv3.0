@@ -31,7 +31,7 @@ graph TB
 
     subgraph "Hilfs-Services"
         Import["import-svc<br/>EPO + CORDIS Bulk<br/>+ Scheduler"]
-        Export["export-svc<br/>CSV/PNG Export"]
+        Export["export-svc<br/>CSV/XLSX/JSON/PDF Export"]
         Pub["publication-svc<br/>Publikationskette"]
     end
 
@@ -199,6 +199,36 @@ Der `actor-type-svc` (UC11) nutzt die kostenlose GLEIF API (`api.gleif.org`) fue
 - **Aktivierung:** `GLEIF_ENABLED=true` (Default)
 - **Cache:** `entity_schema.gleif_cache` mit 90-Tage-TTL (auch Negativ-Ergebnisse werden gecacht)
 - **Bereinigung:** `entity_schema.purge_stale_gleif()` entfernt abgelaufene Eintraege
+
+## Datenakquise-Architektur
+
+Das System nutzt 5 externe Datenquellen ueber 2 Beschaffungsmuster:
+
+### Bulk-Dateiimport (EPO, CORDIS)
+
+EPO- und CORDIS-Daten werden als Bulk-Dateien aus `/data/bulk/` gelesen. Der woechentliche Scheduler verarbeitet neue Dateien automatisch, aber die Dateien selbst muessen manuell bereitgestellt werden. Es existiert derzeit **kein automatisierter Download** ueber EPO OPS oder CORDIS REST API.
+
+### Live-API mit DB-Cache (OpenAIRE, Semantic Scholar, GLEIF)
+
+Drei Quellen werden on-demand bei Analyse-Abfragen ueber HTTP-Adapter aufgerufen:
+
+| Quelle | Adapter | Genutzt von | Cache-TTL | Rate-Limit |
+|---|---|---|---|---|
+| OpenAIRE | `openaire_adapter.py` | UC1 Landscape | 7 Tage | JWT Token, Backoff |
+| Semantic Scholar | Research-Adapter | UC7 Research-Impact | 30 Tage | API-Key |
+| GLEIF | `gleif_adapter.py` | UC11 Actor-Type | 90 Tage | 55 RPM, kein Key |
+
+Alle Adapter implementieren: exponentielles Backoff, Graceful Degradation (leere Ergebnisse statt Abbruch), Stale-Cache-Fallback bei API-Ausfaellen.
+
+## Per-UC-Timeout-Konfiguration
+
+| UC-Service | Timeout | Begruendung |
+|---|---|---|
+| UC2 Maturity | 60s | `family_id COUNT DISTINCT` ist CPU-intensiv |
+| UC3 Competitive | 60s | Entity Resolution + Netzwerk-Berechnungen |
+| UC5 CPC-Flow | 60s | Jaccard-Berechnung auf 237M Zeilen (MV) |
+| UC9 Tech-Cluster | 60s | Community Detection Algorithmen |
+| Alle anderen | 30s | Standard-Aggregationen |
 
 ## CI/CD-Pipeline
 

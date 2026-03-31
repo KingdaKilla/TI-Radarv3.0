@@ -1,6 +1,6 @@
 # TI-Radar -- Technology Intelligence Radar
 
-Webbasierte Analyseplattform für Technologie-Intelligence auf Basis von Patent- und Forschungsdaten. Das System aggregiert Daten aus dem Europäischen Patentamt (EPO, 154.8M Patente), CORDIS (80.5K EU-Forschungsprojekte) und OpenAIRE (Publikationen) und stellt diese über 13 analytische Use Cases (UC1–UC12 + UC-C Publications) als interaktives Dashboard bereit.
+Webbasierte Analyseplattform fuer Technologie-Intelligence auf Basis von Patent- und Forschungsdaten. Das System integriert 5 Datenquellen -- EPO DOCDB (154.8M Patente), CORDIS (80.5K EU-Forschungsprojekte), OpenAIRE (Publikationen), Semantic Scholar (Zitationsanalyse) und GLEIF (Legal Entity Identifier) -- und stellt diese ueber 13 analytische Use Cases (UC1-UC12 + UC-C Publications) als interaktives Dashboard bereit.
 
 Entstanden im Rahmen einer Bachelorarbeit an der HWR Berlin.
 
@@ -83,7 +83,7 @@ Beim ersten Start wird automatisch das Datenbankschema angelegt und CORDIS-Demod
 | Verzeichnis | Beschreibung |
 |---|---|
 | `frontend/` | Next.js 14 Frontend (TypeScript, Recharts, D3, Tailwind) |
-| `services/` | 15 Python-Microservices + 1 Next.js-Frontend (12 UC-Services + Orchestrator + Import + Export + Publication) |
+| `services/` | 16 Python-Microservices + 1 Next.js-Frontend (13 UC-Services + Orchestrator + Import + Export) |
 | `packages/shared/` | Geteilter Python-Code (Domain-Ports, Protobuf-Stubs) |
 | `proto/` | Protobuf-Definitionen für gRPC-Kommunikation |
 | `database/` | SQL-Schema-Migrationen, Mock-Daten |
@@ -139,9 +139,11 @@ Docker-Images werden in der **GitHub Container Registry** (`ghcr.io`) publiziert
 ## Daten & Caching
 
 - **Auto-Seeding:** Beim ersten Start werden automatisch CORDIS-Demodaten (4.815 Projekte, 4.034 Organisationen, 17.900 Publikationen) geladen.
-- **API-Caching:** OpenAIRE- und Semantic-Scholar-Antworten werden in der Datenbank gecacht (7 bzw. 30 Tage TTL).
+- **5 Datenquellen:** EPO DOCDB (Bulk-Import), CORDIS (Bulk-Import), OpenAIRE (Live-API, 7d TTL), Semantic Scholar (Live-API, 30d TTL), GLEIF (Live-API, 90d TTL).
+- **API-Caching:** Externe API-Antworten werden in der Datenbank gecacht mit Stale-Fallback bei API-Ausfaellen.
 - **Woechentlicher Import-Scheduler:** APScheduler im Import-Service fuehrt jeden Sonntag 02:00 UTC einen vollstaendigen Datenimport durch (konfigurierbar).
-- **GLEIF LEI Integration:** Actor-Type-Service (UC11) reichert Organisationen ueber die kostenlose GLEIF API mit Legal Entity Identifiern an (90-Tage-Cache).
+- **GLEIF LEI Integration:** Actor-Type-Service (UC11) reichert Organisationen ueber die kostenlose GLEIF API mit Legal Entity Identifiern an.
+- **Export-Formate:** CSV, XLSX, JSON und PDF (WIPO-konformer Report mit Matplotlib-Charts).
 
 ## Dokumentation
 

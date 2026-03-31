@@ -475,31 +475,13 @@ p {
     margin-top: 4px;
 }
 
-/* --- Chart-Platzhalter --- */
-.chart-placeholder {
-    background: #f8fafc;
-    border: 2px dashed #cbd5e1;
-    border-radius: 8px;
-    padding: 30px 20px;
+/* --- Chart-Titel --- */
+.chart-title {
+    font-size: 11pt;
+    font-weight: 700;
     text-align: center;
-    margin: 16px 0;
-    min-height: 100px;
-}
-
-.chart-placeholder-wide {
-    min-height: 140px;
-}
-
-.chart-placeholder-icon {
-    font-size: 28pt;
-    margin-bottom: 8px;
-    opacity: 0.6;
-}
-
-.chart-placeholder p {
-    font-size: 10pt;
-    color: #475569;
-    margin: 4px 0;
+    color: #1e293b;
+    margin: 14px 0 6px 0;
 }
 
 /* --- Keine-Daten-Box --- */

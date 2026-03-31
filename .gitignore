@@ -44,3 +44,13 @@ htmlcov/
 screenshots/
 figures/
 *.png
+
+# Project-local TODO
+TODO.md
+
+# Presentation
+TI-Radar_MVP_v3.0_Praesentation.pptx
+
+# Docs assets (diagrams, backgrounds)
+docs/backgrounds/
+docs/diagrams/

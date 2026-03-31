@@ -20,6 +20,7 @@ Ziel-Tabellen:
 from __future__ import annotations
 
 import io
+import os
 import time
 import zipfile
 from dataclasses import dataclass, field
@@ -284,9 +285,16 @@ def _iterparse_xml_stream(
             tag=tags,
             recover=True,
         )
+        min_year = int(os.environ.get("EPO_MIN_YEAR", "0"))
         for _event, elem in context:
             patent = _parse_patent_document(elem)
             if patent:
+                if min_year and patent.get("publication_date"):
+                    if patent["publication_date"].year < min_year:
+                        elem.clear()
+                        while elem.getprevious() is not None:
+                            del elem.getparent()[0]
+                        continue
                 yield patent
             # Speicher freigeben
             elem.clear()

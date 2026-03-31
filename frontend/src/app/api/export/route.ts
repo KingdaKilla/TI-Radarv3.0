@@ -7,8 +7,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-const INTERNAL_API_URL =
-  process.env.INTERNAL_API_URL || "http://localhost:8000";
+const EXPORT_API_URL =
+  process.env.EXPORT_API_URL || "http://localhost:8020";
 
 const FORMAT_MIME: Record<string, string> = {
   csv: "text/csv",
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     // S-21: Only allow known formats; fall back to csv for anything unexpected
     const format = ALLOWED_FORMATS.has(body.format) ? body.format : "csv";
 
-    const res = await fetch(`${INTERNAL_API_URL}/api/v1/radar/export`, {
+    const res = await fetch(`${EXPORT_API_URL}/api/v1/export/${format}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

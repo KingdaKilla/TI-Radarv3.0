@@ -8,8 +8,11 @@
  * ────────────────────────────────────────────── */
 
 import { useCallback, useRef, useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import type { Cluster } from "@/lib/clusters";
+import { USE_CASE_LABELS, UC_NUMBERS } from "@/lib/types";
+import type { UseCaseKey } from "@/lib/types";
+import { UC_INSIGHTS } from "@/lib/uc-insights";
 
 interface Props {
   clusters: Cluster[];
@@ -29,6 +32,12 @@ export default function ClusterCarousel({
   compact = false,
 }: Props) {
   const count = clusters.length;
+  const [flippedIndex, setFlippedIndex] = useState<number | null>(null);
+
+  /* Unflip when navigating away */
+  useEffect(() => {
+    setFlippedIndex(null);
+  }, [activeIndex]);
 
   /*
    * Slides: [clone-last, 0, 1, ..., N-1, clone-first]
@@ -107,7 +116,6 @@ export default function ClusterCarousel({
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     pointerStart.current = e.clientX;
     dragging.current = false;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }, []);
 
   const handlePointerUp = useCallback(
@@ -181,6 +189,8 @@ export default function ClusterCarousel({
               const isCenter = i === internalPos;
               const dist = Math.abs(i - internalPos);
               const isNeighbor = dist === 1;
+              const isFlipped = !compact && isCenter && flippedIndex === realIdx;
+              const canFlip = !compact && isCenter && cluster.ucKeys.length > 0;
 
               return (
                 <div
@@ -204,8 +214,15 @@ export default function ClusterCarousel({
                       "transform 0.5s ease, opacity 0.5s ease, filter 0.5s ease",
                   }}
                   onClick={() => {
-                    if (!dragging.current) onSelect(realIdx);
-                    dragging.current = false;
+                    if (dragging.current) {
+                      dragging.current = false;
+                      return;
+                    }
+                    if (canFlip) {
+                      setFlippedIndex(isFlipped ? null : realIdx);
+                    } else {
+                      onSelect(realIdx);
+                    }
                   }}
                   tabIndex={isCenter ? 0 : -1}
                   onKeyDown={(e) => {
@@ -213,50 +230,94 @@ export default function ClusterCarousel({
                     if (e.key === "ArrowLeft") goPrev();
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      onSelect(realIdx);
+                      if (canFlip) {
+                        setFlippedIndex(isFlipped ? null : realIdx);
+                      } else {
+                        onSelect(realIdx);
+                      }
                     }
                   }}
                 >
-                  <div
-                    className={`relative h-full w-full overflow-hidden rounded-2xl transition-shadow ${
-                      isCenter
-                        ? "ring-1 ring-[var(--color-accent-gold)]/30 glow-border"
-                        : "border border-[var(--color-border)]"
-                    }`}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={cluster.image}
-                      alt=""
-                      aria-hidden="true"
-                      className="absolute inset-0 h-full w-full object-cover"
-                      draggable={false}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#091428] via-[#091428]/60 to-transparent" />
-                    <div className="relative z-[2] flex h-full flex-col justify-end p-4">
-                      <h3 className="text-sm sm:text-base lg:text-lg font-bold text-white leading-tight">
-                        {cluster.title}
-                      </h3>
-                      {!compact && cluster.description && (
-                        <p className="mt-1 text-[10px] sm:text-xs text-white/70 leading-snug line-clamp-2">
-                          {cluster.description}
+                  <div className="relative h-full w-full">
+                    {/* ── Front Face ── */}
+                    <div
+                      className={`absolute inset-0 overflow-hidden rounded-2xl transition-all duration-500 ${
+                        isCenter
+                          ? "ring-1 ring-[var(--color-accent-gold)]/30 glow-border"
+                          : "border border-[var(--color-border)]"
+                      }`}
+                      style={{
+                        opacity: isFlipped ? 0 : 1,
+                        transform: isFlipped ? "scaleX(0)" : "scaleX(1)",
+                        pointerEvents: isFlipped ? "none" : "auto",
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={cluster.image}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 h-full w-full object-cover"
+                        draggable={false}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#091428] via-[#091428]/60 to-transparent" />
+                      <div className="relative z-[2] flex h-full flex-col justify-end p-4">
+                        <h3 className="text-sm sm:text-base lg:text-lg font-bold text-white leading-tight">
+                          {cluster.title}
+                        </h3>
+                        {!compact && cluster.description && (
+                          <p className="mt-1 text-[10px] sm:text-xs text-white/70 leading-snug line-clamp-2">
+                            {cluster.description}
+                          </p>
+                        )}
+                        {canFlip && (
+                          <p className="mt-2 text-[10px] text-[var(--color-accent-gold)]/80 font-medium">
+                            Klicken fuer Details
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* ── Back Face ── */}
+                    <div
+                      className="absolute inset-0 overflow-hidden rounded-2xl border border-[var(--color-accent-gold)]/30 bg-[#091428] transition-all duration-500"
+                      style={{
+                        opacity: isFlipped ? 1 : 0,
+                        transform: isFlipped ? "scaleX(1)" : "scaleX(0)",
+                        pointerEvents: isFlipped ? "auto" : "none",
+                      }}
+                    >
+                      <div className="flex h-full flex-col p-5 overflow-y-auto">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="text-sm sm:text-base font-bold text-white">
+                            {cluster.title}
+                          </h3>
+                          <RotateCcw className="h-4 w-4 text-[var(--color-accent-gold)]/60" />
+                        </div>
+                        <p className="text-[10px] sm:text-xs text-white/50 mb-4">
+                          Dieser Analysebereich umfasst:
                         </p>
-                      )}
-                      {compact && cluster.metrics.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {cluster.metrics.map((m, mi) => (
-                            <span
-                              key={mi}
-                              className="rounded-full bg-white/10 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-white/90"
-                            >
-                              <span className="text-white/50">
-                                {m.label}:{" "}
+                        <div className="flex flex-col gap-3 flex-1">
+                          {cluster.ucKeys.map((ucKey: UseCaseKey) => (
+                            <div key={ucKey} className="flex gap-2">
+                              <span className="shrink-0 mt-0.5 rounded bg-[var(--color-accent-gold)]/20 px-1.5 py-0.5 text-[10px] font-bold text-[var(--color-accent-gold)]">
+                                UC{UC_NUMBERS[ucKey].number}
                               </span>
-                              {m.value}
-                            </span>
+                              <div className="min-w-0">
+                                <p className="text-xs font-semibold text-white/90 leading-tight">
+                                  {USE_CASE_LABELS[ucKey]}
+                                </p>
+                                <p className="mt-0.5 text-[10px] leading-snug text-white/50 line-clamp-2">
+                                  {UC_INSIGHTS[ucKey]}
+                                </p>
+                              </div>
+                            </div>
                           ))}
                         </div>
-                      )}
+                        <p className="mt-3 text-[10px] text-[var(--color-accent-gold)]/60 font-medium text-center">
+                          Klicken zum Zurueck
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

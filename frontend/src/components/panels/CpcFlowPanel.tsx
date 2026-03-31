@@ -7,7 +7,7 @@
  * ────────────────────────────────────────────── */
 
 import PanelCard from "./PanelCard";
-import CpcHeatmap from "@/components/charts/CpcHeatmap";
+import CpcChordDiagram from "@/components/charts/CpcChordDiagram";
 import InfoTooltip from "@/components/ui/InfoTooltip";
 import { METRIC_TOOLTIPS } from "@/lib/metric-tooltips";
 import type { CpcFlowPanel as CpcFlowPanelData } from "@/lib/types";
@@ -66,8 +66,8 @@ export default function CpcFlowPanel({
 
           {/* Chord Diagram (when link data is available) */}
           {hasChordData && (
-            <div className="h-[clamp(16rem,45vh,32rem)]" aria-label="Heatmap: CPC-Technologiefluss">
-              <CpcHeatmap nodes={data.nodes} links={data.links} />
+            <div className="h-[clamp(16rem,45vh,32rem)]" aria-label="Chord-Diagramm: CPC-Technologiefluss">
+              <CpcChordDiagram nodes={data.nodes} links={data.links} />
             </div>
           )}
 

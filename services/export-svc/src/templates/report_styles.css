@@ -14,7 +14,7 @@
     margin: 18mm 20mm 22mm 20mm;
 
     @top-left {
-        content: "TI-Radar — Patent Landscape Report";
+        content: "TI-Radar — Technology Intelligence Report";
         font-size: 8pt;
         color: #64748b;
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -59,7 +59,7 @@
     margin: 20mm 18mm 22mm 18mm;
 
     @top-left {
-        content: "TI-Radar — Patent Landscape Report";
+        content: "TI-Radar — Technology Intelligence Report";
         font-size: 8pt;
         color: #64748b;
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -122,10 +122,12 @@ p {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
-    text-align: center;
+    gap: 12px;
+    align-items: flex-start;
+    text-align: left;
     background: linear-gradient(135deg, #1e3a5f 0%, #2a4365 40%, #2d5a87 100%);
     color: #ffffff;
+    padding: 35mm 30mm;
     page-break-after: always;
     position: relative;
     overflow: hidden;
@@ -161,28 +163,37 @@ p {
     letter-spacing: 6px;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 30px;
 }
 
 .title-main {
-    font-size: 32pt;
+    font-size: 28pt;
     font-weight: 700;
     letter-spacing: -0.5px;
-    margin-bottom: 12px;
-    max-width: 80%;
+    max-width: 90%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .title-subtitle {
-    font-size: 16pt;
+    font-size: 18pt;
     font-weight: 300;
-    color: rgba(255, 255, 255, 0.8);
-    margin-bottom: 40px;
+    color: rgba(255, 255, 255, 0.85);
+    max-width: 90%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.title-divider {
+    width: 80px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
 }
 
 .title-meta {
-    font-size: 10pt;
+    font-size: 9pt;
     color: rgba(255, 255, 255, 0.6);
-    line-height: 1.8;
+    line-height: 1.7;
 }
 
 .title-meta strong {
@@ -204,13 +215,6 @@ p {
     font-weight: 600;
     color: rgba(255, 255, 255, 0.85);
     white-space: nowrap;
-}
-
-.title-divider {
-    width: 80px;
-    height: 2px;
-    background: rgba(255, 255, 255, 0.3);
-    margin: 20px auto;
 }
 
 .title-footer {

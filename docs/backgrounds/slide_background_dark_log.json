@@ -1,0 +1,17 @@
+{
+  "user_prompt": "Dark abstract background for technology presentation slides. Deep navy blue and dark violet gradient base with subtle glowing geometric mesh lines, faint radar-like concentric circles emanating from center, soft blue and purple light accents, very subtle digital particle effects. Must be dark enough for white text overlay. No text, no logos, no objects. Elegant, modern, professional technology aesthetic. Subtle depth and dimension, not flat.",
+  "full_prompt": "Create a high-quality, professional image.\n\nIMAGE QUALITY:\n- High resolution, sharp details, no artifacts\n- Professional lighting appropriate to the subject\n- Accurate colors with natural tonal range\n- Clean composition with clear focal point\n\nCOMPOSITION:\n- Strong focal point that draws the eye\n- Rule of thirds or intentional centered composition\n- Appropriate depth of field for the subject\n- Balanced visual weight across the frame\n- Foreground/midground/background separation where appropriate\n\nTECHNICAL EXCELLENCE:\n- Accurate human anatomy (correct hands, proportions, faces)\n- Physically plausible lighting and shadows\n- Correct perspective and spatial relationships\n- Natural material textures and surfaces\n\nTEXT (if any text is part of the image):\n- Spelled correctly with no garbled characters\n- Legible font choice appropriate to the context\n- Text integrated naturally into the scene\n- Maximum 2 font families if text is prominent\n\nCRITICAL — AVOID:\n- Watermarks, signatures, or artist tags\n- Extra fingers, distorted hands, or anatomical errors\n- Blurry or out-of-focus main subject (unless intentionally bokeh)\n- Unnatural skin tones or plastic-looking faces\n- Text artifacts or nonsense characters\n- Tiling artifacts or repeated patterns at edges\n\n\nIMAGE CATEGORY: Texture / Pattern\n\n\nTEXTURE / PATTERN REQUIREMENTS:\n- High detail material surface rendering\n- Consistent pattern repetition without obvious seams\n- Physically accurate material properties (roughness, reflectivity, translucency)\n- Appropriate scale for the material type\n- Natural variation within the pattern (not perfectly robotic)\n- Clean edges suitable for tiling if applicable\n- Realistic wear, aging, or patina where appropriate\n\n\n\nVISUAL STYLE: Neon / Cyberpunk\n\nSTYLE DIRECTION: Neon glow effects, cyberpunk atmosphere, dark background with vivid neon accents, futuristic urban feel.\n\nCOLOR DIRECTION: neon pink (#FF00FF), electric blue (#00FFFF), vivid purple (#BF00FF) on dark (#0D0D0D) background\n\n\nIMAGE SUBJECT AND CONTENT:\nDark abstract background for technology presentation slides. Deep navy blue and dark violet gradient base with subtle glowing geometric mesh lines, faint radar-like concentric circles emanating from center, soft blue and purple light accents, very subtle digital particle effects. Must be dark enough for white text overlay. No text, no logos, no objects. Elegant, modern, professional technology aesthetic. Subtle depth and dimension, not flat.",
+  "category": "texture",
+  "style": "neon",
+  "palette": null,
+  "model": "flux-pro-1.1-ultra",
+  "aspect_ratio": "16:9",
+  "width": null,
+  "height": null,
+  "seed": null,
+  "prompt_upsampling": true,
+  "bfl_task_id": "86deb8e9-ed13-4b95-b74e-d7f16f869f70",
+  "generation_time_seconds": 44.6,
+  "output_path": "C:/Users/bensc/OneDrive/HWR/6. Semester/Bachelor/07_Prototypen/mvp_v3.0_new/figures/slide_background_dark.png",
+  "timestamp": "2026-03-30T11:39:11.433974"
+}

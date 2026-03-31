@@ -4,9 +4,11 @@
  * TI-Radar v3 -- InfoTooltip
  * Reusable tooltip component that shows an info
  * icon with explanatory text on hover/focus.
+ * Uses fixed positioning to escape overflow:hidden.
  * ────────────────────────────────────────────── */
 
-import { useState, useCallback, useId } from "react";
+import { useState, useCallback, useId, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Info } from "lucide-react";
 import clsx from "clsx";
 
@@ -19,9 +21,24 @@ export interface InfoTooltipProps {
 
 export default function InfoTooltip({ text, className }: InfoTooltipProps) {
   const [visible, setVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
   const tooltipId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const show = useCallback(() => setVisible(true), []);
+  useEffect(() => setMounted(true), []);
+
+  const show = useCallback(() => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPos({
+        top: rect.top - 8,
+        left: rect.left + rect.width / 2,
+      });
+    }
+    setVisible(true);
+  }, []);
+
   const hide = useCallback(() => setVisible(false), []);
 
   return (
@@ -31,6 +48,7 @@ export default function InfoTooltip({ text, className }: InfoTooltipProps) {
       onMouseLeave={hide}
     >
       <button
+        ref={triggerRef}
         type="button"
         onFocus={show}
         onBlur={hide}
@@ -46,32 +64,22 @@ export default function InfoTooltip({ text, className }: InfoTooltipProps) {
         <span className="sr-only">Info</span>
       </button>
 
-      {/* Tooltip popover */}
-      <span
-        id={tooltipId}
-        role="tooltip"
-        className={clsx(
-          "pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2",
-          "w-max max-w-xs rounded-lg px-3 py-2",
-          "bg-[var(--color-bg-primary)] border border-[var(--color-border)]",
-          "text-xs leading-relaxed text-[var(--color-text-secondary)]",
-          "shadow-lg z-50",
-          "transition-all duration-150",
-          visible
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-1 invisible"
-        )}
-      >
-        {text}
-        {/* Arrow */}
+      {/* Tooltip rendered via portal to escape overflow:hidden */}
+      {mounted && visible && createPortal(
         <span
-          className={clsx(
-            "absolute top-full left-1/2 -translate-x-1/2",
-            "border-4 border-transparent border-t-[var(--color-border)]"
-          )}
-          aria-hidden="true"
-        />
-      </span>
+          id={tooltipId}
+          role="tooltip"
+          className="pointer-events-none fixed w-max max-w-xs rounded-lg px-3 py-2 bg-[var(--color-bg-primary)] border border-[var(--color-border)] text-xs leading-relaxed text-[var(--color-text-secondary)] shadow-lg z-[9999]"
+          style={{
+            top: pos.top,
+            left: pos.left,
+            transform: "translate(-50%, -100%)",
+          }}
+        >
+          {text}
+        </span>,
+        document.body,
+      )}
     </span>
   );
 }

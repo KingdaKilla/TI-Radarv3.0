@@ -91,12 +91,14 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
             asyncio.create_task(self._repo.discipline_trend(technology, start_year=start_year, end_year=end_year), name="trend"),
             asyncio.create_task(self._repo.cross_disciplinary_links(technology, start_year=start_year, end_year=end_year), name="links"),
             asyncio.create_task(self._repo.total_mapped_projects(technology), name="total_mapped"),
+            asyncio.create_task(self._repo.total_projects(technology), name="total_projects"),
         ]
 
         disciplines: list[dict[str, Any]] = []
         trend: list[dict[str, Any]] = []
         links: list[dict[str, Any]] = []
         total_mapped: int = 0
+        total_projects: int = 0
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
         for task, result in zip(tasks, results, strict=False):
@@ -113,6 +115,8 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
                 links = cast(list[dict[str, Any]], result)
             elif name == "total_mapped":
                 total_mapped = int(result)
+            elif name == "total_projects":
+                total_projects = int(result)
 
         # --- Metriken berechnen ---
         disc_counts = {str(d["label"]): int(d["project_count"]) for d in disciplines}
@@ -163,8 +167,8 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
             if len(yearly) < 2:
                 return 0.0
             sorted_years = sorted(yearly.keys())
-            # Nur vollstaendige Datenjahre (<=2025)
-            sorted_years = [y for y in sorted_years if y <= 2025]
+            # Nur vollstaendige Datenjahre (<=2024, CORDIS ~90% in 2025)
+            sorted_years = [y for y in sorted_years if y <= 2024]
             if len(sorted_years) < 2:
                 return 0.0
             first_val = float(yearly[sorted_years[0]])
@@ -184,6 +188,7 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
             data_sources.append({"name": "CORDIS EuroSciVoc (PostgreSQL)", "type": "PROJECT", "record_count": total_mapped})
 
         processing_time_ms = int((time.monotonic() - t0) * 1000)
+        mapping_coverage = total_mapped / max(total_projects, 1)
         logger.info("analyse_abgeschlossen", technology=technology, disziplinen=active_disciplines, dauer_ms=processing_time_ms)
 
         return self._build_response(
@@ -191,6 +196,7 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
             links=links, trend=trend, shannon=shannon, simpson=simpson,
             active_disciplines=active_disciplines, active_fields=active_fields,
             is_interdisciplinary=is_interdisciplinary, total_mapped=total_mapped,
+            mapping_coverage=mapping_coverage,
             data_sources=data_sources, warnings=warnings, request_id=request_id,
             processing_time_ms=processing_time_ms,
         )
@@ -231,6 +237,7 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
                     "is_interdisciplinary": kwargs["is_interdisciplinary"],
                 },
                 "total_mapped_publications": kwargs["total_mapped"],
+                "mapping_coverage": kwargs.get("mapping_coverage", 0.0),
                 "metadata": {
                     "processing_time_ms": kwargs["processing_time_ms"],
                     "data_sources": kwargs["data_sources"],
@@ -311,7 +318,9 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
             disciplines=pb_disciplines, disciplinary_links=pb_links,
             discipline_trend=pb_trend, interdisciplinarity=pb_interdisciplinarity,
             fields_of_science=pb_fields,
-            total_mapped_publications=kwargs["total_mapped"], metadata=metadata,
+            total_mapped_publications=kwargs["total_mapped"],
+            mapping_coverage=kwargs.get("mapping_coverage", 0.0),
+            metadata=metadata,
         )
 
     def _build_empty_response(self, request_id: str, t0: float) -> Any:
@@ -319,6 +328,7 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
         return self._build_response(
             disciplines=[], tree_roots=[], fields=[], links=[], trend=[],
             shannon=0.0, simpson=0.0, active_disciplines=0, active_fields=0,
-            is_interdisciplinary=False, total_mapped=0, data_sources=[], warnings=[],
+            is_interdisciplinary=False, total_mapped=0, mapping_coverage=0.0,
+            data_sources=[], warnings=[],
             request_id=request_id, processing_time_ms=processing_time_ms,
         )

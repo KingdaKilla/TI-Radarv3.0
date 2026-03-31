@@ -172,9 +172,97 @@ def _create_overview_sheet(
                     error.get("error_message", ""),
                 ])
 
+    # Key-Metriken pro UC
+    ws.append([])
+    ws.append(["Kernmetriken"])
+    ws.cell(row=ws.max_row, column=1).font = Font(bold=True, size=12)
+
+    metric_rows = _extract_key_metrics(data)
+    if metric_rows:
+        ws.append(["Use Case", "Metrik", "Wert"])
+        for cell in ws[ws.max_row]:
+            cell.font = HEADER_FONT
+            cell.fill = HEADER_FILL
+        for row in metric_rows:
+            ws.append(row)
+
     # Spaltenbreiten anpassen
-    ws.column_dimensions["A"].width = 25
-    ws.column_dimensions["B"].width = 60
+    ws.column_dimensions["A"].width = 30
+    ws.column_dimensions["B"].width = 30
+    ws.column_dimensions["C"].width = 25
+
+
+def _num(val: Any, default: float = 0) -> float:
+    """Konvertiert einen Wert sicher zu float (Protobuf liefert teils Strings)."""
+    if val is None:
+        return default
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return default
+
+
+def _extract_key_metrics(data: dict[str, Any]) -> list[list[Any]]:
+    """Extrahiert die wichtigsten Kennzahlen pro UC fuer das Uebersichtsblatt."""
+    rows: list[list[Any]] = []
+
+    landscape = data.get("landscape") or {}
+    if landscape:
+        summary = landscape.get("summary") or {}
+        rows.append(["Technologie-Landschaft", "Patente gesamt", summary.get("total_patents", 0)])
+        rows.append(["Technologie-Landschaft", "Projekte gesamt", summary.get("total_projects", 0)])
+        cagr_vals = landscape.get("cagr_values") or {}
+        pat_cagr = _num(cagr_vals.get("patents"))
+        if pat_cagr:
+            rows.append(["Technologie-Landschaft", "CAGR Patente", f"{pat_cagr*100:.1f}%"])
+
+    maturity = data.get("maturity") or {}
+    if maturity:
+        rows.append(["Reifegrad-Analyse", "Phase", maturity.get("phase", "")])
+        rows.append(["Reifegrad-Analyse", "R²", f"{_num(maturity.get('r_squared')):.3f}"])
+
+    competitive = data.get("competitive") or {}
+    if competitive:
+        rows.append(["Wettbewerbsanalyse", "HHI-Index", f"{_num(competitive.get('hhi_index')):.2f}"])
+        rows.append(["Wettbewerbsanalyse", "Akteure gesamt", competitive.get("total_actors", 0)])
+        rows.append(["Wettbewerbsanalyse", "Top-3 Marktanteil", f"{_num(competitive.get('top3_share'))*100:.1f}%"])
+
+    funding = data.get("funding") or {}
+    if funding:
+        total = _num(funding.get("total_funding_eur"))
+        rows.append(["Foerderungsanalyse", "Foerdervolumen (EUR)", f"{total:,.0f}"])
+        rows.append(["Foerderungsanalyse", "Projekte", funding.get("project_count", 0)])
+
+    geo = data.get("geographic") or {}
+    if geo:
+        rows.append(["Geographische Verteilung", "Laender", geo.get("total_countries", 0)])
+        rows.append(["Geographische Verteilung", "Cross-Border-Anteil", f"{_num(geo.get('cross_border_share'))*100:.1f}%"])
+
+    ri = data.get("research_impact") or {}
+    if ri:
+        rows.append(["Forschungsimpact", "h-Index", ri.get("h_index", 0)])
+        rows.append(["Forschungsimpact", "Publikationen", ri.get("total_publications", 0)])
+
+    esco = data.get("euroscivoc") or {}
+    if esco:
+        inter = esco.get("interdisciplinarity") or {}
+        rows.append(["Wissenschaftsdisziplinen", "Shannon-Index", f"{_num(inter.get('shannon_index')):.2f}"])
+        rows.append(["Wissenschaftsdisziplinen", "Aktive Felder", inter.get("active_fields", 0)])
+
+    at = data.get("actor_type") or {}
+    if at:
+        rows.append(["Akteurs-Typen", "Klassifizierte Akteure", at.get("total_classified_actors", 0)])
+
+    pg = data.get("patent_grant") or {}
+    if pg:
+        summary = pg.get("summary") or {}
+        rows.append(["Erteilungsquoten", "Erteilungsquote", f"{_num(summary.get('overall_grant_rate'))*100:.1f}%"])
+
+    pub = data.get("publication") or {}
+    if pub:
+        rows.append(["Publikations-Impact", "Publikationen", pub.get("total_publications", 0)])
+
+    return rows
 
 
 # ---------------------------------------------------------------------------

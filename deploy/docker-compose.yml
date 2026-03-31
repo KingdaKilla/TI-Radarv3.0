@@ -314,6 +314,7 @@ services:
           cpus: "1.0"
     networks:
       - backend
+      - frontend
 
   # ==================== Frontend ====================
   frontend:
@@ -329,6 +330,7 @@ services:
       # NEXT_PUBLIC_* wird zur Build-Zeit gebacken (Dockerfile ARG).
       # Runtime-Wert hier für SSR Server-Side Calls:
       INTERNAL_API_URL: http://orchestrator-svc:8000
+      EXPORT_API_URL: http://export-svc:8020
     restart: unless-stopped
     deploy:
       resources:

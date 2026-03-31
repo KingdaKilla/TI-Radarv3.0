@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python generate_report.py)",
+      "WebFetch(domain:gi-ev.github.io)",
+      "WebFetch(domain:gi.de)",
+      "WebFetch(domain:ctan.org)",
+      "WebFetch(domain:mirrors.ctan.org)",
+      "WebFetch(domain:ftp.rrze.uni-erlangen.de)",
+      "Bash(ls -la \"C:/Users/bensc/OneDrive/HWR/Schmietendorf/Umfrage TRANSFORM/\"*.docx)",
+      "Bash(python -c \":*)"
+    ]
+  }
+}

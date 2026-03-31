@@ -37,6 +37,7 @@ from typing import Any
 
 import structlog
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from markupsafe import Markup
 from weasyprint import HTML
 
 from src.exporters.csv_exporter import (
@@ -260,6 +261,19 @@ async def generate_pdf(
         "euroscivoc": panel_data.get("euroscivoc", {}),
         "actor_type": panel_data.get("actor_type", {}),
         "patent_grant": panel_data.get("patent_grant", {}),
+        # SVG-Inline-Visualisierungen (Markup() verhindert Jinja2-Autoescape)
+        "landscape_chart": Markup(_build_bar_chart_svg(
+            panel_data.get("landscape", {}), "time_series", "year", "patent_count", "Patente pro Jahr"
+        )),
+        "funding_chart": Markup(_build_bar_chart_svg(
+            panel_data.get("funding", {}), "time_series", "year", "funding_eur", "Foerderung pro Jahr (EUR)", divisor=1_000_000, suffix="M"
+        )),
+        "competitive_chart": Markup(_build_horizontal_bar_svg(
+            panel_data.get("competitive", {}), "top_actors", "name", "patent_count", "Top-Akteure nach Patenten", limit=8
+        )),
+        "geographic_chart": Markup(_build_horizontal_bar_svg(
+            panel_data.get("geographic", {}), "country_distribution", "country_name", "patent_count", "Top-Laender nach Patenten", limit=10
+        )),
         # Vorgerenderte Datentabellen (als HTML-Strings)
         "landscape_table": table_html_map.get("landscape", ""),
         "maturity_table": table_html_map.get("maturity", ""),
@@ -590,3 +604,117 @@ def _cell_css_class(column: str, value: Any) -> str:
 def _esc(text: str) -> str:
     """HTML-Escaping fuer sicheres Einbetten von Nutzerdaten."""
     return html.escape(str(text), quote=True)
+
+
+# ---------------------------------------------------------------------------
+# Inline-SVG-Visualisierungen fuer PDF (WeasyPrint kann kein JS)
+# ---------------------------------------------------------------------------
+
+_CHART_COLOR = "#2a4365"
+_CHART_COLOR_LIGHT = "#4a7ab5"
+_CHART_WIDTH = 700
+_CHART_HEIGHT = 200
+
+
+def _safe_num(val: Any) -> float:
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def _build_bar_chart_svg(
+    panel: dict[str, Any],
+    data_key: str,
+    x_key: str,
+    y_key: str,
+    title: str,
+    divisor: float = 1,
+    suffix: str = "",
+) -> str:
+    """Erzeugt ein vertikales Balkendiagramm als inline SVG."""
+    items = panel.get(data_key, [])
+    if not items or not isinstance(items, list):
+        return ""
+
+    values = [(_safe_num(e.get(y_key, 0)) / divisor, str(e.get(x_key, ""))) for e in items]
+    if not values or max(v for v, _ in values) == 0:
+        return ""
+
+    max_val = max(v for v, _ in values)
+    n = len(values)
+    w = _CHART_WIDTH
+    h = _CHART_HEIGHT
+    margin_left = 60
+    margin_bottom = 30
+    margin_top = 30
+    plot_w = w - margin_left - 10
+    plot_h = h - margin_top - margin_bottom
+    bar_w = max(4, min(40, (plot_w - n * 2) / n))
+    gap = (plot_w - n * bar_w) / max(n, 1)
+
+    parts = [f'<div style="margin:10px 0"><svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">']
+    parts.append(f'<text x="{w // 2}" y="16" text-anchor="middle" font-size="10" font-weight="bold" fill="#334155">{_esc(title)}</text>')
+
+    # Y-axis gridlines
+    for i in range(5):
+        y = margin_top + plot_h - (i / 4) * plot_h
+        val = max_val * i / 4
+        label = f"{val:.0f}{suffix}" if divisor > 1 else f"{val:,.0f}".replace(",", ".")
+        parts.append(f'<line x1="{margin_left}" y1="{y}" x2="{w - 10}" y2="{y}" stroke="#e2e8f0" stroke-width="0.5"/>')
+        parts.append(f'<text x="{margin_left - 5}" y="{y + 3}" text-anchor="end" font-size="7" fill="#94a3b8">{label}</text>')
+
+    # Bars
+    for i, (val, label) in enumerate(values):
+        x = margin_left + i * (bar_w + gap) + gap / 2
+        bar_h = (val / max_val) * plot_h if max_val > 0 else 0
+        y = margin_top + plot_h - bar_h
+        parts.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_w:.1f}" height="{bar_h:.1f}" fill="{_CHART_COLOR}" rx="1"/>')
+        if n <= 15:
+            parts.append(f'<text x="{x + bar_w / 2:.1f}" y="{margin_top + plot_h + 12}" text-anchor="middle" font-size="6" fill="#64748b">{_esc(str(label)[-4:])}</text>')
+
+    parts.append("</svg></div>")
+    return "\n".join(parts)
+
+
+def _build_horizontal_bar_svg(
+    panel: dict[str, Any],
+    data_key: str,
+    label_key: str,
+    value_key: str,
+    title: str,
+    limit: int = 10,
+) -> str:
+    """Erzeugt ein horizontales Balkendiagramm als inline SVG."""
+    items = panel.get(data_key, [])
+    if not items or not isinstance(items, list):
+        return ""
+
+    entries = [(str(e.get(label_key, "")), _safe_num(e.get(value_key, 0))) for e in items[:limit]]
+    entries = [(l, v) for l, v in entries if v > 0]
+    if not entries:
+        return ""
+
+    max_val = max(v for _, v in entries)
+    n = len(entries)
+    w = _CHART_WIDTH
+    bar_h = 16
+    gap = 4
+    margin_left = 150
+    margin_top = 30
+    h = margin_top + n * (bar_h + gap) + 10
+    plot_w = w - margin_left - 50
+
+    parts = [f'<div style="margin:10px 0"><svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">']
+    parts.append(f'<text x="{w // 2}" y="16" text-anchor="middle" font-size="10" font-weight="bold" fill="#334155">{_esc(title)}</text>')
+
+    for i, (label, val) in enumerate(entries):
+        y = margin_top + i * (bar_h + gap)
+        bar_w = (val / max_val) * plot_w if max_val > 0 else 0
+        display_label = label[:22] + "..." if len(label) > 25 else label
+        parts.append(f'<text x="{margin_left - 5}" y="{y + bar_h / 2 + 3}" text-anchor="end" font-size="7" fill="#334155">{_esc(display_label)}</text>')
+        parts.append(f'<rect x="{margin_left}" y="{y}" width="{bar_w:.1f}" height="{bar_h}" fill="{_CHART_COLOR_LIGHT}" rx="2"/>')
+        parts.append(f'<text x="{margin_left + bar_w + 4:.1f}" y="{y + bar_h / 2 + 3}" font-size="7" fill="#64748b">{val:,.0f}</text>')
+
+    parts.append("</svg></div>")
+    return "\n".join(parts)

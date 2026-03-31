@@ -1,0 +1,232 @@
+---
+title: "TI-Radar v3.0 — Entity-Relationship-Modell"
+---
+erDiagram
+    %% ============================================================
+    %% PATENT_SCHEMA (blau)
+    %% ============================================================
+
+    patents {
+        bigint id PK "Partitioniert"
+        smallint publication_year PK
+        text publication_number UK
+        char2 country
+        text title
+        date publication_date
+        date filing_date
+        text family_id
+        text_arr cpc_codes "GIN-Index"
+        text_arr applicant_countries "GIN-Index"
+        tsvector search_vector
+    }
+
+    applicants {
+        integer id PK
+        text raw_name UK
+        text normalized_name
+    }
+
+    patent_applicants {
+        bigint patent_id FK
+        smallint patent_year FK "Co-partitioniert"
+        integer applicant_id FK
+    }
+
+    patent_cpc {
+        bigint patent_id FK
+        varchar8 cpc_code FK "Co-partitioniert"
+        smallint pub_year FK
+    }
+
+    cpc_descriptions {
+        varchar8 code PK
+        char1 section
+        varchar4 class_code
+        text description_en
+        text description_de
+    }
+
+    patent_citations {
+        text citing_patent FK
+        text cited_patent FK
+        text citation_category
+        text cited_phase
+        integer citing_year
+    }
+
+    patents ||--o{ patent_applicants : "hat"
+    applicants ||--o{ patent_applicants : "ist"
+    patents ||--o{ patent_cpc : "klassifiziert"
+    cpc_descriptions ||--o{ patent_cpc : "beschreibt"
+    patents ||--o{ patent_citations : "zitiert"
+
+    %% ============================================================
+    %% CORDIS_SCHEMA (gruen)
+    %% ============================================================
+
+    projects {
+        integer id PK "CORDIS ID"
+        varchar10 framework "FP7 H2020 HORIZON"
+        varchar50 acronym
+        text title
+        text objective
+        date start_date
+        date end_date
+        numeric total_cost
+        numeric ec_max_contribution
+        varchar50 funding_scheme
+        tsvector search_vector
+    }
+
+    organizations {
+        integer id PK
+        integer project_id FK
+        text name
+        char2 country
+        varchar20 role "coordinator participant"
+        varchar5 activity_type "HES PRC REC OTH PUB"
+        boolean sme
+        numeric ec_contribution
+    }
+
+    publications {
+        integer id PK
+        integer project_id FK
+        text title
+        text authors
+        text doi UK
+        date publication_date
+        boolean open_access
+    }
+
+    euroscivoc {
+        integer id PK
+        text code UK
+        text label_en
+        text label_de
+        text parent_code FK "Self-Referenz"
+        smallint level
+    }
+
+    project_euroscivoc {
+        integer project_id FK
+        integer euroscivoc_id FK
+    }
+
+    projects ||--o{ organizations : "hat Teilnehmer"
+    projects ||--o{ publications : "hat Publikationen"
+    projects ||--o{ project_euroscivoc : "klassifiziert"
+    euroscivoc ||--o{ project_euroscivoc : "zugeordnet"
+    euroscivoc ||--o{ euroscivoc : "parent"
+
+    %% ============================================================
+    %% RESEARCH_SCHEMA (violett)
+    %% ============================================================
+
+    papers {
+        bigint id PK
+        text semantic_scholar_id UK
+        text title
+        smallint year
+        integer citation_count
+        integer influential_citation_count
+        text doi
+        boolean is_open_access
+        text_arr fields_of_study
+        timestamptz stale_after "30d TTL"
+    }
+
+    authors {
+        bigint id PK
+        text semantic_scholar_id UK
+        text name
+        text affiliation
+        integer h_index
+        integer citation_count
+    }
+
+    paper_authors {
+        bigint paper_id FK
+        bigint author_id FK
+        smallint author_position
+    }
+
+    query_cache {
+        integer id PK
+        text technology
+        smallint year_start
+        smallint year_end
+        integer result_count
+        timestamptz stale_after "30d TTL"
+    }
+
+    papers ||--o{ paper_authors : "verfasst von"
+    authors ||--o{ paper_authors : "hat Papers"
+
+    %% ============================================================
+    %% ENTITY_SCHEMA (orange)
+    %% ============================================================
+
+    unified_actors {
+        uuid id PK
+        text canonical_name
+        char2 country
+        varchar20 actor_type "company university research_org"
+        char20 gleif_lei
+    }
+
+    actor_source_mappings {
+        integer id PK
+        uuid unified_actor_id FK
+        varchar20 source_type "epo_applicant cordis_org gleif"
+        text source_id
+        text source_name
+        real confidence "0.0-1.0"
+        varchar30 match_method
+    }
+
+    gleif_cache {
+        text raw_name PK
+        char20 lei
+        text legal_name
+        char2 country
+        varchar20 category
+        timestamptz resolved_at "90d TTL"
+    }
+
+    unified_actors ||--o{ actor_source_mappings : "gemappt"
+
+    %% ============================================================
+    %% EXPORT_SCHEMA (rot)
+    %% ============================================================
+
+    analysis_cache {
+        bigint id PK
+        text technology
+        varchar10 use_case "UC1-UC12"
+        jsonb result_json
+        boolean european_only
+        timestamptz expires_at "24h TTL"
+        text request_hash UK
+    }
+
+    report_templates {
+        integer id PK
+        varchar100 name UK
+        varchar10 format "csv pdf xlsx json"
+        jsonb template_config
+        text_arr use_cases
+    }
+
+    export_log {
+        bigint id PK
+        text technology
+        text_arr use_cases
+        varchar10 format
+        integer template_id FK
+        integer row_count
+        bigint file_size_bytes
+        timestamptz created_at
+    }
+
+    report_templates ||--o{ export_log : "verwendet"

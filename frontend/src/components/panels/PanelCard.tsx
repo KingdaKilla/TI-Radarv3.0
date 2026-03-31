@@ -10,8 +10,10 @@ import { AlertTriangle, Loader2, Maximize2 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { UseCaseKey } from "@/lib/types";
 import ExplainabilityBar from "@/components/ui/ExplainabilityBar";
+import InfoTooltip from "@/components/ui/InfoTooltip";
 import { DATA_SOURCES } from "@/lib/data-sources";
 import { METHODOLOGY_TOOLTIPS } from "@/lib/methodology-tooltips";
+import { UC_INSIGHTS } from "@/lib/uc-insights";
 
 interface PanelCardProps {
   title: string;
@@ -57,6 +59,9 @@ export default function PanelCard({
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)]">
             {title}
           </h2>
+          {ucKey && UC_INSIGHTS[ucKey] && (
+            <InfoTooltip text={UC_INSIGHTS[ucKey]} />
+          )}
         </div>
         <div className="flex items-center gap-1.5">
           {isLoading && (

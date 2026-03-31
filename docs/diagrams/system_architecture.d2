@@ -1,0 +1,238 @@
+# TI-Radar v3.0 — Systemarchitektur
+
+direction: right
+
+# ============================================================
+# EXTERNAL SOURCES (left)
+# ============================================================
+external: "Externe\nDatenquellen" {
+  style: {
+    fill: "#1A1A1A"
+    stroke: "#78909C"
+    font-color: "#B0BEC5"
+    border-radius: 10
+    stroke-dash: 5
+    stroke-width: 2
+    font-size: 22
+  }
+  grid-rows: 4
+  grid-columns: 1
+  grid-gap: 2
+
+  a: "EPO DOCDB" {
+    style: { fill: "#2A2A2A"; stroke: "#90A4AE"; font-color: "#CFD8DC"; border-radius: 4; font-size: 18 }
+  }
+  b: "EU CORDIS" {
+    style: { fill: "#2A2A2A"; stroke: "#90A4AE"; font-color: "#CFD8DC"; border-radius: 4; font-size: 18 }
+  }
+  c: "OpenAIRE" {
+    style: { fill: "#2A2A2A"; stroke: "#90A4AE"; font-color: "#CFD8DC"; border-radius: 4; font-size: 18 }
+  }
+  d: "Semantic Scholar" {
+    style: { fill: "#2A2A2A"; stroke: "#90A4AE"; font-color: "#CFD8DC"; border-radius: 4; font-size: 18 }
+  }
+}
+
+# ============================================================
+# DATABASE
+# ============================================================
+database: "DATENBANK\nPostgreSQL 17 | 6 Schemas | ~590 GB" {
+  style: {
+    fill: "#2E1A00"
+    stroke: "#FF9800"
+    font-color: "#FFE0B2"
+    border-radius: 10
+    stroke-width: 2
+    font-size: 22
+    multiple: true
+  }
+  grid-rows: 3
+  grid-columns: 2
+  grid-gap: 2
+
+  a: "patent" {
+    style: { fill: "#4D3200"; stroke: "#FFB74D"; font-color: "#FFE0B2"; border-radius: 4; font-size: 18 }
+  }
+  b: "cordis" {
+    style: { fill: "#4D3200"; stroke: "#FFB74D"; font-color: "#FFE0B2"; border-radius: 4; font-size: 18 }
+  }
+  c: "research" {
+    style: { fill: "#4D3200"; stroke: "#FFB74D"; font-color: "#FFE0B2"; border-radius: 4; font-size: 18 }
+  }
+  d: "entity" {
+    style: { fill: "#4D3200"; stroke: "#FFB74D"; font-color: "#FFE0B2"; border-radius: 4; font-size: 18 }
+  }
+  e: "cross" {
+    style: { fill: "#4D3200"; stroke: "#FFB74D"; font-color: "#FFE0B2"; border-radius: 4; font-size: 18 }
+  }
+  f: "export" {
+    style: { fill: "#4D3200"; stroke: "#FFB74D"; font-color: "#FFE0B2"; border-radius: 4; font-size: 18 }
+  }
+}
+
+# ============================================================
+# UC-SERVICES
+# ============================================================
+services: "UC-SERVICES\n13x gRPC Microservices\nPython | Fan-Out" {
+  style: {
+    fill: "#1A0D2E"
+    stroke: "#9C27B0"
+    font-color: "#E1BEE7"
+    border-radius: 10
+    stroke-width: 2
+    font-size: 22
+  }
+  grid-rows: 7
+  grid-columns: 2
+  grid-gap: 2
+
+  uc1: "UC-01" {
+    style: { fill: "#2D1B46"; stroke: "#AB47BC"; font-color: "#CE93D8"; border-radius: 4; font-size: 18 }
+  }
+  uc2: "UC-02" {
+    style: { fill: "#2D1B46"; stroke: "#AB47BC"; font-color: "#CE93D8"; border-radius: 4; font-size: 18 }
+  }
+  uc3: "UC-03" {
+    style: { fill: "#2D1B46"; stroke: "#AB47BC"; font-color: "#CE93D8"; border-radius: 4; font-size: 18 }
+  }
+  uc4: "UC-04" {
+    style: { fill: "#2D1B46"; stroke: "#AB47BC"; font-color: "#CE93D8"; border-radius: 4; font-size: 18 }
+  }
+  uc5: "UC-05" {
+    style: { fill: "#2D1B46"; stroke: "#AB47BC"; font-color: "#CE93D8"; border-radius: 4; font-size: 18 }
+  }
+  uc6: "UC-06" {
+    style: { fill: "#2D1B46"; stroke: "#AB47BC"; font-color: "#CE93D8"; border-radius: 4; font-size: 18 }
+  }
+  uc7: "UC-07" {
+    style: { fill: "#2D1B46"; stroke: "#AB47BC"; font-color: "#CE93D8"; border-radius: 4; font-size: 18 }
+  }
+  uc8: "UC-08" {
+    style: { fill: "#2D1B46"; stroke: "#AB47BC"; font-color: "#CE93D8"; border-radius: 4; font-size: 18 }
+  }
+  uc9: "UC-09" {
+    style: { fill: "#2D1B46"; stroke: "#AB47BC"; font-color: "#CE93D8"; border-radius: 4; font-size: 18 }
+  }
+  uc10: "UC-10" {
+    style: { fill: "#2D1B46"; stroke: "#AB47BC"; font-color: "#CE93D8"; border-radius: 4; font-size: 18 }
+  }
+  uc11: "UC-11" {
+    style: { fill: "#2D1B46"; stroke: "#AB47BC"; font-color: "#CE93D8"; border-radius: 4; font-size: 18 }
+  }
+  uc12: "UC-12" {
+    style: { fill: "#2D1B46"; stroke: "#AB47BC"; font-color: "#CE93D8"; border-radius: 4; font-size: 18 }
+  }
+  uc13: "UC-13" {
+    style: { fill: "#2D1B46"; stroke: "#AB47BC"; font-color: "#CE93D8"; border-radius: 4; font-size: 18 }
+  }
+}
+
+# ============================================================
+# API GATEWAY
+# ============================================================
+gateway: "API GATEWAY\nFastAPI | REST/JSON" {
+  style: {
+    fill: "#0D2818"
+    stroke: "#4CAF50"
+    font-color: "#C8E6C9"
+    border-radius: 10
+    stroke-width: 2
+    font-size: 22
+  }
+  grid-rows: 3
+  grid-columns: 1
+  grid-gap: 2
+
+  a: "Orchestrator" {
+    style: { fill: "#1A3D28"; stroke: "#66BB6A"; font-color: "#A5D6A7"; border-radius: 4; font-size: 18 }
+  }
+  b: "Response Cache" {
+    style: { fill: "#1A3D28"; stroke: "#66BB6A"; font-color: "#A5D6A7"; border-radius: 4; font-size: 18 }
+  }
+  c: "CORS / Rate Limit" {
+    style: { fill: "#1A3D28"; stroke: "#66BB6A"; font-color: "#A5D6A7"; border-radius: 4; font-size: 18 }
+  }
+}
+
+# ============================================================
+# FRONTEND
+# ============================================================
+frontend: "FRONTEND\nNext.js 14 | TypeScript" {
+  style: {
+    fill: "#0D1B2A"
+    stroke: "#00BCD4"
+    font-color: "#E0F7FA"
+    border-radius: 10
+    stroke-width: 2
+    font-size: 22
+  }
+  grid-rows: 3
+  grid-columns: 1
+  grid-gap: 2
+
+  a: "Dashboard" {
+    style: { fill: "#1A2D3D"; stroke: "#00ACC1"; font-color: "#B2EBF2"; border-radius: 4; font-size: 18 }
+  }
+  b: "Detailansichten" {
+    style: { fill: "#1A2D3D"; stroke: "#00ACC1"; font-color: "#B2EBF2"; border-radius: 4; font-size: 18 }
+  }
+  c: "Export" {
+    style: { fill: "#1A2D3D"; stroke: "#00ACC1"; font-color: "#B2EBF2"; border-radius: 4; font-size: 18 }
+  }
+}
+
+# ============================================================
+# CI/CD (top)
+# ============================================================
+cicd: "CI/CD" {
+  style: {
+    fill: "#1A1A2E"
+    stroke: "#5C6BC0"
+    font-color: "#C5CAE9"
+    border-radius: 10
+    stroke-width: 2
+    font-size: 22
+  }
+  grid-rows: 2
+  grid-columns: 2
+  grid-gap: 2
+
+  a: "GitHub Actions" {
+    style: { fill: "#252547"; stroke: "#7986CB"; font-color: "#C5CAE9"; border-radius: 4; font-size: 18 }
+  }
+  b: "Docker / ghcr.io" {
+    style: { fill: "#252547"; stroke: "#7986CB"; font-color: "#C5CAE9"; border-radius: 4; font-size: 18 }
+  }
+  c: "6 Pipelines" {
+    style: { fill: "#252547"; stroke: "#7986CB"; font-color: "#C5CAE9"; border-radius: 4; font-size: 18 }
+  }
+  d: "836+ Tests" {
+    style: { fill: "#252547"; stroke: "#7986CB"; font-color: "#C5CAE9"; border-radius: 4; font-size: 18 }
+  }
+}
+
+# ============================================================
+# CONNECTIONS (left to right flow)
+# ============================================================
+external -> database: ETL {
+  style: { stroke: "#78909C"; stroke-width: 2; stroke-dash: 5; font-color: "#B0BEC5"; font-size: 18 }
+}
+database -> services: SQL / asyncpg {
+  style: { stroke: "#FFA726"; stroke-width: 2; font-color: "#FFCC80"; font-size: 18 }
+}
+services -> gateway: gRPC / Protobuf {
+  style: { stroke: "#7E57C2"; stroke-width: 2; font-color: "#B39DDB"; font-size: 18 }
+}
+gateway -> frontend: HTTP / JSON {
+  style: { stroke: "#26A69A"; stroke-width: 2; font-color: "#80CBC4"; font-size: 18 }
+}
+
+cicd -> frontend: {
+  style: { stroke: "#5C6BC0"; stroke-width: 1; stroke-dash: 5 }
+}
+cicd -> gateway: {
+  style: { stroke: "#5C6BC0"; stroke-width: 1; stroke-dash: 5 }
+}
+cicd -> services: {
+  style: { stroke: "#5C6BC0"; stroke-width: 1; stroke-dash: 5 }
+}

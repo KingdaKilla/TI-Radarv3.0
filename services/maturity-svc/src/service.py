@@ -161,16 +161,16 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             total_patents = 0
 
         # --- Daten-Vollstaendigkeits-Cutoff ---
-        # EPO-Bulk-Daten vollstaendig bis August 2025,
-        # CORDIS mit 1-2 Jahren Verzoegerung.
+        # EPO-Bulk-Daten: 2025 unvollstaendig (Nov/Dez lueckenhaft),
+        # daher nur bis einschliesslich 2024 als vollstaendig betrachten.
         # S-Curve-Fit nur auf vollstaendige Jahre anwenden.
-        data_complete_year = 2025
+        data_complete_year = 2024
 
         if end_year > data_complete_year:
             warnings.append({
                 "message": (
                     f"Patentdaten ab {data_complete_year + 1} möglicherweise unvollständig "
-                    f"(EPO-Bulk-Daten bis August 2025, CORDIS mit 1-2 Jahren Verzögerung)"
+                    f"(EPO-Bulk-Daten 2025 nur bis ca. Oktober vollständig)"
                 ),
                 "severity": "MEDIUM",
                 "code": "DATA_INCOMPLETE_RECENT_YEARS",
@@ -382,7 +382,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         warnings: list[dict[str, str]],
         request_id: str,
         processing_time_ms: int,
-        data_complete_year: int = 2025,
+        data_complete_year: int = 2024,
         aicc_selected: float = 0.0,
         aicc_alternative: float = 0.0,
         delta_aicc: float = 0.0,
@@ -538,7 +538,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         warnings: list[dict[str, str]],
         request_id: str,
         processing_time_ms: int,
-        data_complete_year: int = 2025,
+        data_complete_year: int = 2024,
         aicc_selected: float = 0.0,
         aicc_alternative: float = 0.0,
         delta_aicc: float = 0.0,

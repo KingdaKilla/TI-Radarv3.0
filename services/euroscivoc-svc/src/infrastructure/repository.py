@@ -202,6 +202,16 @@ class EuroSciVocRepository:
         async with self._pool.acquire() as conn:
             return await conn.fetchval(sql, technology) or 0
 
+    async def total_projects(self, technology: str) -> int:
+        """Gesamtanzahl aller Projekte fuer eine Technologie."""
+        sql = """
+            SELECT COUNT(*)
+            FROM cordis_schema.projects p
+            WHERE p.search_vector @@ plainto_tsquery('english', $1)
+        """
+        async with self._pool.acquire() as conn:
+            return await conn.fetchval(sql, technology) or 0
+
     async def health_check(self) -> dict[str, Any]:
         """Datenbank-Health-Check."""
         async with self._pool.acquire() as conn:

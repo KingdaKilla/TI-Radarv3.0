@@ -241,6 +241,7 @@ services:
           cpus: "1.0"
     networks:
       - backend
+      - frontend
 
   # ==================== Frontend ====================
   frontend:
@@ -252,6 +253,7 @@ services:
       - orchestrator-svc
     environment:
       INTERNAL_API_URL: http://orchestrator-svc:8000
+      EXPORT_API_URL: http://export-svc:8020
     restart: unless-stopped
     deploy:
       resources:

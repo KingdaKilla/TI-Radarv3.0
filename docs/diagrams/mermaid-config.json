@@ -1,0 +1,18 @@
+{
+  "theme": "dark",
+  "er": {
+    "layoutDirection": "TB",
+    "minEntityWidth": 180,
+    "minEntityHeight": 40,
+    "entityPadding": 15,
+    "fontSize": 14
+  },
+  "themeVariables": {
+    "darkMode": true,
+    "background": "#0D1117",
+    "primaryColor": "#1F2937",
+    "primaryTextColor": "#E5E7EB",
+    "lineColor": "#6B7280",
+    "secondaryColor": "#374151"
+  }
+}

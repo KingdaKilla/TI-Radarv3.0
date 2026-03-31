@@ -16,9 +16,11 @@ import DetailViewRouter from "@/components/detail/DetailViewRouter";
 import ExecutiveSummary from "@/components/dashboard/ExecutiveSummary";
 import ClusterCarousel from "@/components/dashboard/ClusterCarousel";
 import ClusterContent from "@/components/dashboard/ClusterContent";
+import ReportButton from "@/components/report/ReportButton";
 import { buildClusterData } from "@/lib/clusters";
 import type { Cluster } from "@/lib/clusters";
-import type { RadarRequest } from "@/lib/types";
+import { USE_CASES } from "@/lib/types";
+import type { RadarRequest, UseCaseKey } from "@/lib/types";
 
 export default function DashboardPage() {
   const [params, setParams] = useState<RadarRequest | null>(null);
@@ -59,7 +61,7 @@ export default function DashboardPage() {
           "Patentlandschaft, S-Kurven-Reife und CPC-Technologiekonvergenz",
         image: "/images/clusters/technology.png",
         metrics: [],
-        ucKeys: [] as Cluster["ucKeys"],
+        ucKeys: ["landscape", "maturity", "cpc_flow"],
       },
       {
         id: "market",
@@ -68,7 +70,7 @@ export default function DashboardPage() {
         description: "Wettbewerber, Marktkonzentration und Akteurs-Dynamik",
         image: "/images/clusters/market.png",
         metrics: [],
-        ucKeys: [] as Cluster["ucKeys"],
+        ucKeys: ["competitive", "temporal", "actor_type"],
       },
       {
         id: "research",
@@ -78,7 +80,7 @@ export default function DashboardPage() {
           "EU-Förderung, Forschungsimpact und Publikationsanalyse",
         image: "/images/clusters/research.png",
         metrics: [],
-        ucKeys: [] as Cluster["ucKeys"],
+        ucKeys: ["funding", "research_impact", "publication"],
       },
       {
         id: "geography",
@@ -88,7 +90,7 @@ export default function DashboardPage() {
           "Länderverteilung, Technologie-Cluster und Klassifikation",
         image: "/images/clusters/geography.png",
         metrics: [],
-        ucKeys: [] as Cluster["ucKeys"],
+        ucKeys: ["geographic", "tech_cluster", "euroscivoc", "patent_grant"],
       },
     ],
     [],
@@ -97,6 +99,12 @@ export default function DashboardPage() {
   /** Derived state: which clusters to show and which layout mode */
   const displayClusters = clusterData?.clusters ?? landingClusters;
   const isDashboard = !!clusterData && !!data;
+
+  /** Verfuegbare UCs fuer Report-Export (nur die mit Daten) */
+  const availableUcs = useMemo<UseCaseKey[]>(() => {
+    if (!data) return [];
+    return USE_CASES.filter((uc) => data[uc] != null);
+  }, [data]);
 
   return (
     <div className="flex min-h-screen flex-col bg-hero-gradient">
@@ -129,6 +137,14 @@ export default function DashboardPage() {
                 <Home className="h-3.5 w-3.5" aria-hidden="true" />
                 <span className="hidden sm:inline">Neue Analyse</span>
               </button>
+            )}
+
+            {/* Report generieren */}
+            {data && availableUcs.length > 0 && (
+              <ReportButton
+                technology={params?.technology ?? ""}
+                availableUcs={availableUcs}
+              />
             )}
 
             {/* Vergleich-Navigation */}

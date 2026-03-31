@@ -17,7 +17,7 @@
 <div class="title-page">
     <div class="title-badge">WIPO-konform</div>
     <div class="title-logo">TI-Radar</div>
-    <div class="title-main">Patent Landscape Report</div>
+    <div class="title-main">Technology Intelligence Report</div>
     <div class="title-subtitle">{{ technology }}</div>
     <div class="title-divider"></div>
     <div class="title-meta">
@@ -342,6 +342,11 @@
         <p class="text-small text-muted">Interaktives Diagramm im Web-Frontend verfuegbar</p>
     </div>
 
+    {# SVG-Visualisierung #}
+    {% if landscape_chart %}
+    {{ landscape_chart }}
+    {% endif %}
+
     {# Datentabelle #}
     {% if landscape_table %}
     <h3>Detaildaten</h3>
@@ -466,6 +471,10 @@
         <p class="text-small text-muted">Interaktives Diagramm im Web-Frontend verfuegbar</p>
     </div>
 
+    {% if competitive_chart %}
+    {{ competitive_chart }}
+    {% endif %}
+
     {% if competitive_table %}
     <h3>Top-Akteure</h3>
     {{ competitive_table }}
@@ -521,6 +530,10 @@
         <p>Treemap: Foerdervolumen nach Rahmenprogramm und Foerderinstrument</p>
         <p class="text-small text-muted">Programme: FP7, Horizon 2020, Horizon Europe | Instrumente: RIA, IA, CSA</p>
     </div>
+
+    {% if funding_chart %}
+    {{ funding_chart }}
+    {% endif %}
 
     {% if funding_table %}
     <h3>Foerderdetails</h3>
@@ -617,6 +630,10 @@
         <p>Laenderverteilung: Patent- und Projektaktivitaet nach Land (Europa-Fokus)</p>
         <p class="text-small text-muted">Sortiert nach Gesamtaktivitaet, Top-Kooperationspaare hervorgehoben</p>
     </div>
+
+    {% if geographic_chart %}
+    {{ geographic_chart }}
+    {% endif %}
 
     {% if geographic_table %}
     <h3>Laender-Ranking</h3>

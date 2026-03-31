@@ -2,15 +2,16 @@
 
 /* ──────────────────────────────────────────────
  * TI-Radar v3 -- UC5: CPC-Technologiefluss (Detailansicht)
- * 5 Sektionen: MetricCards, Heatmap, Auto-Analyse,
- * Kombinationstabelle
+ * 6 Sektionen: MetricCards, Chord-Diagramm, Auto-Analyse,
+ * Kombinationstabelle, Whitespace-Heatmap + Tabelle
  * ────────────────────────────────────────────── */
 
 import MetricCard from "@/components/charts/MetricCard";
 import DetailChartSection from "@/components/detail/DetailChartSection";
 import DetailAnalysisSection from "@/components/detail/DetailAnalysisSection";
 import DetailDataSection from "@/components/detail/DetailDataSection";
-import CpcHeatmap from "@/components/charts/CpcHeatmap";
+import CpcChordDiagram from "@/components/charts/CpcChordDiagram";
+import WhitespaceHeatmap from "@/components/charts/WhitespaceHeatmap";
 import type { CpcFlowPanel } from "@/lib/types";
 
 interface CpcFlowDetailProps {
@@ -86,14 +87,14 @@ export default function CpcFlowDetail({ data }: CpcFlowDetailProps) {
 
       {/* ── Sektion 2: Heatmap ── */}
       {hasChordData ? (
-        <DetailChartSection ariaLabel="Heatmap: CPC-Technologiefluss (Detailansicht)">
-          <CpcHeatmap nodes={data.nodes} links={data.links} />
+        <DetailChartSection ariaLabel="Chord-Diagramm: CPC-Technologiefluss (Detailansicht)">
+          <CpcChordDiagram nodes={data.nodes} links={data.links} />
         </DetailChartSection>
       ) : (
-        <DetailChartSection ariaLabel="CPC-Heatmap nicht verfügbar">
+        <DetailChartSection ariaLabel="CPC-Chord-Diagramm nicht verfügbar">
           <div className="flex h-full items-center justify-center">
             <p className="text-sm italic text-[var(--color-text-muted)]">
-              Nicht genügend Daten für die Heatmap-Darstellung (mind. 2 Knoten und 1 Verbindung erforderlich).
+              Nicht genügend Daten für die Chord-Darstellung (mind. 2 Knoten und 1 Verbindung erforderlich).
             </p>
           </div>
         </DetailChartSection>
@@ -210,6 +211,18 @@ export default function CpcFlowDetail({ data }: CpcFlowDetailProps) {
             Diese Lücken können unerschlossene Innovationschancen darstellen —
             Technologiefelder, die bisher kaum kombiniert wurden (Yoon &amp; Park, 2005).
           </p>
+
+          {/* Whitespace Opportunity Heatmap */}
+          <DetailChartSection
+            ariaLabel="Heatmap: Whitespace Opportunity Scores"
+            heightPx={350}
+          >
+            <WhitespaceHeatmap
+              opportunities={data.whitespace_opportunities}
+              cpcLabels={cpcLabels}
+            />
+          </DetailChartSection>
+
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

@@ -54,7 +54,7 @@
 --    (CPC co-occurrence, yearly counts, top actors, country distributions)
 --    that were computed per-request in the SQLite version.
 --
--- 9. pgvector COLUMNS (vector(1536)) are provisioned on key tables for
+-- 9. pgvector COLUMNS (vector(384)) are provisioned on key tables for
 --    future LLM embedding storage. Not populated at initial deployment.
 --
 -- ============================================================================
@@ -121,8 +121,8 @@ CREATE TABLE patent_schema.patents (
     filing_date         DATE,                       -- application/filing date for time-to-grant (UC12)
     -- Full-text search vector (maintained by trigger, replaces SQLite FTS5)
     search_vector       tsvector,
-    -- Future: LLM embedding of title (1536-dim for OpenAI, 1024 for Cohere)
-    title_embedding     vector(1536),
+    -- LLM embedding of title (384-dim for multilingual-e5-small)
+    title_embedding     vector(384),
 
     CONSTRAINT pk_patents PRIMARY KEY (id, publication_year),
     CONSTRAINT uq_patents_pubnum UNIQUE (publication_number, publication_year),
@@ -165,7 +165,7 @@ COMMENT ON COLUMN patent_schema.patents.applicant_countries IS
 COMMENT ON COLUMN patent_schema.patents.search_vector IS
     'tsvector of title (weight A) + cpc_codes (weight B) for full-text search. Replaces SQLite FTS5.';
 COMMENT ON COLUMN patent_schema.patents.title_embedding IS
-    'Future: 1536-dim vector for semantic similarity search via pgvector.';
+    '384-dim vector (multilingual-e5-small) for semantic similarity search via pgvector.';
 
 
 -- --------------------------------------------------------------------------
@@ -415,7 +415,7 @@ CREATE TABLE cordis_schema.projects (
     -- Full-text search (replaces SQLite FTS5)
     search_vector       tsvector,
     -- Future: LLM embedding of title + objective
-    content_embedding   vector(1536),
+    content_embedding   vector(384),
 
     CONSTRAINT ck_framework CHECK (
         framework IN ('FP7', 'H2020', 'HORIZON', 'UNKNOWN')
@@ -658,7 +658,7 @@ CREATE TABLE research_schema.papers (
     -- Full-text search
     search_vector       tsvector,
     -- Future: abstract embedding for semantic search
-    abstract_embedding  vector(1536),
+    abstract_embedding  vector(384),
     -- Cache management
     fetched_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     query_technology    TEXT NOT NULL,                -- which technology query fetched this paper
@@ -818,7 +818,7 @@ CREATE TABLE entity_schema.unified_actors (
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     -- Future: LLM embedding of actor profile for semantic actor search
-    name_embedding      vector(1536),
+    name_embedding      vector(384),
 
     CONSTRAINT ck_actor_type CHECK (
         actor_type IS NULL OR actor_type IN (
@@ -1276,6 +1276,88 @@ $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 COMMENT ON FUNCTION public.ti_fuzzy_score IS
     'Trigram similarity score (0.0-1.0) between two strings. '
     'Case-insensitive, accent-insensitive. For entity resolution.';
+
+
+-- ============================================================================
+-- ADDITIONAL TABLES (created by services/migrations on source system)
+-- ============================================================================
+
+-- Alembic migration version tracking
+CREATE TABLE IF NOT EXISTS public.alembic_version (
+    version_num VARCHAR(32) NOT NULL PRIMARY KEY
+);
+
+-- Patent embedding enrichment progress tracking
+CREATE TABLE IF NOT EXISTS patent_schema.enrichment_progress (
+    zip_name            TEXT PRIMARY KEY,
+    updated_count       INTEGER NOT NULL DEFAULT 0,
+    completed_at        TIMESTAMPTZ
+);
+
+-- RAG document chunks with embeddings for semantic search
+CREATE TABLE IF NOT EXISTS cross_schema.document_chunks (
+    id                  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    source              TEXT NOT NULL,
+    source_id           TEXT NOT NULL,
+    chunk_index         INTEGER NOT NULL,
+    chunk_text          TEXT NOT NULL,
+    embedding           vector(384)
+);
+
+CREATE INDEX IF NOT EXISTS idx_dc_source ON cross_schema.document_chunks (source, source_id);
+
+-- ETL sync checkpoints per data source
+CREATE TABLE IF NOT EXISTS cross_schema.etl_checkpoints (
+    source              TEXT PRIMARY KEY,
+    last_sync_at        TIMESTAMPTZ,
+    last_sync_cursor    TEXT,
+    records_synced      INTEGER DEFAULT 0,
+    total_records_ever  BIGINT DEFAULT 0,
+    status              VARCHAR(20),
+    error_message       TEXT,
+    run_duration_s      REAL,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ETL run history log
+CREATE TABLE IF NOT EXISTS cross_schema.etl_run_log (
+    id                  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    source              TEXT NOT NULL,
+    started_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    finished_at         TIMESTAMPTZ,
+    status              VARCHAR(20) NOT NULL DEFAULT 'running',
+    records_fetched     INTEGER DEFAULT 0,
+    records_inserted    INTEGER DEFAULT 0,
+    records_updated     INTEGER DEFAULT 0,
+    records_skipped     INTEGER DEFAULT 0,
+    error_message       TEXT,
+    cursor_before       TEXT,
+    cursor_after        TEXT,
+    mv_refresh_duration_s REAL
+);
+
+CREATE INDEX IF NOT EXISTS idx_erl_source ON cross_schema.etl_run_log (source, started_at DESC);
+
+-- OpenAIRE publications cache
+CREATE TABLE IF NOT EXISTS research_schema.openaire_publications (
+    id                  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    openaire_id         TEXT UNIQUE,
+    title               TEXT,
+    authors             TEXT,
+    doi                 TEXT,
+    year                SMALLINT,
+    date_of_acceptance  DATE,
+    publisher           TEXT,
+    journal             TEXT,
+    is_open_access      BOOLEAN,
+    subjects            TEXT[],
+    query_technology    TEXT,
+    fetched_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_oap_tech ON research_schema.openaire_publications (query_technology);
+CREATE INDEX IF NOT EXISTS idx_oap_year ON research_schema.openaire_publications (year);
 
 
 -- ============================================================================

@@ -1,0 +1,425 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 200
+  }
+}
+
+# ============================================================
+# TI-Radar v3.0 — Entity-Relationship-Modell (D2)
+# All tables at top level for correct ELK edge routing.
+# Schema grouping via container boxes (tables as children).
+# Internal edges defined at TOP level with fully-qualified names
+# so ELK routes them around all nodes.
+# ============================================================
+
+direction: right
+
+# ============================================================
+# PATENT_SCHEMA
+# ============================================================
+patent_schema: "patent_schema (154.8M Patente, ~191 GB)" {
+  style: {
+    fill: "#0D1B2A"
+    stroke: "#2196F3"
+    font-color: "#90CAF9"
+    border-radius: 8
+  }
+  grid-rows: 3
+  grid-columns: 2
+
+  patents: {
+    shape: sql_table
+    id: BIGINT {constraint: [PK]}
+    publication_year: SMALLINT {constraint: [PK]}
+    publication_number: TEXT {constraint: [UK]}
+    country: "CHAR(2)"
+    title: TEXT
+    publication_date: DATE
+    filing_date: DATE
+    family_id: TEXT
+    cpc_codes: "TEXT[]"
+    applicant_countries: "TEXT[]"
+    search_vector: tsvector
+  }
+
+  patent_applicants: {
+    shape: sql_table
+    patent_id: BIGINT {constraint: [FK]}
+    patent_year: SMALLINT {constraint: [FK]}
+    applicant_id: INTEGER {constraint: [FK]}
+  }
+
+  applicants: {
+    shape: sql_table
+    id: INTEGER {constraint: [PK]}
+    raw_name: TEXT {constraint: [UK]}
+    normalized_name: TEXT
+  }
+
+  patent_cpc: {
+    shape: sql_table
+    patent_id: BIGINT {constraint: [FK]}
+    cpc_code: "VARCHAR(8)" {constraint: [FK]}
+    pub_year: SMALLINT {constraint: [FK]}
+  }
+
+  cpc_descriptions: {
+    shape: sql_table
+    code: "VARCHAR(8)" {constraint: [PK]}
+    section: "CHAR(1)"
+    class_code: "VARCHAR(4)"
+    description_en: TEXT
+    description_de: TEXT
+  }
+
+  patent_citations: {
+    shape: sql_table
+    citing_patent: TEXT {constraint: [FK]}
+    cited_patent: TEXT {constraint: [FK]}
+    citation_category: TEXT
+    cited_phase: TEXT
+    citing_year: INTEGER
+  }
+}
+
+# ============================================================
+# CORDIS_SCHEMA
+# ============================================================
+cordis_schema: "cordis_schema (80.5K Projekte, ~1.7 GB)" {
+  style: {
+    fill: "#0D2818"
+    stroke: "#4CAF50"
+    font-color: "#A5D6A7"
+    border-radius: 8
+  }
+  grid-rows: 3
+  grid-columns: 2
+
+  projects: {
+    shape: sql_table
+    id: INTEGER {constraint: [PK]}
+    framework: "VARCHAR(10)"
+    acronym: "VARCHAR(50)"
+    title: TEXT
+    objective: TEXT
+    start_date: DATE
+    end_date: DATE
+    total_cost: "NUMERIC(15,2)"
+    ec_max_contribution: "NUMERIC(15,2)"
+    funding_scheme: "VARCHAR(50)"
+    search_vector: tsvector
+  }
+
+  organizations: {
+    shape: sql_table
+    id: INTEGER {constraint: [PK]}
+    project_id: INTEGER {constraint: [FK]}
+    name: TEXT
+    country: "CHAR(2)"
+    role: "VARCHAR(20)"
+    activity_type: "VARCHAR(5)"
+    sme: BOOLEAN
+    ec_contribution: "NUMERIC(15,2)"
+  }
+
+  euroscivoc: {
+    shape: sql_table
+    id: INTEGER {constraint: [PK]}
+    code: TEXT {constraint: [UK]}
+    label_en: TEXT
+    label_de: TEXT
+    parent_code: TEXT {constraint: [FK]}
+    level: SMALLINT
+  }
+
+  publications: {
+    shape: sql_table
+    id: INTEGER {constraint: [PK]}
+    project_id: INTEGER {constraint: [FK]}
+    title: TEXT
+    authors: TEXT
+    doi: TEXT {constraint: [UK]}
+    publication_date: DATE
+    open_access: BOOLEAN
+  }
+
+  project_euroscivoc: {
+    shape: sql_table
+    project_id: INTEGER {constraint: [FK]}
+    euroscivoc_id: INTEGER {constraint: [FK]}
+  }
+}
+
+# ============================================================
+# RESEARCH_SCHEMA
+# ============================================================
+research_schema: "research_schema (Semantic Scholar Cache)" {
+  style: {
+    fill: "#1A0D2E"
+    stroke: "#9C27B0"
+    font-color: "#CE93D8"
+    border-radius: 8
+  }
+  grid-rows: 2
+  grid-columns: 2
+
+  papers: {
+    shape: sql_table
+    id: BIGINT {constraint: [PK]}
+    semantic_scholar_id: TEXT {constraint: [UK]}
+    title: TEXT
+    year: SMALLINT
+    citation_count: INTEGER
+    influential_citation_count: INTEGER
+    doi: TEXT
+    is_open_access: BOOLEAN
+    fields_of_study: "TEXT[]"
+    stale_after: TIMESTAMPTZ
+  }
+
+  paper_authors: {
+    shape: sql_table
+    paper_id: BIGINT {constraint: [FK]}
+    author_id: BIGINT {constraint: [FK]}
+    author_position: SMALLINT
+  }
+
+  authors: {
+    shape: sql_table
+    id: BIGINT {constraint: [PK]}
+    semantic_scholar_id: TEXT {constraint: [UK]}
+    name: TEXT
+    affiliation: TEXT
+    h_index: INTEGER
+    citation_count: INTEGER
+  }
+
+  query_cache: {
+    shape: sql_table
+    id: INTEGER {constraint: [PK]}
+    technology: TEXT
+    year_start: SMALLINT
+    year_end: SMALLINT
+    result_count: INTEGER
+    stale_after: TIMESTAMPTZ
+  }
+}
+
+# ============================================================
+# ENTITY_SCHEMA
+# ============================================================
+entity_schema: "entity_schema (129.8K Unified Actors)" {
+  style: {
+    fill: "#2E1A00"
+    stroke: "#FF9800"
+    font-color: "#FFCC80"
+    border-radius: 8
+  }
+  direction: down
+
+  unified_actors: {
+    shape: sql_table
+    id: UUID {constraint: [PK]}
+    canonical_name: TEXT
+    country: "CHAR(2)"
+    actor_type: "VARCHAR(20)"
+    gleif_lei: "CHAR(20)"
+  }
+
+  actor_source_mappings: {
+    shape: sql_table
+    id: INTEGER {constraint: [PK]}
+    unified_actor_id: UUID {constraint: [FK]}
+    source_type: "VARCHAR(20)"
+    source_id: TEXT
+    source_name: TEXT
+    confidence: REAL
+    match_method: "VARCHAR(30)"
+  }
+
+  gleif_cache: {
+    shape: sql_table
+    raw_name: TEXT {constraint: [PK]}
+    lei: "CHAR(20)"
+    legal_name: TEXT
+    country: "CHAR(2)"
+    category: "VARCHAR(20)"
+    resolved_at: TIMESTAMPTZ
+  }
+}
+
+# ============================================================
+# CROSS_SCHEMA (Materialized Views)
+# ============================================================
+cross_schema: "cross_schema (9 Materialized Views)" {
+  style: {
+    fill: "#1A1A1A"
+    stroke: "#78909C"
+    font-color: "#B0BEC5"
+    border-radius: 8
+    stroke-dash: 5
+  }
+  grid-rows: 4
+  grid-columns: 2
+
+  mv_patent_counts_by_cpc_year: {
+    shape: sql_table
+    cpc_code: "VARCHAR(8)"
+    pub_year: SMALLINT
+    patent_count: INTEGER
+  }
+
+  mv_cpc_cooccurrence: {
+    shape: sql_table
+    code_a: "VARCHAR(8)"
+    code_b: "VARCHAR(8)"
+    pub_year: SMALLINT
+    co_count: INTEGER
+  }
+
+  mv_top_applicants: {
+    shape: sql_table
+    normalized_name: TEXT
+    applicant_id: INTEGER
+    patent_count: INTEGER
+    first_year: SMALLINT
+    last_year: SMALLINT
+  }
+
+  mv_patent_country_distribution: {
+    shape: sql_table
+    country_code: "VARCHAR(2)"
+    year: SMALLINT
+    patent_count: INTEGER
+  }
+
+  mv_project_counts_by_year: {
+    shape: sql_table
+    year: SMALLINT
+    framework: "VARCHAR(10)"
+    project_count: INTEGER
+    total_ec_funding: "NUMERIC(15,2)"
+  }
+
+  mv_top_cordis_orgs: {
+    shape: sql_table
+    name: TEXT
+    country: "CHAR(2)"
+    activity_type: "VARCHAR(5)"
+    project_count: INTEGER
+    total_ec_contribution: "NUMERIC(15,2)"
+  }
+
+  mv_funding_by_instrument: {
+    shape: sql_table
+    funding_scheme: "VARCHAR(50)"
+    year: SMALLINT
+    project_count: INTEGER
+    total_funding: "NUMERIC(15,2)"
+  }
+
+  import_log: {
+    shape: sql_table
+    id: SERIAL {constraint: [PK]}
+    source: TEXT
+    filename: TEXT
+    imported_at: TIMESTAMPTZ
+    record_count: INTEGER
+    status: TEXT
+  }
+}
+
+# ============================================================
+# EXPORT_SCHEMA
+# ============================================================
+export_schema: "export_schema (Analysis Cache & Reports)" {
+  style: {
+    fill: "#2E0D0D"
+    stroke: "#E91E63"
+    font-color: "#F48FB1"
+    border-radius: 8
+  }
+  direction: down
+
+  analysis_cache: {
+    shape: sql_table
+    id: BIGINT {constraint: [PK]}
+    technology: TEXT
+    use_case: "VARCHAR(10)"
+    result_json: JSONB
+    european_only: BOOLEAN
+    expires_at: TIMESTAMPTZ
+    request_hash: TEXT {constraint: [UK]}
+  }
+
+  report_templates: {
+    shape: sql_table
+    id: INTEGER {constraint: [PK]}
+    name: "VARCHAR(100)" {constraint: [UK]}
+    format: "VARCHAR(10)"
+    template_config: JSONB
+    use_cases: "TEXT[]"
+  }
+
+  export_log: {
+    shape: sql_table
+    id: BIGINT {constraint: [PK]}
+    technology: TEXT
+    use_cases: "TEXT[]"
+    format: "VARCHAR(10)"
+    template_id: INTEGER {constraint: [FK]}
+    row_count: INTEGER
+    file_size_bytes: BIGINT
+    created_at: TIMESTAMPTZ
+  }
+}
+
+# ============================================================
+# CROSS-SCHEMA RELATIONSHIPS
+# ============================================================
+
+patent_schema -> cross_schema: "patents materialized\ninto 4 MVs" {
+  style.stroke: "#546E7A"
+  style.stroke-dash: 5
+  style.stroke-width: 2
+}
+
+cordis_schema -> cross_schema: "projects materialized\ninto 3 MVs" {
+  style.stroke: "#546E7A"
+  style.stroke-dash: 5
+  style.stroke-width: 2
+}
+
+patent_schema -> entity_schema: "applicants → entity resolution" {
+  style.stroke: "#FFB74D"
+  style.stroke-dash: 5
+  style.stroke-width: 2
+}
+cordis_schema -> entity_schema: "organizations → entity resolution" {
+  style.stroke: "#FFB74D"
+  style.stroke-dash: 5
+  style.stroke-width: 2
+}
+
+patent_schema -> export_schema: "UC-Ergebnisse\n→ analysis_cache (JSONB)" {
+  style.stroke: "#F06292"
+  style.stroke-dash: 5
+  style.stroke-width: 2
+}
+cordis_schema -> export_schema: "UC-Ergebnisse\n→ analysis_cache (JSONB)" {
+  style.stroke: "#F06292"
+  style.stroke-dash: 5
+  style.stroke-width: 2
+}
+research_schema -> export_schema: "UC7-Ergebnisse\n→ analysis_cache (JSONB)" {
+  style.stroke: "#F06292"
+  style.stroke-dash: 5
+  style.stroke-width: 2
+}
+
+research_schema -> cordis_schema: "DOI-Match\npapers.doi ↔ publications.doi" {
+  style.stroke: "#CE93D8"
+  style.stroke-dash: 5
+  style.stroke-width: 2
+}

@@ -33,54 +33,74 @@ logger = structlog.get_logger(__name__)
 # Jeder Eintrag: (UC-Panel-Key, Anzeigename, Spaltenkoepfe, Pfad zu den Daten)
 UC_COLUMN_DEFS: dict[str, tuple[str, list[str], str]] = {
     "landscape": (
-        "UC1 Landscape",
-        ["year", "patent_count", "project_count", "cagr"],
-        "yearly_data",
+        "UC1 Technologie-Landschaft",
+        ["year", "patent_count", "project_count", "publication_count", "funding_eur"],
+        "time_series",
     ),
     "maturity": (
-        "UC2 Maturity",
-        ["year", "cumulative_patents", "maturity_phase", "s_curve_r2"],
-        "yearly_data",
+        "UC2 Reifegrad-Analyse",
+        ["year", "cumulative", "fitted", "annual_count"],
+        "s_curve_data",
     ),
     "competitive": (
-        "UC3 Competitive",
-        ["actor_name", "country", "patent_count", "project_count", "hhi_share"],
-        "actors",
+        "UC3 Wettbewerbsanalyse",
+        ["name", "country_code", "patent_count", "project_count", "share"],
+        "top_actors",
     ),
     "funding": (
-        "UC4 Funding",
-        ["year", "framework", "ec_funding", "project_count", "funding_scheme"],
-        "funding_entries",
+        "UC4 Foerderungsanalyse",
+        ["year", "funding_eur", "project_count", "avg_project_size", "participant_count"],
+        "time_series",
     ),
     "cpc_flow": (
-        "UC5 CPC-Flow",
-        ["code_a", "code_b", "jaccard_index", "co_occurrence_count"],
-        "pairs",
+        "UC5 Cross-Tech Intelligence",
+        ["code_a", "code_b", "similarity", "co_occurrence_count", "description_a", "description_b"],
+        "top_pairs",
     ),
     "geographic": (
-        "UC6 Geographic",
-        ["country", "patent_count", "project_count", "collaboration_pairs"],
-        "countries",
+        "UC6 Geographische Verteilung",
+        ["country_code", "country_name", "patent_count", "project_count", "share"],
+        "country_distribution",
     ),
     "research_impact": (
-        "UC7 Research-Impact",
-        ["paper_title", "year", "citations", "venue", "h_index_contribution"],
-        "papers",
+        "UC7 Forschungsimpact",
+        ["title", "year", "citation_count", "venue", "doi"],
+        "top_papers",
     ),
     "temporal": (
-        "UC8 Temporal",
-        ["actor_name", "first_year", "last_year", "persistence_years", "patent_count"],
-        "actors",
+        "UC8 Zeitliche Entwicklung",
+        ["actor_name", "persistence_type", "first_active_year", "last_active_year", "active_years_count"],
+        "actor_timeline",
+    ),
+    "tech_cluster": (
+        "UC9 Technologie-Cluster",
+        ["label", "actor_count", "patent_count", "density", "coherence"],
+        "clusters",
+    ),
+    "euroscivoc": (
+        "UC10 Wissenschaftsdisziplinen",
+        ["label", "total_projects", "share", "cagr"],
+        "fields_of_science",
+    ),
+    "actor_type": (
+        "UC11 Akteurs-Typen",
+        ["type", "label", "actor_count", "project_count", "actor_share"],
+        "type_breakdown",
+    ),
+    "patent_grant": (
+        "UC12 Erteilungsquoten",
+        ["year", "application_count", "grant_count", "grant_rate", "pending_count"],
+        "year_trend",
+    ),
+    "publication": (
+        "UC13 Publikations-Impact",
+        ["title", "doi", "journal", "publication_year", "project_acronym"],
+        "top_publications",
     ),
 }
 
-# Zusaetzliche UCs (UC9, UC10, UC11, UC12) mit generischem Fallback
-EXTRA_UC_DEFS: dict[str, tuple[str, str]] = {
-    "tech_cluster": ("UC9 Tech-Cluster", "clusters"),
-    "actor_type": ("UC11 Actor-Type", "actor_types"),
-    "patent_grant": ("UC12 Patent-Grant", "grants"),
-    "euroscivoc": ("UC10 EuroSciVoc", "categories"),
-}
+# Alle UCs sind jetzt in UC_COLUMN_DEFS — EXTRA_UC_DEFS nicht mehr benoetigt
+EXTRA_UC_DEFS: dict[str, tuple[str, str]] = {}
 
 
 # ---------------------------------------------------------------------------

@@ -10,6 +10,7 @@ COPY database/sql/006_citation_schema.sql   /docker-entrypoint-initdb.d/
 COPY database/sql/007_publication_role.sql   /docker-entrypoint-initdb.d/
 COPY database/sql/008_seed_cordis.sh        /docker-entrypoint-initdb.d/
 COPY database/sql/009_api_cache.sql         /docker-entrypoint-initdb.d/
+COPY database/sql/010_fix_vector_dims_and_missing_tables.sql /docker-entrypoint-initdb.d/
 COPY database/mock_data/                    /docker-entrypoint-initdb.d/mock_data/
 
 RUN chmod +x /docker-entrypoint-initdb.d/008_seed_cordis.sh

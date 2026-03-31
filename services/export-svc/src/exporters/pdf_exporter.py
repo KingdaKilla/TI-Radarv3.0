@@ -30,11 +30,17 @@ fuer konsistente Datenstruktur ueber alle Export-Formate.
 
 from __future__ import annotations
 
+import base64
 import html
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
+import matplotlib
+matplotlib.use("Agg")  # Non-interactive backend fuer Server
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import structlog
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
@@ -273,6 +279,30 @@ async def generate_pdf(
         )),
         "geographic_chart": Markup(_build_horizontal_bar_svg(
             panel_data.get("geographic", {}), "country_distribution", "country_name", "patent_count", "Top-Laender nach Patenten", limit=10
+        )),
+        "maturity_chart": Markup(_build_bar_chart_svg(
+            panel_data.get("maturity", {}), "s_curve_data", "year", "cumulative", "Kumulative Patente (S-Kurve)"
+        )),
+        "cpc_flow_chart": Markup(_build_horizontal_bar_svg(
+            panel_data.get("cpc_flow", {}), "top_pairs", "code_a", "co_occurrence_count", "Top CPC-Code-Paare (Co-Occurrence)", limit=10
+        )),
+        "research_impact_chart": Markup(_build_bar_chart_svg(
+            panel_data.get("research_impact", {}), "citation_trend", "year", "total_citations", "Zitationen pro Jahr"
+        )),
+        "temporal_chart": Markup(_build_bar_chart_svg(
+            panel_data.get("temporal", {}), "entrant_persistence_trend", "year", "total_active", "Aktive Akteure pro Jahr"
+        )),
+        "tech_cluster_chart": Markup(_build_horizontal_bar_svg(
+            panel_data.get("tech_cluster", {}), "clusters", "label", "patent_count", "Cluster nach Patentanzahl", limit=10
+        )),
+        "euroscivoc_chart": Markup(_build_horizontal_bar_svg(
+            panel_data.get("euroscivoc", {}), "fields_of_science", "label", "total_projects", "Wissenschaftsfelder nach Projekten", limit=10
+        )),
+        "actor_type_chart": Markup(_build_horizontal_bar_svg(
+            panel_data.get("actor_type", {}), "type_breakdown", "label", "actor_count", "Akteurs-Typen", limit=8
+        )),
+        "patent_grant_chart": Markup(_build_bar_chart_svg(
+            panel_data.get("patent_grant", {}), "year_trend", "year", "grant_count", "Erteilte Patente pro Jahr"
         )),
         # Vorgerenderte Datentabellen (als HTML-Strings)
         "landscape_table": table_html_map.get("landscape", ""),
@@ -607,13 +637,29 @@ def _esc(text: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Inline-SVG-Visualisierungen fuer PDF (WeasyPrint kann kein JS)
+# Matplotlib-basierte Chart-Generierung (PNG Base64 fuer WeasyPrint)
 # ---------------------------------------------------------------------------
 
 _CHART_COLOR = "#2a4365"
 _CHART_COLOR_LIGHT = "#4a7ab5"
-_CHART_WIDTH = 700
-_CHART_HEIGHT = 200
+_CHART_COLORS = ["#2a4365", "#4a7ab5", "#6b9fd2", "#0072B2", "#009E73",
+                 "#E69F00", "#D55E00", "#CC79A7", "#56B4E9", "#F0E442"]
+
+# Globale matplotlib-Konfiguration (einmalig)
+plt.rcParams.update({
+    "font.size": 8,
+    "axes.titlesize": 10,
+    "axes.labelsize": 8,
+    "xtick.labelsize": 7,
+    "ytick.labelsize": 7,
+    "figure.dpi": 150,
+    "savefig.dpi": 150,
+    "figure.facecolor": "white",
+    "axes.facecolor": "#fafbfc",
+    "axes.grid": True,
+    "grid.alpha": 0.3,
+    "grid.linewidth": 0.5,
+})
 
 
 def _safe_num(val: Any) -> float:
@@ -621,6 +667,16 @@ def _safe_num(val: Any) -> float:
         return float(val)
     except (ValueError, TypeError):
         return 0.0
+
+
+def _fig_to_base64_img(fig: plt.Figure) -> str:
+    """Konvertiert eine matplotlib-Figur in ein base64-kodiertes HTML <img>-Tag."""
+    buf = BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight", pad_inches=0.15)
+    plt.close(fig)
+    buf.seek(0)
+    b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+    return f'<img src="data:image/png;base64,{b64}" style="width:100%;max-width:700px;margin:8px 0">'
 
 
 def _build_bar_chart_svg(
@@ -632,49 +688,29 @@ def _build_bar_chart_svg(
     divisor: float = 1,
     suffix: str = "",
 ) -> str:
-    """Erzeugt ein vertikales Balkendiagramm als inline SVG."""
+    """Erzeugt ein vertikales Balkendiagramm als matplotlib PNG."""
     items = panel.get(data_key, [])
     if not items or not isinstance(items, list):
         return ""
 
-    values = [(_safe_num(e.get(y_key, 0)) / divisor, str(e.get(x_key, ""))) for e in items]
-    if not values or max(v for v, _ in values) == 0:
+    x_vals = [str(e.get(x_key, "")) for e in items]
+    y_vals = [_safe_num(e.get(y_key, 0)) / divisor for e in items]
+
+    if not y_vals or max(y_vals) == 0:
         return ""
 
-    max_val = max(v for v, _ in values)
-    n = len(values)
-    w = _CHART_WIDTH
-    h = _CHART_HEIGHT
-    margin_left = 60
-    margin_bottom = 30
-    margin_top = 30
-    plot_w = w - margin_left - 10
-    plot_h = h - margin_top - margin_bottom
-    bar_w = max(4, min(40, (plot_w - n * 2) / n))
-    gap = (plot_w - n * bar_w) / max(n, 1)
+    fig, ax = plt.subplots(figsize=(9, 2.8))
+    bars = ax.bar(range(len(x_vals)), y_vals, color=_CHART_COLOR, width=0.7, zorder=3)
+    ax.set_title(title, fontweight="bold", pad=10)
+    ax.set_xticks(range(len(x_vals)))
+    ax.set_xticklabels([str(v)[-4:] for v in x_vals], rotation=45 if len(x_vals) > 8 else 0, ha="right" if len(x_vals) > 8 else "center")
+    ax.set_ylabel(suffix if suffix else None)
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}{suffix}"))
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    fig.tight_layout()
 
-    parts = [f'<div style="margin:10px 0"><svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">']
-    parts.append(f'<text x="{w // 2}" y="16" text-anchor="middle" font-size="10" font-weight="bold" fill="#334155">{_esc(title)}</text>')
-
-    # Y-axis gridlines
-    for i in range(5):
-        y = margin_top + plot_h - (i / 4) * plot_h
-        val = max_val * i / 4
-        label = f"{val:.0f}{suffix}" if divisor > 1 else f"{val:,.0f}".replace(",", ".")
-        parts.append(f'<line x1="{margin_left}" y1="{y}" x2="{w - 10}" y2="{y}" stroke="#e2e8f0" stroke-width="0.5"/>')
-        parts.append(f'<text x="{margin_left - 5}" y="{y + 3}" text-anchor="end" font-size="7" fill="#94a3b8">{label}</text>')
-
-    # Bars
-    for i, (val, label) in enumerate(values):
-        x = margin_left + i * (bar_w + gap) + gap / 2
-        bar_h = (val / max_val) * plot_h if max_val > 0 else 0
-        y = margin_top + plot_h - bar_h
-        parts.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{bar_w:.1f}" height="{bar_h:.1f}" fill="{_CHART_COLOR}" rx="1"/>')
-        if n <= 15:
-            parts.append(f'<text x="{x + bar_w / 2:.1f}" y="{margin_top + plot_h + 12}" text-anchor="middle" font-size="6" fill="#64748b">{_esc(str(label)[-4:])}</text>')
-
-    parts.append("</svg></div>")
-    return "\n".join(parts)
+    return _fig_to_base64_img(fig)
 
 
 def _build_horizontal_bar_svg(
@@ -685,36 +721,34 @@ def _build_horizontal_bar_svg(
     title: str,
     limit: int = 10,
 ) -> str:
-    """Erzeugt ein horizontales Balkendiagramm als inline SVG."""
+    """Erzeugt ein horizontales Balkendiagramm als matplotlib PNG."""
     items = panel.get(data_key, [])
     if not items or not isinstance(items, list):
         return ""
 
-    entries = [(str(e.get(label_key, "")), _safe_num(e.get(value_key, 0))) for e in items[:limit]]
+    entries = [(str(e.get(label_key, ""))[:30], _safe_num(e.get(value_key, 0))) for e in items[:limit]]
     entries = [(l, v) for l, v in entries if v > 0]
     if not entries:
         return ""
 
-    max_val = max(v for _, v in entries)
-    n = len(entries)
-    w = _CHART_WIDTH
-    bar_h = 16
-    gap = 4
-    margin_left = 150
-    margin_top = 30
-    h = margin_top + n * (bar_h + gap) + 10
-    plot_w = w - margin_left - 50
+    labels, values = zip(*reversed(entries))  # reversed fuer top-to-bottom
+    n = len(labels)
+    fig_h = max(2.0, 0.35 * n + 0.8)
 
-    parts = [f'<div style="margin:10px 0"><svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">']
-    parts.append(f'<text x="{w // 2}" y="16" text-anchor="middle" font-size="10" font-weight="bold" fill="#334155">{_esc(title)}</text>')
+    fig, ax = plt.subplots(figsize=(9, fig_h))
+    colors = [_CHART_COLORS[i % len(_CHART_COLORS)] for i in range(n)]
+    bars = ax.barh(range(n), values, color=colors, height=0.65, zorder=3)
+    ax.set_yticks(range(n))
+    ax.set_yticklabels(labels)
+    ax.set_title(title, fontweight="bold", pad=10)
+    ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{x:,.0f}"))
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
 
-    for i, (label, val) in enumerate(entries):
-        y = margin_top + i * (bar_h + gap)
-        bar_w = (val / max_val) * plot_w if max_val > 0 else 0
-        display_label = label[:22] + "..." if len(label) > 25 else label
-        parts.append(f'<text x="{margin_left - 5}" y="{y + bar_h / 2 + 3}" text-anchor="end" font-size="7" fill="#334155">{_esc(display_label)}</text>')
-        parts.append(f'<rect x="{margin_left}" y="{y}" width="{bar_w:.1f}" height="{bar_h}" fill="{_CHART_COLOR_LIGHT}" rx="2"/>')
-        parts.append(f'<text x="{margin_left + bar_w + 4:.1f}" y="{y + bar_h / 2 + 3}" font-size="7" fill="#64748b">{val:,.0f}</text>')
+    # Werte an Balken schreiben
+    for bar, val in zip(bars, values):
+        ax.text(bar.get_width() + max(values) * 0.01, bar.get_y() + bar.get_height() / 2,
+                f"{val:,.0f}", va="center", fontsize=6, color="#64748b")
 
-    parts.append("</svg></div>")
-    return "\n".join(parts)
+    fig.tight_layout()
+    return _fig_to_base64_img(fig)

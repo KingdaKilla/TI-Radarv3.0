@@ -409,6 +409,10 @@
         <p class="text-small text-muted">Phasen: Entstehung &rarr; Wachstum &rarr; Reife &rarr; Saettigung</p>
     </div>
 
+    {% if maturity_chart %}
+    {{ maturity_chart }}
+    {% endif %}
+
     {% if maturity_table %}
     <h3>Detaildaten</h3>
     {{ maturity_table }}
@@ -575,6 +579,10 @@
         <p class="text-small text-muted">Hohe Jaccard-Werte deuten auf Technologiekonvergenz hin</p>
     </div>
 
+    {% if cpc_flow_chart %}
+    {{ cpc_flow_chart }}
+    {% endif %}
+
     {% if cpc_flow_table %}
     <h3>Top CPC-Paare</h3>
     {{ cpc_flow_table }}
@@ -683,6 +691,10 @@
         <p class="text-small text-muted">Quelle: Semantic Scholar API</p>
     </div>
 
+    {% if research_impact_chart %}
+    {{ research_impact_chart }}
+    {% endif %}
+
     {% if research_impact_table %}
     <h3>Top-Publikationen</h3>
     {{ research_impact_table }}
@@ -723,6 +735,10 @@
         <p>Stacked Area Chart: Akteur-Dynamik und thematische Entwicklung ueber die Zeit</p>
         <p class="text-small text-muted">Zeigt Persistenz von Akteuren und Verschiebung thematischer Schwerpunkte</p>
     </div>
+
+    {% if temporal_chart %}
+    {{ temporal_chart }}
+    {% endif %}
 
     {% if temporal_table %}
     <h3>Akteur-Persistenz</h3>
@@ -766,6 +782,10 @@
         <p class="text-small text-muted">Interaktives Diagramm mit expandierbaren Cluster-Details im Web-Frontend</p>
     </div>
 
+    {% if tech_cluster_chart %}
+    {{ tech_cluster_chart }}
+    {% endif %}
+
     {% if tech_cluster_table %}
     <h3>Cluster-Uebersicht</h3>
     {{ tech_cluster_table }}
@@ -808,6 +828,10 @@
         <p class="text-small text-muted">Shannon-Index H = -&sum; p<sub>i</sub> ln(p<sub>i</sub>): hoehere Werte = groessere Disziplin-Vielfalt</p>
     </div>
 
+    {% if euroscivoc_chart %}
+    {{ euroscivoc_chart }}
+    {% endif %}
+
     {% if euroscivoc_table %}
     <h3>Disziplin-Verteilung</h3>
     {{ euroscivoc_table }}
@@ -839,6 +863,10 @@
         <div class="chart-placeholder-icon">&#x1F3DB;</div>
         <p>Donut-Diagramm: Verteilung der Akteure nach Organisationstyp</p>
     </div>
+
+    {% if actor_type_chart %}
+    {{ actor_type_chart }}
+    {% endif %}
 
     {% if actor_type_table %}
     <h3>Typ-Verteilung</h3>
@@ -880,6 +908,10 @@
         <div class="chart-placeholder-icon">&#x2705;</div>
         <p>Composed Chart: Anmeldungen und Erteilungen (Balken) mit Erteilungsquote (Linie, sekundaere Y-Achse)</p>
     </div>
+
+    {% if patent_grant_chart %}
+    {{ patent_grant_chart }}
+    {% endif %}
 
     {% if patent_grant_table %}
     <h3>Erteilungsdetails</h3>

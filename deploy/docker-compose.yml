@@ -46,7 +46,8 @@ services:
       - ../database/sql/008_seed_cordis.sh:/docker-entrypoint-initdb.d/008_seed_cordis.sh
       - ../database/mock_data:/docker-entrypoint-initdb.d/mock_data:ro
       - ../database/sql/009_api_cache.sql:/docker-entrypoint-initdb.d/009_api_cache.sql
-    shm_size: 1g
+      - ../database/sql/010_fix_vector_dims_and_missing_tables.sql:/docker-entrypoint-initdb.d/010_fix_vector_dims_and_missing_tables.sql
+    shm_size: 4g
     ports:
       - "127.0.0.1:5432:5432"
     healthcheck:
@@ -57,8 +58,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 8G
-          cpus: "2.0"
+          memory: 24G
+          cpus: "8.0"
     networks:
       - backend
 
@@ -281,14 +282,17 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-tip_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ti_radar}
       IMPORT_SCHEDULE: ${IMPORT_SCHEDULE:-0 2 * * 0}
       SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-true}
+      BATCH_SIZE: "200000"
+      MAX_WORKERS: "16"
+      EPO_MIN_YEAR: "2016"
     ports:
       - "127.0.0.1:8030:8030"
     restart: unless-stopped
     deploy:
       resources:
         limits:
-          memory: 2G
-          cpus: "2.0"
+          memory: 16G
+          cpus: "12.0"
     networks:
       - backend
 

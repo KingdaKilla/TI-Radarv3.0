@@ -300,6 +300,54 @@ COMMENT ON TABLE patent_schema.import_metadata IS
 
 
 -- --------------------------------------------------------------------------
+-- EPO OPS API Cache (query-level caching for live adapter)
+-- --------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS patent_schema.epo_ops_cache (
+    technology   TEXT        NOT NULL,
+    start_year   SMALLINT,
+    end_year     SMALLINT,
+    result_json  JSONB       NOT NULL DEFAULT '[]',
+    fetched_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    stale_after  TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '7 days',
+    CONSTRAINT pk_epo_ops_cache PRIMARY KEY (technology, start_year, end_year)
+);
+
+CREATE INDEX IF NOT EXISTS idx_epo_ops_cache_stale
+    ON patent_schema.epo_ops_cache (stale_after);
+
+COMMENT ON TABLE patent_schema.epo_ops_cache IS
+    'Query-level cache for EPO OPS REST API responses (7-day TTL).';
+
+
+-- --------------------------------------------------------------------------
+-- Patent Citations (Forward/Backward Citation Analysis, UC-F)
+-- --------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS patent_schema.patent_citations (
+    citing_patent      TEXT NOT NULL,
+    cited_patent       TEXT NOT NULL,
+    citation_category  TEXT,
+    cited_phase        TEXT,
+    citing_year        INTEGER,
+    PRIMARY KEY (citing_patent, cited_patent)
+);
+
+CREATE INDEX IF NOT EXISTS idx_citations_cited
+    ON patent_schema.patent_citations (cited_patent);
+
+CREATE INDEX IF NOT EXISTS idx_citations_year
+    ON patent_schema.patent_citations (citing_year);
+
+CREATE INDEX IF NOT EXISTS idx_citations_category
+    ON patent_schema.patent_citations (citation_category)
+    WHERE citation_category IS NOT NULL;
+
+COMMENT ON TABLE patent_schema.patent_citations IS
+    'Patent citation network — Forward/Backward Citations from EPO DOCDB XML (UC-F).';
+COMMENT ON COLUMN patent_schema.patent_citations.citation_category IS
+    'EPO category: X=particularly relevant, Y=relevant in combination, A=prior art, D=cited in proceedings.';
+
+
+-- --------------------------------------------------------------------------
 -- PATENT_SCHEMA INDEXES
 -- --------------------------------------------------------------------------
 
@@ -551,6 +599,23 @@ COMMENT ON TABLE cordis_schema.import_metadata IS
 
 
 -- --------------------------------------------------------------------------
+-- CORDIS API Cache (query-level caching for live adapter)
+-- --------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS cordis_schema.cordis_api_cache (
+    technology   TEXT        PRIMARY KEY,
+    result_json  JSONB       NOT NULL DEFAULT '[]',
+    fetched_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    stale_after  TIMESTAMPTZ NOT NULL DEFAULT NOW() + INTERVAL '7 days'
+);
+
+CREATE INDEX IF NOT EXISTS idx_cordis_api_cache_stale
+    ON cordis_schema.cordis_api_cache (stale_after);
+
+COMMENT ON TABLE cordis_schema.cordis_api_cache IS
+    'Query-level cache for CORDIS REST API responses (7-day TTL).';
+
+
+-- --------------------------------------------------------------------------
 -- CORDIS_SCHEMA INDEXES
 -- --------------------------------------------------------------------------
 
@@ -727,6 +792,24 @@ COMMENT ON TABLE research_schema.query_cache IS
 
 
 -- --------------------------------------------------------------------------
+-- OpenAIRE API Cache (publication counts per keyword+year)
+-- --------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS research_schema.openaire_cache (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    query_key       TEXT NOT NULL,
+    year            INT NOT NULL,
+    count           INT NOT NULL,
+    fetched_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    stale_after     TIMESTAMPTZ NOT NULL DEFAULT (now() + INTERVAL '7 days'),
+    CONSTRAINT uq_openaire_cache UNIQUE (query_key, year)
+);
+
+COMMENT ON TABLE research_schema.openaire_cache IS
+    'Cache for OpenAIRE publication count API responses (7-day TTL). '
+    'Each row stores the publication count for a (keyword, year) pair.';
+
+
+-- --------------------------------------------------------------------------
 -- RESEARCH_SCHEMA INDEXES
 -- --------------------------------------------------------------------------
 
@@ -745,6 +828,9 @@ CREATE INDEX idx_authors_hindex ON research_schema.authors (h_index DESC NULLS L
 
 CREATE INDEX idx_pa_author ON research_schema.paper_authors (author_id);
 CREATE INDEX idx_query_cache_stale ON research_schema.query_cache (stale_after);
+
+CREATE INDEX IF NOT EXISTS idx_openaire_cache_stale
+    ON research_schema.openaire_cache (query_key, stale_after);
 
 
 -- --------------------------------------------------------------------------
@@ -1339,6 +1425,33 @@ CREATE TABLE IF NOT EXISTS cross_schema.etl_run_log (
 
 CREATE INDEX IF NOT EXISTS idx_erl_source ON cross_schema.etl_run_log (source, started_at DESC);
 
+
+-- --------------------------------------------------------------------------
+-- Import Log (file-level tracking for incremental imports)
+-- --------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS cross_schema.import_log (
+    id                  SERIAL PRIMARY KEY,
+    source              TEXT NOT NULL,
+    filename            TEXT NOT NULL,
+    imported_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    record_count        INTEGER NOT NULL DEFAULT 0,
+    duration_seconds    REAL,
+    status              TEXT NOT NULL DEFAULT 'completed',
+
+    CONSTRAINT uq_import_log_source_file UNIQUE (source, filename),
+    CONSTRAINT ck_import_log_status CHECK (status IN ('completed', 'failed', 'skipped')),
+    CONSTRAINT ck_import_log_source CHECK (source IN ('epo', 'cordis', 'euroscivoc'))
+);
+
+COMMENT ON TABLE cross_schema.import_log IS
+    'Import tracking for incremental imports. Prevents re-importing already processed files.';
+
+CREATE INDEX IF NOT EXISTS idx_import_log_source
+    ON cross_schema.import_log (source);
+CREATE INDEX IF NOT EXISTS idx_import_log_imported_at
+    ON cross_schema.import_log (imported_at DESC);
+
+
 -- OpenAIRE publications cache
 CREATE TABLE IF NOT EXISTS research_schema.openaire_publications (
     id                  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -1514,6 +1627,9 @@ BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'svc_euroscivoc') THEN
         CREATE ROLE svc_euroscivoc LOGIN;
     END IF;
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'svc_publication') THEN
+        CREATE ROLE svc_publication LOGIN;
+    END IF;
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'svc_export') THEN
         CREATE ROLE svc_export LOGIN;
     END IF;
@@ -1556,6 +1672,7 @@ ALTER ROLE svc_tech_cluster PASSWORD 'svc_tech_cluster_pw';
 ALTER ROLE svc_actor_type PASSWORD 'svc_actor_type_pw';
 ALTER ROLE svc_patent_grant PASSWORD 'svc_patent_grant_pw';
 ALTER ROLE svc_euroscivoc PASSWORD 'svc_euroscivoc_pw';
+ALTER ROLE svc_publication PASSWORD 'svc_publication_pw';
 ALTER ROLE svc_export PASSWORD 'svc_export_pw';
 ALTER ROLE svc_entity_resolution PASSWORD 'svc_entity_pw';
 ALTER ROLE importer_epo PASSWORD 'importer_epo_pw';
@@ -1574,13 +1691,13 @@ GRANT USAGE ON SCHEMA patent_schema  TO svc_landscape, svc_maturity, svc_competi
 
 GRANT USAGE ON SCHEMA cordis_schema  TO svc_landscape, svc_competitive, svc_funding,
     svc_geographic, svc_temporal, svc_tech_cluster, svc_actor_type, svc_euroscivoc,
-    svc_export, svc_entity_resolution,
+    svc_publication, svc_export, svc_entity_resolution,
     importer_cordis, tip_admin, tip_readonly;
 
 GRANT USAGE ON SCHEMA cross_schema   TO svc_landscape, svc_maturity, svc_competitive,
     svc_funding, svc_cpc_flow, svc_geographic, svc_temporal, svc_tech_cluster,
     svc_actor_type, svc_patent_grant, svc_euroscivoc, svc_export,
-    tip_admin, tip_readonly;
+    importer_epo, importer_cordis, tip_admin, tip_readonly;
 
 GRANT USAGE ON SCHEMA research_schema TO svc_research_impact, svc_landscape, svc_export,
     tip_admin, tip_readonly;
@@ -1602,6 +1719,8 @@ GRANT SELECT ON ALL TABLES IN SCHEMA patent_schema TO svc_landscape;
 GRANT SELECT ON ALL TABLES IN SCHEMA cordis_schema TO svc_landscape;
 GRANT SELECT ON ALL TABLES IN SCHEMA cross_schema TO svc_landscape;
 GRANT SELECT ON ALL TABLES IN SCHEMA research_schema TO svc_landscape;
+GRANT INSERT, UPDATE, DELETE ON research_schema.openaire_cache TO svc_landscape;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA research_schema TO svc_landscape;
 
 -- UC2 Maturity: reads patents + patent_cpc + cross-schema MVs
 GRANT SELECT ON ALL TABLES IN SCHEMA patent_schema TO svc_maturity;
@@ -1658,6 +1777,11 @@ GRANT SELECT ON ALL TABLES IN SCHEMA cordis_schema TO svc_entity_resolution;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA entity_schema TO svc_entity_resolution;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA entity_schema TO svc_entity_resolution;
 
+-- UC-C Publication: reads cordis_schema
+GRANT SELECT ON ALL TABLES IN SCHEMA cordis_schema TO svc_publication;
+ALTER DEFAULT PRIVILEGES IN SCHEMA cordis_schema
+    GRANT SELECT ON TABLES TO svc_publication;
+
 
 -- --------------------------------------------------------------------------
 -- Data import roles: write access to their target schemas
@@ -1667,11 +1791,15 @@ GRANT USAGE ON ALL SEQUENCES IN SCHEMA entity_schema TO svc_entity_resolution;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA patent_schema TO importer_epo;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA patent_schema TO importer_epo;
 GRANT EXECUTE ON FUNCTION cross_schema.refresh_patent_views() TO importer_epo;
+GRANT SELECT, INSERT, UPDATE ON cross_schema.import_log TO importer_epo;
+GRANT USAGE ON SEQUENCE cross_schema.import_log_id_seq TO importer_epo;
 
 -- CORDIS importer: writes to cordis_schema
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA cordis_schema TO importer_cordis;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA cordis_schema TO importer_cordis;
 GRANT EXECUTE ON FUNCTION cross_schema.refresh_cordis_views() TO importer_cordis;
+GRANT SELECT, INSERT, UPDATE ON cross_schema.import_log TO importer_cordis;
+GRANT USAGE ON SEQUENCE cross_schema.import_log_id_seq TO importer_cordis;
 
 
 -- --------------------------------------------------------------------------

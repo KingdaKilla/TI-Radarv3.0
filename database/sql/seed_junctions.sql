@@ -1,13 +1,13 @@
 -- ============================================================================
--- 011_fix_mock_junctions.sql
+-- seed_junctions.sql
 -- Fehlende Junction-Tabellen aus denormalisierten Mock-Daten ableiten
 --
 -- Behebt: UC1/UC5/UC8 leer (patent_cpc fehlt)
 --         UC3/UC8      leer (patent_applicants / unified_actors fehlen)
 --         UC7          leer (research_schema.papers fehlt)
 --
--- Voraussetzung: 002_schema.sql + seed_mock.sql bereits ausgefuehrt
--- Ausfuehren:    psql -U postgres -d ti_radar -f 011_fix_mock_junctions.sql
+-- Voraussetzung: 002_schema.sql + seed_mock.sh bereits ausgefuehrt
+-- Ausfuehren:    psql -U tip_admin -d ti_radar -f seed_junctions.sql
 -- ============================================================================
 
 BEGIN;

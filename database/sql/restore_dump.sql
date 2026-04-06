@@ -21,6 +21,7 @@ BEGIN;
 
 -- --- Patent Schema ---
 TRUNCATE patent_schema.patent_citations;
+TRUNCATE patent_schema.epo_ops_cache;
 TRUNCATE patent_schema.patent_cpc CASCADE;
 TRUNCATE patent_schema.patent_applicants CASCADE;
 TRUNCATE patent_schema.applicants CASCADE;
@@ -36,6 +37,7 @@ TRUNCATE cordis_schema.organizations CASCADE;
 TRUNCATE cordis_schema.projects CASCADE;
 TRUNCATE cordis_schema.euroscivoc CASCADE;
 TRUNCATE cordis_schema.import_metadata;
+TRUNCATE cordis_schema.cordis_api_cache;
 
 -- --- Research Schema ---
 TRUNCATE research_schema.paper_authors;
@@ -65,12 +67,12 @@ TRUNCATE public.alembic_version;
 
 
 -- ============================================================================
--- 2. Vektor-Dimensionen an Dump anpassen (384 -> 1024)
---    Der Dump enthaelt 1024-dimensionale Embeddings
+-- 2. Vektor-Dimensionen an Dump anpassen (nur noetig wenn Dump andere Dims hat)
+--    Schema definiert vector(384). Auskommentiert da neuer Dump 384 verwendet.
 -- ============================================================================
 
-ALTER TABLE cross_schema.document_chunks
-    ALTER COLUMN embedding TYPE vector(1024);
+-- ALTER TABLE cross_schema.document_chunks
+--     ALTER COLUMN embedding TYPE vector(1024);
 
 
 -- ============================================================================

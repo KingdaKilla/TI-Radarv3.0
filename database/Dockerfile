@@ -1,22 +1,18 @@
 FROM pgvector/pgvector:pg17
 
-# Initialisierungsskripte in den PostgreSQL-Entrypoint kopieren
+# Schema-Initialisierung (nur bei erstem Start, alphabetische Reihenfolge)
 COPY database/sql/001_extensions.sql        /docker-entrypoint-initdb.d/
 COPY database/sql/002_schema.sql            /docker-entrypoint-initdb.d/
 COPY database/sql/003_postgresql_tuning.sql /docker-entrypoint-initdb.d/
-COPY database/sql/004_query_translation.sql /docker-entrypoint-initdb.d/
-COPY database/sql/005_import_log.sql        /docker-entrypoint-initdb.d/
-COPY database/sql/006_citation_schema.sql   /docker-entrypoint-initdb.d/
-COPY database/sql/007_publication_role.sql   /docker-entrypoint-initdb.d/
-COPY database/sql/008_seed_cordis.sh        /docker-entrypoint-initdb.d/
-COPY database/sql/009_api_cache.sql         /docker-entrypoint-initdb.d/
-COPY database/sql/010_fix_vector_dims_and_missing_tables.sql /docker-entrypoint-initdb.d/
-COPY database/sql/011_fix_mock_junctions.sql /docker-entrypoint-initdb.d/
+
+# Seed-Skripte: 100er-Nummern -> laufen nach Schema-Init
+COPY database/sql/seed_mock.sh              /docker-entrypoint-initdb.d/100_seed_mock.sh
+COPY database/sql/seed_junctions.sql        /docker-entrypoint-initdb.d/101_seed_junctions.sql
 COPY database/mock_data/                    /docker-entrypoint-initdb.d/mock_data/
 
-# Restore-Skripte (fuer Dump-Import, NICHT bei Init)
+# Restore-Werkzeuge (nicht bei Init)
 COPY database/sql/restore_dump.sql          /opt/restore/restore_dump.sql
 COPY database/restore_on_server.sh          /opt/restore/restore_on_server.sh
 
-RUN chmod +x /docker-entrypoint-initdb.d/008_seed_cordis.sh \
+RUN chmod +x /docker-entrypoint-initdb.d/100_seed_mock.sh \
     && chmod +x /opt/restore/restore_on_server.sh

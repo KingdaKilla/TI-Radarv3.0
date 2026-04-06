@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# 008_seed_cordis.sh
+# seed_mock.sh
 # Automatic CORDIS + Patent mock-data seed for first DB init.
 # Executed by PostgreSQL docker-entrypoint-initdb.d on first start.
 # ============================================================
@@ -17,17 +17,17 @@ ROW_COUNT=$(psql -U "$USER" -d "$DB" -tAc \
     "SELECT COUNT(*) FROM cordis_schema.projects;" 2>/dev/null || echo "0")
 
 if [ "$ROW_COUNT" -gt 0 ]; then
-    echo "008_seed_cordis: projects table already has $ROW_COUNT rows — skipping seed."
+    echo "seed_mock: projects table already has $ROW_COUNT rows — skipping seed."
     exit 0
 fi
 
 # Verify mock data directory exists
 if [ ! -d "$MOCK_DIR" ]; then
-    echo "008_seed_cordis: mock data directory $MOCK_DIR not found — skipping seed."
+    echo "seed_mock: mock data directory $MOCK_DIR not found — skipping seed."
     exit 0
 fi
 
-echo "008_seed_cordis: seeding CORDIS + patent mock data …"
+echo "seed_mock: seeding CORDIS + patent mock data …"
 
 # ------------------------------------------------------------------
 # Helper: allow explicit IDs on GENERATED ALWAYS AS IDENTITY columns
@@ -202,4 +202,4 @@ TOTAL=$(psql -U "$USER" -d "$DB" -tAc "
         (SELECT COUNT(*) FROM patent_schema.patents);
 ")
 
-echo "008_seed_cordis: done — $TOTAL total rows seeded (quantum computing mock data)."
+echo "seed_mock: done — $TOTAL total rows seeded (quantum computing mock data)."

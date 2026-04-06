@@ -721,6 +721,34 @@ async def refresh_views(request: Request) -> RefreshResponse:
 
 
 # ---------------------------------------------------------------------------
+# API Delta-Update (EPO OPS + CORDIS REST API)
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/api-delta",
+    summary="API-basierte Delta-Updates manuell ausloesen",
+    description=(
+        "Startet einen API-Delta-Update im Hintergrund. EPO OPS und CORDIS REST APIs "
+        "werden fuer die zuletzt gesuchten Technologien abgefragt. API-Daten ueberschreiben "
+        "bestehende Bulk-Eintraege (ON CONFLICT DO UPDATE)."
+    ),
+    dependencies=[Depends(require_admin_key)],
+)
+async def trigger_api_delta(request: Request) -> dict[str, str]:
+    """Manueller Trigger fuer API-basierte Delta-Updates."""
+    import asyncio
+
+    from src.scheduler import daily_api_delta_job
+
+    asyncio.create_task(daily_api_delta_job(request.app))
+    return {
+        "status": "Delta-Update gestartet",
+        "message": "EPO OPS + CORDIS API Updates laufen im Hintergrund",
+    }
+
+
+# ---------------------------------------------------------------------------
 # Scheduler-Status Endpoint
 # ---------------------------------------------------------------------------
 

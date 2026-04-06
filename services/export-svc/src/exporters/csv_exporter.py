@@ -33,67 +33,67 @@ logger = structlog.get_logger(__name__)
 # Jeder Eintrag: (UC-Panel-Key, Anzeigename, Spaltenkoepfe, Pfad zu den Daten)
 UC_COLUMN_DEFS: dict[str, tuple[str, list[str], str]] = {
     "landscape": (
-        "UC1 Technologie-Landschaft",
+        "UC 1 Technologie-Landschaft",
         ["year", "patent_count", "project_count", "publication_count", "funding_eur"],
         "time_series",
     ),
     "maturity": (
-        "UC2 Reifegrad-Analyse",
+        "UC 2 Reifegrad-Analyse",
         ["year", "cumulative", "fitted", "annual_count"],
         "s_curve_data",
     ),
     "competitive": (
-        "UC3 Wettbewerbsanalyse",
+        "UC 4 Wettbewerbsanalyse",
         ["name", "country_code", "patent_count", "project_count", "share"],
         "top_actors",
     ),
     "funding": (
-        "UC4 Foerderungsanalyse",
+        "UC 7 Förderungsanalyse",
         ["year", "funding_eur", "project_count", "avg_project_size", "participant_count"],
         "time_series",
     ),
     "cpc_flow": (
-        "UC5 Cross-Tech Intelligence",
+        "UC 3 Cross-Tech Intelligence",
         ["code_a", "code_b", "similarity", "co_occurrence_count", "description_a", "description_b"],
         "top_pairs",
     ),
     "geographic": (
-        "UC6 Geographische Verteilung",
+        "UC 10 Geographische Verteilung",
         ["country_code", "country_name", "patent_count", "project_count", "share"],
         "country_distribution",
     ),
     "research_impact": (
-        "UC7 Forschungsimpact",
+        "UC 8 Forschungsimpact",
         ["title", "year", "citation_count", "venue", "doi"],
         "top_papers",
     ),
     "temporal": (
-        "UC8 Zeitliche Entwicklung",
+        "UC 5 Zeitliche Entwicklung",
         ["actor_name", "persistence_type", "first_active_year", "last_active_year", "active_years_count"],
         "actor_timeline",
     ),
     "tech_cluster": (
-        "UC9 Technologie-Cluster",
+        "UC 11 Technologie-Cluster",
         ["label", "actor_count", "patent_count", "density", "coherence"],
         "clusters",
     ),
     "euroscivoc": (
-        "UC10 Wissenschaftsdisziplinen",
+        "UC 12 Wissenschaftsdisziplinen",
         ["label", "total_projects", "share", "cagr"],
         "fields_of_science",
     ),
     "actor_type": (
-        "UC11 Akteurs-Typen",
+        "UC 6 Akteurs-Typen",
         ["type", "label", "actor_count", "project_count", "actor_share"],
         "type_breakdown",
     ),
     "patent_grant": (
-        "UC12 Erteilungsquoten",
+        "UC 13 Erteilungsquoten",
         ["year", "application_count", "grant_count", "grant_rate", "pending_count"],
         "year_trend",
     ),
     "publication": (
-        "UC13 Publikations-Impact",
+        "UC 13 Publikations-Impact",
         ["title", "doi", "journal", "publication_year", "project_acronym"],
         "top_publications",
     ),

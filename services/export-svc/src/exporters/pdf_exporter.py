@@ -73,6 +73,7 @@ _STYLES_CSS_PATH = _TEMPLATE_DIR / "report_styles.css"
 # Sektion 15/16/17/18 = Datenqualitaet + Anhang (fest)
 
 UC_DISPLAY_META: dict[str, tuple[str, str, int]] = {
+    # Cluster 1: Technologie & Reife
     "landscape": (
         "Technologie-Übersicht",
         "Patent- und Projektaktivität im Zeitverlauf mit CAGR-Wachstumsrate",
@@ -83,49 +84,52 @@ UC_DISPLAY_META: dict[str, tuple[str, str, int]] = {
         "S-Kurve, Reifephase, Bestimmtheitsmaß R² und AICc",
         4,
     ),
-    "competitive": (
-        "Wettbewerbsanalyse",
-        "Top-Akteure, HHI-Konzentrationsindex und CR4",
-        5,
-    ),
-    "funding": (
-        "Förderungsanalyse",
-        "EU-Förderprogramme, Instrumente und Fördervolumen",
-        6,
-    ),
     "cpc_flow": (
         "Technologiefluss",
         "Jaccard-Heatmap, Co-Occurrence und Top-CPC-Paare",
-        7,
+        5,
     ),
-    "geographic": (
-        "Geographische Verteilung",
-        "Länderverteilung, EU-Anteil und Kooperationspaare",
-        8,
-    ),
-    "research_impact": (
-        "Forschungsimpact",
-        "h-Index, Top-Journals, Zitations-Trend",
-        9,
+    # Cluster 2: Marktakteure
+    "competitive": (
+        "Wettbewerbsanalyse",
+        "Top-Akteure, HHI-Konzentrationsindex und CR4",
+        6,
     ),
     "temporal": (
         "Zeitliche Dynamik",
         "Akteur-Persistenz, Programm-Evolution und Themen im Zeitverlauf",
-        10,
-    ),
-    "tech_cluster": (
-        "Technologie-Cluster",
-        "Radar-Dimensionen, Cluster-Analyse und verwandte Technologiefelder",
-        11,
-    ),
-    "euroscivoc": (
-        "Wissenschaftsdisziplinen",
-        "EuroSciVoc-Taxonomie und Shannon-Diversitätsindex",
-        12,
+        7,
     ),
     "actor_type": (
         "Akteurs-Typverteilung",
         "Verteilung nach Organisationstyp (Hochschule, Industrie, KMU, Forschung)",
+        8,
+    ),
+    # Cluster 3: Forschung & Förderung
+    "funding": (
+        "Förderungsanalyse",
+        "EU-Förderprogramme, Instrumente und Fördervolumen",
+        9,
+    ),
+    "research_impact": (
+        "Forschungsimpact",
+        "h-Index, Top-Journals, Zitations-Trend",
+        10,
+    ),
+    # Cluster 4: Geographische Perspektive
+    "geographic": (
+        "Geographische Verteilung",
+        "Länderverteilung, EU-Anteil und Kooperationspaare",
+        11,
+    ),
+    "tech_cluster": (
+        "Technologie-Cluster",
+        "Radar-Dimensionen, Cluster-Analyse und verwandte Technologiefelder",
+        12,
+    ),
+    "euroscivoc": (
+        "Wissenschaftsdisziplinen",
+        "EuroSciVoc-Taxonomie und Shannon-Diversitätsindex",
         13,
     ),
     "patent_grant": (

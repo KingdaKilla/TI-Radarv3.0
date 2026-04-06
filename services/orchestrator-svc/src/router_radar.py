@@ -28,8 +28,11 @@ from src.middleware import record_grpc_call, record_radar_request
 from src.schemas import (
     DataSourceInfo,
     ExplainabilityInfo,
+    HATEOASLinks,
     RadarRequest,
     RadarResponse,
+    UCPanel,
+    UCPanelMetadata,
     UseCaseError,
     WarningItem,
     WarningSeverity,
@@ -473,10 +476,35 @@ async def analyze_technology(
         total=total_uc_count,
     )
 
+    # --- Typisierte UC-Panels aufbauen ---
+    panels: list[UCPanel] = []
+    for uc_name, data in panel_data.items():
+        panel_meta = UCPanelMetadata()
+        if data and "metadata" in data:
+            raw_meta = data["metadata"]
+            panel_meta = UCPanelMetadata(
+                processing_time_ms=int(raw_meta.get("processing_time_ms", 0)),
+                request_id=raw_meta.get("request_id", ""),
+                timestamp=raw_meta.get("timestamp", ""),
+            )
+        panels.append(UCPanel(use_case=uc_name, data=data, metadata=panel_meta))
+
+    # --- HATEOAS-Links ---
+    tech_encoded = request.technology.replace(" ", "%20")
+    links = HATEOASLinks(
+        self="/api/v1/radar",
+        export_csv="/api/v1/export/csv",
+        export_json="/api/v1/export/json",
+        export_xlsx="/api/v1/export/xlsx",
+        export_pdf="/api/v1/export/pdf",
+        suggestions=f"/api/v1/suggestions?q={tech_encoded}",
+    )
+
     # --- Response zusammenbauen ---
     return RadarResponse(
         technology=request.technology,
         analysis_period=f"{start_year}-{current_year}",
+        panels=panels,
         landscape=panel_data.get("landscape", {}),
         maturity=panel_data.get("maturity", {}),
         competitive=panel_data.get("competitive", {}),
@@ -490,6 +518,7 @@ async def analyze_technology(
         patent_grant=panel_data.get("patent_grant", {}),
         euroscivoc=panel_data.get("euroscivoc", {}),
         publication=panel_data.get("publication", {}),
+        **{"_links": links},
         uc_errors=uc_errors,
         explainability=explainability,
         total_processing_time_ms=elapsed_ms,

@@ -155,22 +155,61 @@ class ExplainabilityInfo(BaseModel):
 # =============================================================================
 
 
-class RadarResponse(BaseModel):
-    """Komplette Radar-Antwort mit allen 12 UC-Panels.
+class UCPanelMetadata(BaseModel):
+    """Metadaten eines einzelnen UC-Panel-Ergebnisses."""
 
-    Jedes Panel ist ein offenes dict[str, Any], da die konkrete Struktur
-    durch die jeweiligen Protobuf-Definitionen bestimmt wird und sich
-    panel-spezifisch unterscheidet. Die Konvertierung von Protobuf zu
-    JSON-dict erfolgt im Router.
+    processing_time_ms: int = 0
+    data_sources: list[DataSourceInfo] = Field(default_factory=list)
+    warnings: list[WarningItem] = Field(default_factory=list)
+    request_id: str = ""
+    timestamp: str = ""
+
+
+class UCPanel(BaseModel):
+    """Typisiertes UC-Panel mit Discriminator-Feld.
+
+    Das ``use_case``-Feld identifiziert den konkreten Panel-Typ (analog zu
+    TMF630 @type). ``data`` enthaelt die panel-spezifischen Ergebnisse aus
+    der Protobuf-Konvertierung. ``metadata`` liefert Panel-Metadaten.
+
+    Bei Graceful Degradation: data = {}, metadata bleibt leer.
+    """
+
+    use_case: str = Field(description="Panel-Typ / Discriminator (z.B. 'landscape', 'maturity')")
+    data: dict[str, Any] = Field(default_factory=dict, description="Panel-spezifische Ergebnisdaten")
+    metadata: UCPanelMetadata = Field(default_factory=UCPanelMetadata)
+
+
+class HATEOASLinks(BaseModel):
+    """Navigierbare Links zu verwandten Ressourcen (HATEOAS-Prinzip)."""
+
+    self: str = ""
+    export_csv: str = ""
+    export_json: str = ""
+    export_xlsx: str = ""
+    export_pdf: str = ""
+    suggestions: str = ""
+
+
+class RadarResponse(BaseModel):
+    """Komplette Radar-Antwort mit allen UC-Panels.
+
+    Jedes Panel ist als typisiertes ``UCPanel``-Objekt modelliert, wobei
+    das ``use_case``-Feld als Discriminator dient (analog zu TMF630 @type).
+    Zusaetzlich bleiben die UC-Panels als flache Felder erhalten fuer
+    Abwaertskompatibilitaet.
 
     Bei Graceful Degradation enthaelt ein fehlgeschlagenes Panel ein
-    leeres Dict {} und der Fehler wird in uc_errors gemeldet.
+    leeres ``data: {}`` und der Fehler wird in ``uc_errors`` gemeldet.
     """
 
     technology: str
     analysis_period: str
 
-    # 12 UC-Panels (Protobuf -> JSON-dict)
+    # Typisierte UC-Panels als Liste (neues Format mit Discriminator)
+    panels: list[UCPanel] = Field(default_factory=list, description="Alle UC-Panel-Ergebnisse als typisierte Liste")
+
+    # 12 UC-Panels als flache Felder (Abwaertskompatibilitaet)
     landscape: dict[str, Any] = Field(default_factory=dict)
     maturity: dict[str, Any] = Field(default_factory=dict)
     competitive: dict[str, Any] = Field(default_factory=dict)
@@ -185,6 +224,9 @@ class RadarResponse(BaseModel):
     euroscivoc: dict[str, Any] = Field(default_factory=dict)
     publication: dict[str, Any] = Field(default_factory=dict)
 
+    # HATEOAS-Links
+    _links: HATEOASLinks = Field(default_factory=HATEOASLinks, alias="_links")
+
     # Orchestrator-Metadaten
     uc_errors: list[UseCaseError] = Field(default_factory=list)
     explainability: ExplainabilityInfo = Field(default_factory=ExplainabilityInfo)
@@ -193,6 +235,8 @@ class RadarResponse(BaseModel):
     total_uc_count: int = 13
     request_id: str = ""
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+    model_config = {"populate_by_name": True}
 
 
 # =============================================================================

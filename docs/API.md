@@ -7,7 +7,7 @@ Der Orchestrator stellt eine REST/JSON-API auf Port 8000 bereit. Alle Analyse-En
 | Methode | Pfad | Beschreibung |
 |---|---|---|
 | `POST` | `/api/v1/radar` | Komplette Radar-Analyse (alle 13 UC-Services parallel) |
-| `GET` | `/api/v1/suggestions` | Autocomplete-Vorschläge für das Suchfeld |
+| `GET` | `/api/v1/suggestions` | Autocomplete-Vorschlaege fuer das Suchfeld |
 | `GET` | `/health` | Health Check (shallow oder deep) |
 | `GET` | `/metrics` | Prometheus-Metriken (OpenMetrics-Format) |
 | `POST` | `/api/v1/import/epo` | EPO-Patent-Bulk-Import |
@@ -16,6 +16,9 @@ Der Orchestrator stellt eine REST/JSON-API auf Port 8000 bereit. Alle Analyse-En
 | `POST` | `/api/v1/import/refresh-views` | Materialized Views aktualisieren |
 | `GET` | `/api/v1/import/status` | Import-Status abfragen |
 | `GET` | `/api/v1/import/schedule` | Scheduler-Status abfragen |
+| `POST` | `/api/v1/import/api-delta` | Manueller API-Delta-Update (EPO OPS + CORDIS) |
+
+**Hinweis:** Die Radar-Response enthaelt jetzt zusaetzlich `panels` (typisierte UC-Panel-Liste mit Discriminator) und `_links` (HATEOAS-Links zu Export-Endpoints und Suggestions). Siehe [POST /api/v1/radar](#post-apiv1radar) fuer Details.
 
 ---
 
@@ -59,6 +62,18 @@ curl -X POST http://localhost:8000/api/v1/radar \
 {
   "technology": "solid-state batteries",
   "analysis_period": "2016-2026",
+  "panels": [
+    {
+      "use_case": "landscape",
+      "data": { ... },
+      "metadata": { "processing_time_ms": 1200, "request_id": "a1b2c3d4", "timestamp": "..." }
+    },
+    {
+      "use_case": "maturity",
+      "data": { ... },
+      "metadata": { "processing_time_ms": 980, "request_id": "a1b2c3d4", "timestamp": "..." }
+    }
+  ],
   "landscape": { ... },
   "maturity": { ... },
   "competitive": { ... },
@@ -72,6 +87,14 @@ curl -X POST http://localhost:8000/api/v1/radar \
   "patent_grant": { ... },
   "euroscivoc": { ... },
   "publication": { ... },
+  "_links": {
+    "self": "/api/v1/radar",
+    "export_csv": "/api/v1/export/csv",
+    "export_json": "/api/v1/export/json",
+    "export_xlsx": "/api/v1/export/xlsx",
+    "export_pdf": "/api/v1/export/pdf",
+    "suggestions": "/api/v1/suggestions?q=solid-state%20batteries"
+  },
   "uc_errors": [],
   "explainability": {
     "data_sources": [
@@ -93,6 +116,14 @@ curl -X POST http://localhost:8000/api/v1/radar \
   "timestamp": "2026-03-22T14:30:00.000000"
 }
 ```
+
+#### Response-Felder
+
+| Feld | Beschreibung |
+|---|---|
+| `panels` | Typisierte Liste aller UC-Panel-Ergebnisse. Jedes Panel hat ein `use_case`-Discriminator-Feld, `data` (Ergebnisse) und `metadata` (Laufzeit, Request-ID). |
+| `landscape`, `maturity`, ... | Flache Panel-Felder (Abwaertskompatibilitaet). Identischer Inhalt wie in `panels[].data`. |
+| `_links` | HATEOAS-Links zu verwandten Ressourcen (Export-Formate, Suggestions). Clients koennen diesen Links folgen statt URLs hartzukodieren. |
 
 Jedes UC-Panel (`landscape`, `maturity`, etc.) enthält die service-spezifische Analyse als JSON-Objekt. Die genaue Struktur wird durch die jeweilige Protobuf-Definition bestimmt (siehe `proto/uc*.proto`).
 
@@ -391,8 +422,11 @@ Der Export-Service (`export-svc`, Port 8020) stellt Endpunkte fuer den Datenexpo
 | `POST` | `/api/v1/export/json` | JSON-Export |
 | `POST` | `/api/v1/export/pdf` | PDF-Report (WeasyPrint + Matplotlib-Charts) |
 | `POST` | `/api/v1/export/batch` | ZIP-Batch-Export (mehrere Technologien) |
-| `GET` | `/api/v1/export/history` | Export-Historie / Audit-Log |
+| `GET` | `/api/v1/export/history` | Export-Historie / Audit-Log (paginiert, `X-Total-Count`) |
 | `DELETE` | `/api/v1/export/cache` | Abgelaufene Cache-Eintraege bereinigen |
+| `POST` | `/api/v1/export/webhooks` | Webhook registrieren (Event-Hub Pattern) |
+| `GET` | `/api/v1/export/webhooks` | Registrierte Webhooks auflisten |
+| `DELETE` | `/api/v1/export/webhooks/{id}` | Webhook abmelden |
 
 ### POST /api/v1/export/{format}
 
@@ -449,20 +483,71 @@ curl -X POST http://localhost:8020/api/v1/export/batch \
 
 ### GET /api/v1/export/history
 
-Gibt die Export-Historie als Audit-Log zurueck (letzte Exporte mit Technologie, Format, Dateigroesse, Dauer).
+Gibt die Export-Historie als paginiertes Audit-Log zurueck. Der Response-Header `X-Total-Count` enthaelt die Gesamtanzahl aller Eintraege.
 
 ```bash
-curl http://localhost:8020/api/v1/export/history \
-  -H "X-Admin-Key: <admin-key>"
+# Seite 1 (Standard: 50 Eintraege)
+curl http://localhost:8020/api/v1/export/history
+
+# Seite 2, je 20 Eintraege
+curl "http://localhost:8020/api/v1/export/history?offset=20&limit=20"
 ```
+
+| Parameter | Typ | Default | Beschreibung |
+|---|---|---|---|
+| `offset` | `int` | `0` | Startindex (0-basiert) |
+| `limit` | `int` | `50` | Max. Eintraege (max. 500) |
+
+**Response-Header:** `X-Total-Count: 247` (Gesamtanzahl aller Log-Eintraege)
 
 ### DELETE /api/v1/export/cache
 
-Bereinigt abgelaufene Cache-Eintraege in `export_schema.analysis_cache`.
+Bereinigt abgelaufene Cache-Eintraege in `export_schema.analysis_cache`. Loest einen `cache.purged`-Webhook-Event aus.
 
 ```bash
 curl -X DELETE http://localhost:8020/api/v1/export/cache \
   -H "X-Admin-Key: <admin-key>"
+```
+
+### POST /api/v1/export/webhooks (Event-Hub Pattern)
+
+Registriert einen Webhook fuer Event-Benachrichtigungen. Bei relevanten Events sendet der Export-Service einen HTTP POST mit dem Event-Payload an die registrierte Callback-URL.
+
+```bash
+curl -X POST http://localhost:8020/api/v1/export/webhooks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "callback_url": "https://mein-system.de/webhook",
+    "events": ["export.completed", "cache.purged"],
+    "secret": "optionaler-hmac-secret"
+  }'
+```
+
+**Gueltige Event-Typen:**
+
+| Event | Beschreibung |
+|---|---|
+| `export.completed` | Ein Export wurde erfolgreich abgeschlossen |
+| `export.failed` | Ein Export ist fehlgeschlagen |
+| `cache.purged` | Cache-Eintraege wurden bereinigt |
+
+**Response (201 Created):**
+
+```json
+{
+  "id": "a1b2c3d4",
+  "callback_url": "https://mein-system.de/webhook",
+  "events": ["export.completed", "cache.purged"],
+  "created_at": "2026-04-05T12:00:00+00:00"
+}
+```
+
+### DELETE /api/v1/export/webhooks/{id}
+
+Entfernt eine Webhook-Registrierung. Response: `204 No Content`.
+
+```bash
+curl -X DELETE http://localhost:8020/api/v1/export/webhooks/a1b2c3d4
 ```
 
 ### Analyse-Caching
@@ -480,11 +565,17 @@ Der Export-Service cached Analyseergebnisse in `export_schema.analysis_cache`:
 | Code | Beschreibung |
 |---|---|
 | `200` | Erfolg |
-| `400` | Ungültige Anfrage (Validierungsfehler: ungültige CPC-Codes, unbekannte use_cases, etc.) |
-| `401` | Fehlender oder ungültiger API-Key |
-| `422` | Pydantic-Validierungsfehler (z.B. `technology` zu lang, `years` außerhalb 3-30) |
-| `429` | Rate Limit überschritten (100 Requests/Minute) |
+| `201` | Ressource erstellt (Webhook-Registrierung) |
+| `204` | Erfolgreich geloescht (Webhook-Abmeldung) |
+| `400` | Ungueltige Anfrage (Validierungsfehler: ungueltige CPC-Codes, unbekannte use_cases, ungueltige Event-Typen) |
+| `401` | Fehlender oder ungueltiger API-Key |
+| `404` | Ressource nicht gefunden (z.B. Webhook-ID) |
+| `422` | Pydantic-Validierungsfehler (z.B. `technology` zu lang, `years` ausserhalb 3-30) |
+| `429` | Rate Limit ueberschritten (100 Requests/Minute) |
 | `500` | Interner Serverfehler |
+| `502` | Orchestrator nicht erreichbar (Export-Service) |
+| `503` | Datenbank nicht verfuegbar |
+| `504` | Orchestrator-Timeout (Export-Service) |
 
 ### Fehler-Response (422)
 

@@ -16,7 +16,9 @@ Endpoints:
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
+import uuid
 import hmac
 import io
 import json
@@ -29,7 +31,7 @@ from typing import Any
 import asyncpg
 import httpx
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request, Security
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, Security
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
@@ -125,6 +127,38 @@ class CachePurgeResult(BaseModel):
 
     deleted_count: int
     message: str
+
+
+class WebhookCreate(BaseModel):
+    """Registrierung eines Webhooks fuer Event-Benachrichtigungen.
+
+    Implementiert das Event-Hub-Pattern (Pub/Sub): Der Client registriert
+    eine Callback-URL und wird bei relevanten Events automatisch per
+    HTTP POST benachrichtigt.
+    """
+
+    callback_url: str = Field(
+        ...,
+        description="URL, an die Event-Payloads per HTTP POST gesendet werden",
+    )
+    events: list[str] = Field(
+        ...,
+        min_length=1,
+        description="Event-Typen zum Abonnieren: export.completed, export.failed, cache.purged",
+    )
+    secret: str = Field(
+        default="",
+        description="Optionaler HMAC-Secret fuer Payload-Signierung (X-Webhook-Signature)",
+    )
+
+
+class WebhookResponse(BaseModel):
+    """Bestaetigung einer Webhook-Registrierung."""
+
+    id: str
+    callback_url: str
+    events: list[str]
+    created_at: str
 
 
 class BatchExportRequest(BaseModel):
@@ -768,12 +802,15 @@ async def export_batch_endpoint(
 )
 async def export_history(
     request: Request,
+    response: Response,
     limit: int = 50,
     offset: int = 0,
 ) -> list[ExportHistoryEntry]:
-    """Gibt die letzten Export-Log-Eintraege zurueck.
+    """Gibt die letzten Export-Log-Eintraege zurueck (paginiert).
 
     Nuetzlich fuer Audit-Trails und Nutzungsstatistiken.
+    Der Response-Header ``X-Total-Count`` enthaelt die Gesamtanzahl aller
+    Eintraege, unabhaengig von offset/limit.
     """
     pool: asyncpg.Pool | None = request.app.state.db_pool
     if pool is None:
@@ -782,17 +819,24 @@ async def export_history(
             detail="Datenbank nicht verfuegbar — Export-Historie kann nicht abgefragt werden",
         )
 
-    rows = await pool.fetch(
-        """
-        SELECT id, technology, export_format, use_cases, row_count,
-               file_size_bytes, duration_ms, created_at, client_ip, request_id
-        FROM export_schema.export_log
-        ORDER BY created_at DESC
-        LIMIT $1 OFFSET $2
-        """,
-        min(limit, 500),
-        offset,
+    clamped_limit = min(limit, 500)
+
+    total_count, rows = await asyncio.gather(
+        pool.fetchval("SELECT COUNT(*) FROM export_schema.export_log"),
+        pool.fetch(
+            """
+            SELECT id, technology, export_format, use_cases, row_count,
+                   file_size_bytes, duration_ms, created_at, client_ip, request_id
+            FROM export_schema.export_log
+            ORDER BY created_at DESC
+            LIMIT $1 OFFSET $2
+            """,
+            clamped_limit,
+            offset,
+        ),
     )
+
+    response.headers["X-Total-Count"] = str(total_count or 0)
 
     return [
         ExportHistoryEntry(
@@ -854,10 +898,141 @@ async def purge_expired_cache(request: Request) -> CachePurgeResult:
 
     logger.info("cache_bereinigt", deleted_count=deleted_count)
 
-    return CachePurgeResult(
+    result = CachePurgeResult(
         deleted_count=deleted_count,
         message=f"{deleted_count} abgelaufene Cache-Eintraege geloescht",
     )
+
+    # Webhook-Benachrichtigung (Event-Hub Pattern)
+    await notify_webhooks("cache.purged", {
+        "event": "cache.purged",
+        "deleted_count": deleted_count,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    })
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# POST /api/v1/export/webhooks  +  DELETE /api/v1/export/webhooks/{id}
+# ---------------------------------------------------------------------------
+
+# In-Memory Webhook-Registry (MVP — fuer Produktion: Datenbank-Tabelle)
+_webhook_registry: dict[str, dict[str, Any]] = {}
+
+VALID_WEBHOOK_EVENTS = frozenset({
+    "export.completed",
+    "export.failed",
+    "cache.purged",
+})
+
+
+@router.post(
+    "/webhooks",
+    response_model=WebhookResponse,
+    status_code=201,
+    summary="Webhook registrieren (Event-Hub Pattern)",
+)
+async def register_webhook(webhook: WebhookCreate) -> WebhookResponse:
+    """Registriert einen Webhook fuer Event-Benachrichtigungen.
+
+    Der Client gibt eine Callback-URL und eine Liste von Event-Typen an.
+    Bei jedem relevanten Event sendet der Export-Service einen HTTP POST
+    mit dem Event-Payload an die Callback-URL.
+
+    Gueltige Event-Typen: ``export.completed``, ``export.failed``, ``cache.purged``
+    """
+    invalid = set(webhook.events) - VALID_WEBHOOK_EVENTS
+    if invalid:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Ungueltige Event-Typen: {', '.join(sorted(invalid))}. "
+                   f"Gueltig: {', '.join(sorted(VALID_WEBHOOK_EVENTS))}",
+        )
+
+    webhook_id = str(uuid.uuid4())[:8]
+    now = datetime.now(timezone.utc).isoformat()
+
+    _webhook_registry[webhook_id] = {
+        "callback_url": webhook.callback_url,
+        "events": webhook.events,
+        "secret": webhook.secret,
+        "created_at": now,
+    }
+
+    logger.info(
+        "webhook_registriert",
+        webhook_id=webhook_id,
+        callback_url=webhook.callback_url,
+        events=webhook.events,
+    )
+
+    return WebhookResponse(
+        id=webhook_id,
+        callback_url=webhook.callback_url,
+        events=webhook.events,
+        created_at=now,
+    )
+
+
+@router.delete(
+    "/webhooks/{webhook_id}",
+    status_code=204,
+    summary="Webhook abmelden",
+)
+async def unregister_webhook(webhook_id: str) -> None:
+    """Entfernt eine bestehende Webhook-Registrierung."""
+    if webhook_id not in _webhook_registry:
+        raise HTTPException(status_code=404, detail="Webhook nicht gefunden")
+
+    del _webhook_registry[webhook_id]
+    logger.info("webhook_abgemeldet", webhook_id=webhook_id)
+
+
+@router.get(
+    "/webhooks",
+    response_model=list[WebhookResponse],
+    summary="Registrierte Webhooks auflisten",
+)
+async def list_webhooks() -> list[WebhookResponse]:
+    """Gibt alle registrierten Webhooks zurueck."""
+    return [
+        WebhookResponse(
+            id=wh_id,
+            callback_url=wh["callback_url"],
+            events=wh["events"],
+            created_at=wh["created_at"],
+        )
+        for wh_id, wh in _webhook_registry.items()
+    ]
+
+
+async def notify_webhooks(event_type: str, payload: dict[str, Any]) -> None:
+    """Benachrichtigt alle registrierten Webhooks fuer einen Event-Typ.
+
+    Wird intern aufgerufen nach Export-Abschluss oder Cache-Bereinigung.
+    Fehler bei der Zustellung werden geloggt, blockieren aber nicht.
+    """
+    for wh_id, wh in _webhook_registry.items():
+        if event_type not in wh["events"]:
+            continue
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                headers = {"Content-Type": "application/json"}
+                if wh.get("secret"):
+                    sig = hashlib.sha256(
+                        (wh["secret"] + json.dumps(payload, sort_keys=True)).encode()
+                    ).hexdigest()
+                    headers["X-Webhook-Signature"] = sig
+                await client.post(wh["callback_url"], json=payload, headers=headers)
+                logger.info("webhook_zugestellt", webhook_id=wh_id, event=event_type)
+        except Exception as exc:
+            logger.warning(
+                "webhook_zustellung_fehlgeschlagen",
+                webhook_id=wh_id,
+                event=event_type,
+                error=str(exc),
+            )
 
 
 # ---------------------------------------------------------------------------

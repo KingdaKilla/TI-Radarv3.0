@@ -50,6 +50,22 @@ class Settings(BaseSettings):
     scheduler_enabled: bool = True
     scheduler_timezone: str = "UTC"
 
+    # EPO OPS API (Live-Datenakquise)
+    epo_ops_consumer_key: str = ""
+    epo_ops_consumer_secret: str = ""
+    epo_ops_timeout_s: float = 15.0
+    epo_ops_rate_limit_rpm: int = 200
+    epo_ops_enabled: bool = True
+
+    # CORDIS REST API (Live-Datenakquise)
+    cordis_api_timeout_s: float = 15.0
+    cordis_api_rate_limit_rpm: int = 30
+    cordis_api_enabled: bool = True
+
+    # API Delta-Update Scheduler (taeglich, ergaenzt woechentlichen Bulk)
+    api_delta_schedule: str = "0 3 * * *"  # Cron: taeglich 03:00 UTC
+    api_delta_lookback_days: int = 30
+
     @property
     def cors_origin_list(self) -> list[str]:
         """CORS-Origins als Liste aufsplitten."""

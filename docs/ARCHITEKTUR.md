@@ -30,8 +30,8 @@ graph TB
     end
 
     subgraph "Hilfs-Services"
-        Import["import-svc<br/>EPO + CORDIS Bulk<br/>+ Scheduler"]
-        Export["export-svc<br/>CSV/XLSX/JSON/PDF Export"]
+        Import["import-svc<br/>EPO + CORDIS Bulk/API<br/>+ Scheduler (Bulk + Delta)"]
+        Export["export-svc<br/>CSV/XLSX/JSON/PDF Export<br/>+ Webhooks"]
         Pub["publication-svc<br/>Publikationskette"]
     end
 
@@ -135,6 +135,13 @@ mappers/            Protobuf-zu-Dict- und Dict-zu-Response-Konvertierung
 - Per-UC-Timeout-Konfiguration
 - Rate Limiting (100 Requests/Minute pro IP)
 
+### API-Design-Patterns (TMF630-inspiriert)
+
+- **Typisierte Panels:** Die `RadarResponse` enthaelt ein `panels`-Array mit `use_case`-Discriminator-Feld (analog zu TMF630 `@type`) fuer typisierte Panel-Identifikation
+- **HATEOAS:** `_links`-Objekt in der RadarResponse mit navigierbaren Links zu Export-Endpoints und Suggestions
+- **Paging:** `GET /api/v1/export/history` unterstuetzt `offset`/`limit` mit `X-Total-Count`-Header
+- **Event-Hub (Pub/Sub):** `POST /api/v1/export/webhooks` registriert Callback-URLs fuer Event-Benachrichtigungen (`export.completed`, `export.failed`, `cache.purged`)
+
 ### Fan-Out-Muster
 
 ```
@@ -204,9 +211,20 @@ Der `actor-type-svc` (UC11) nutzt die kostenlose GLEIF API (`api.gleif.org`) fue
 
 Das System nutzt 5 externe Datenquellen ueber 2 Beschaffungsmuster:
 
-### Bulk-Dateiimport (EPO, CORDIS)
+### Hybrides Beschaffungsmodell (Bulk + API)
 
-EPO- und CORDIS-Daten werden als Bulk-Dateien aus `/data/bulk/` gelesen. Der woechentliche Scheduler verarbeitet neue Dateien automatisch, aber die Dateien selbst muessen manuell bereitgestellt werden. Es existiert derzeit **kein automatisierter Download** ueber EPO OPS oder CORDIS REST API.
+Das System nutzt ein zweistufiges Beschaffungsmodell:
+
+1. **Bulk-Dateiimport (initiales Setup):** EPO DOCDB-XML und CORDIS JSON-ZIP werden woechentlich importiert (Sonntag 02:00 UTC). Die Dateien muessen manuell in `/data/bulk/` bereitgestellt werden. Bulk-Daten bilden die historische Datenbasis.
+
+2. **Live-API-Adapter (laufende Aktualisierung):** EPO OPS REST API und CORDIS REST API werden taeglich abgefragt (03:00 UTC). API-Daten sind die primaere laufende Datenquelle und **ueberschreiben Bulk-Daten** (`ON CONFLICT DO UPDATE`).
+
+| Quelle | Methode | Schedule | Prioritaet |
+|---|---|---|---|
+| EPO DOCDB | Bulk-Dateiimport | Woechentlich (So 02:00) | Initiales Setup |
+| EPO OPS API | Live-REST-API (OAuth2) | Taeglich (03:00) | Aktuell, ueberschreibt Bulk |
+| CORDIS Bulk | JSON-ZIP-Import | Woechentlich (So 02:00) | Initiales Setup |
+| CORDIS API | Live-REST-API (public) | Taeglich (03:00) | Aktuell, ueberschreibt Bulk |
 
 ### Live-API mit DB-Cache (OpenAIRE, Semantic Scholar, GLEIF)
 

@@ -1,10 +1,15 @@
-"""Woechentlicher Import-Scheduler fuer EPO, CORDIS und EuroSciVoc.
+"""Import-Scheduler fuer Bulk-Imports und API-Delta-Updates.
 
-Nutzt APScheduler (AsyncIOScheduler), um Bulk-Imports regelmaessig
-auszufuehren. Der Scheduler laeuft innerhalb des FastAPI-Prozesses
-und wird ueber den Lifespan-Kontext gesteuert.
+Nutzt APScheduler (AsyncIOScheduler), um zwei Job-Typen auszufuehren:
+1. Woechentlicher Bulk-Import (EPO DOCDB, CORDIS, EuroSciVoc) — initiale Datenbasis
+2. Taeglicher API-Delta-Update (EPO OPS, CORDIS REST API) — aktuelle Daten
 
-Standard-Schedule: Sonntag 02:00 UTC (konfigurierbar via IMPORT_SCHEDULE).
+API-Daten ueberschreiben Bulk-Daten (ON CONFLICT DO UPDATE).
+Bulk = initiales Setup. APIs = primaere laufende Datenquelle.
+
+Standard-Schedules:
+- Bulk: Sonntag 02:00 UTC (IMPORT_SCHEDULE)
+- Delta: Taeglich 03:00 UTC (API_DELTA_SCHEDULE)
 """
 
 from __future__ import annotations
@@ -68,9 +73,38 @@ def create_scheduler(
         replace_existing=True,
     )
 
+    # --- Taeglicher API-Delta-Update ---
+    settings = getattr(app, "state", None)
+    delta_cron = "0 3 * * *"
+    if settings and hasattr(settings, "settings"):
+        delta_cron = getattr(settings.settings, "api_delta_schedule", delta_cron)
+
+    delta_parts = delta_cron.strip().split()
+    if len(delta_parts) == 5:
+        delta_trigger = CronTrigger(
+            minute=delta_parts[0],
+            hour=delta_parts[1],
+            day=delta_parts[2],
+            month=delta_parts[3],
+            day_of_week=delta_parts[4],
+            timezone=timezone_str,
+        )
+        scheduler.add_job(
+            daily_api_delta_job,
+            trigger=delta_trigger,
+            args=[app],
+            id="daily_api_delta",
+            name="Taeglicher API-Delta-Update (EPO OPS + CORDIS)",
+            replace_existing=True,
+            misfire_grace_time=3600,
+            max_instances=1,
+        )
+        logger.info("scheduler_delta_konfiguriert", schedule=delta_cron)
+
     logger.info(
         "scheduler_konfiguriert",
-        schedule=cron_expression,
+        bulk_schedule=cron_expression,
+        delta_schedule=delta_cron,
         timezone=timezone_str,
     )
 
@@ -166,18 +200,112 @@ async def weekly_import_job(app: Any) -> None:
     )
 
 
+async def daily_api_delta_job(app: Any) -> None:
+    """Taeglicher Delta-Update: Holt aktuelle Daten via EPO OPS + CORDIS API.
+
+    Fragt die zuletzt gesuchten Technologien erneut ab (aus den Cache-Tabellen).
+    API-Daten ueberschreiben bestehende Bulk-Eintraege (ON CONFLICT DO UPDATE).
+    """
+    global _last_run
+
+    pool = getattr(app.state, "db_pool", None)
+    settings = getattr(app.state, "settings", None)
+
+    if pool is None or settings is None:
+        logger.error("delta_job_abgebrochen", grund="Kein DB-Pool oder Settings")
+        return
+
+    t0 = time.monotonic()
+    started_at = datetime.now(tz=timezone.utc).isoformat()
+    results: dict[str, str] = {}
+    end_year = datetime.now().year
+    start_year = end_year - max(settings.api_delta_lookback_days // 365, 1)
+
+    logger.info("delta_job_gestartet", lookback_days=settings.api_delta_lookback_days)
+
+    # EPO OPS Delta
+    if settings.epo_ops_enabled and settings.epo_ops_consumer_key:
+        try:
+            from src.importers.epo_ops_adapter import EpoOpsAdapter
+
+            epo = EpoOpsAdapter(
+                consumer_key=settings.epo_ops_consumer_key,
+                consumer_secret=settings.epo_ops_consumer_secret,
+                timeout=settings.epo_ops_timeout_s,
+                rate_limit_rpm=settings.epo_ops_rate_limit_rpm,
+                pool=pool,
+            )
+            top_techs = await pool.fetch(
+                "SELECT DISTINCT technology FROM patent_schema.epo_ops_cache "
+                "ORDER BY fetched_at DESC LIMIT 50"
+            )
+            for row in top_techs:
+                await epo.search_patents(
+                    row["technology"], start_year=start_year, end_year=end_year,
+                )
+            results["epo_ops"] = f"ok ({len(top_techs)} Technologien)"
+            logger.info("delta_epo_ops_ok", technologies=len(top_techs))
+        except Exception as exc:
+            results["epo_ops"] = f"fehler: {exc}"
+            logger.error("delta_epo_ops_fehler", error=str(exc))
+    else:
+        results["epo_ops"] = "deaktiviert"
+
+    # CORDIS Delta
+    if settings.cordis_api_enabled:
+        try:
+            from src.importers.cordis_api_adapter import CordisApiAdapter
+
+            cordis = CordisApiAdapter(
+                timeout=settings.cordis_api_timeout_s,
+                rate_limit_rpm=settings.cordis_api_rate_limit_rpm,
+                pool=pool,
+            )
+            top_techs = await pool.fetch(
+                "SELECT DISTINCT technology FROM cordis_schema.cordis_api_cache "
+                "ORDER BY fetched_at DESC LIMIT 50"
+            )
+            for row in top_techs:
+                await cordis.search_projects(row["technology"])
+            results["cordis_api"] = f"ok ({len(top_techs)} Technologien)"
+            logger.info("delta_cordis_api_ok", technologies=len(top_techs))
+        except Exception as exc:
+            results["cordis_api"] = f"fehler: {exc}"
+            logger.error("delta_cordis_api_fehler", error=str(exc))
+    else:
+        results["cordis_api"] = "deaktiviert"
+
+    duration_s = round(time.monotonic() - t0, 1)
+
+    _last_run = {
+        "type": "api_delta",
+        "started_at": started_at,
+        "duration_seconds": duration_s,
+        "results": results,
+    }
+
+    logger.info("delta_job_abgeschlossen", dauer_sekunden=duration_s, ergebnisse=results)
+
+
 def get_schedule_status(scheduler: AsyncIOScheduler | None) -> dict[str, Any]:
     """Aktuellen Scheduler-Status fuer den Status-Endpoint zurueckgeben."""
     if scheduler is None:
         return {"enabled": False}
 
-    job = scheduler.get_job("weekly_bulk_import")
-    next_run = None
-    if job and job.next_run_time:
-        next_run = job.next_run_time.isoformat()
+    bulk_job = scheduler.get_job("weekly_bulk_import")
+    delta_job = scheduler.get_job("daily_api_delta")
+
+    bulk_next = None
+    if bulk_job and bulk_job.next_run_time:
+        bulk_next = bulk_job.next_run_time.isoformat()
+
+    delta_next = None
+    if delta_job and delta_job.next_run_time:
+        delta_next = delta_job.next_run_time.isoformat()
 
     return {
         "enabled": scheduler.running,
-        "next_run": next_run,
+        "bulk_next_run": bulk_next,
+        "delta_next_run": delta_next,
         "last_run": _last_run or None,
     }

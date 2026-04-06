@@ -261,37 +261,37 @@
             <tr>
                 <td><strong>CAGR</strong></td>
                 <td class="formula-cell">((V<sub>final</sub> / V<sub>initial</sub>)<sup>1/n</sup> - 1) &times; 100%</td>
-                <td>UC1</td>
+                <td>UC 1</td>
                 <td>Durchschnittliche jährliche Wachstumsrate</td>
             </tr>
             <tr>
                 <td><strong>S-Kurve</strong></td>
                 <td class="formula-cell">f(t) = L / (1 + e<sup>-k(t-t<sub>0</sub>)</sup>)</td>
-                <td>UC2</td>
+                <td>UC 2</td>
                 <td>Technologie-Reifegrad (Entstehung bis Sättigung)</td>
             </tr>
             <tr>
                 <td><strong>HHI</strong></td>
                 <td class="formula-cell">&sum;(s<sub>i</sub>)<sup>2</sup></td>
-                <td>UC3</td>
+                <td>UC 3</td>
                 <td>&lt;1500 fragmentiert, 1500-2500 moderat, &gt;2500 konzentriert</td>
             </tr>
             <tr>
                 <td><strong>Jaccard-Index</strong></td>
                 <td class="formula-cell">|A &cap; B| / |A &cup; B|</td>
-                <td>UC5</td>
+                <td>UC 3</td>
                 <td>Ähnlichkeit zweier CPC-Klassen (0 = keine, 1 = identisch)</td>
             </tr>
             <tr>
                 <td><strong>h-Index</strong></td>
                 <td class="formula-cell">max(h) wobei h Paper &ge; h Zitationen</td>
-                <td>UC7</td>
+                <td>UC 8</td>
                 <td>Forschungsimpact nach Hirsch (2005)</td>
             </tr>
             <tr>
                 <td><strong>Shannon-Index</strong></td>
                 <td class="formula-cell">H = -&sum; p<sub>i</sub> ln(p<sub>i</sub>)</td>
-                <td>UC10</td>
+                <td>UC 12</td>
                 <td>Diversität der Wissenschaftsdisziplinen</td>
             </tr>
         </tbody>
@@ -299,7 +299,7 @@
 </div>
 
 {# ======================================================================
-   Sektion 5 — UC1: Technologie-Übersicht (Landschaft)
+   Sektion 5 — UC 1: Technologie-Übersicht (Landschaft)
    WIPO Pub. 946: Patent Landscape Overview
    ====================================================================== #}
 {% if "landscape" in uc_keys %}
@@ -308,7 +308,7 @@
         <span class="section-number">3</span>
         <div class="section-title-group">
             <h2 class="section-title">Technologie-Übersicht</h2>
-            <p class="section-subtitle">UC1 — Patent- und Projektaktivität im Zeitverlauf mit CAGR-Wachstumsrate</p>
+            <p class="section-subtitle">UC 1 — Patent- und Projektaktivität im Zeitverlauf mit CAGR-Wachstumsrate</p>
         </div>
     </div>
 
@@ -361,7 +361,7 @@
 {% endif %}
 
 {# ======================================================================
-   Sektion 6 — UC2: Reifegrad-Analyse
+   Sektion 6 — UC 2: Reifegrad-Analyse
    WIPO Pub. 946: Technology Life Cycle / S-Curve Analysis
    ====================================================================== #}
 {% if "maturity" in uc_keys %}
@@ -370,7 +370,7 @@
         <span class="section-number">4</span>
         <div class="section-title-group">
             <h2 class="section-title">Reifegrad-Analyse</h2>
-            <p class="section-subtitle">UC2 — S-Kurve, Reifephase, Bestimmtheitsmaß R² und AICc</p>
+            <p class="section-subtitle">UC 2 — S-Kurve, Reifephase, Bestimmtheitsmaß R² und AICc</p>
         </div>
     </div>
 
@@ -422,16 +422,56 @@
 {% endif %}
 
 {# ======================================================================
-   Sektion 7 — UC3: Wettbewerbsanalyse
-   WIPO Pub. 946: Key Players / Competitive Landscape
+   Sektion 5 — UC 3: Technologiefluss
+   WIPO Pub. 946: Technology Convergence / CPC Analysis
    ====================================================================== #}
-{% if "competitive" in uc_keys %}
+{% if "cpc_flow" in uc_keys %}
 <div class="section section-landscape" id="sec-uc3">
     <div class="section-header">
         <span class="section-number">5</span>
         <div class="section-title-group">
+            <h2 class="section-title">Technologiefluss</h2>
+            <p class="section-subtitle">UC 3 — Jaccard-Heatmap, Co-Occurrence und Top-CPC-Paare</p>
+        </div>
+    </div>
+
+    {% if cpc_flow %}
+    {% if cpc_flow_chart %}
+    <p class="chart-title">Top CPC-Code-Paare (Co-Occurrence)</p>
+    {{ cpc_flow_chart }}
+    {% endif %}
+
+    {% if cpc_flow_table %}
+    <h3>Top CPC-Paare</h3>
+    {{ cpc_flow_table | safe }}
+    {% endif %}
+
+    <div class="summary-box">
+        <h4>Interpretation</h4>
+        <p>Der Jaccard-Index misst die Ähnlichkeit zweier CPC-Klassifikationen basierend auf
+           gemeinsam auftretenden Patentklassen. Ein hoher Wert (nahe 1) bedeutet, dass Patente
+           häufig beiden Klassen gleichzeitig zugeordnet werden — ein Indikator für
+           Technologiekonvergenz.</p>
+    </div>
+    {% else %}
+    <div class="no-data-box">
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{# ======================================================================
+   Sektion 6 — UC 4: Wettbewerbsanalyse
+   WIPO Pub. 946: Key Players / Competitive Landscape
+   ====================================================================== #}
+{% if "competitive" in uc_keys %}
+<div class="section section-landscape" id="sec-uc4">
+    <div class="section-header">
+        <span class="section-number">6</span>
+        <div class="section-title-group">
             <h2 class="section-title">Wettbewerbsanalyse</h2>
-            <p class="section-subtitle">UC3 — Top-Akteure, HHI-Konzentrationsindex und CR4</p>
+            <p class="section-subtitle">UC 4 — Top-Akteure, HHI-Konzentrationsindex und CR4</p>
         </div>
     </div>
 
@@ -483,16 +523,89 @@
 {% endif %}
 
 {# ======================================================================
-   Sektion 8 — UC4: Förderungsanalyse
+   Sektion 7 — UC 5: Zeitliche Dynamik
+   WIPO Pub. 946: Temporal Trends
+   ====================================================================== #}
+{% if "temporal" in uc_keys %}
+<div class="section section-landscape" id="sec-uc5">
+    <div class="section-header">
+        <span class="section-number">7</span>
+        <div class="section-title-group">
+            <h2 class="section-title">Zeitliche Dynamik</h2>
+            <p class="section-subtitle">UC 5 — Akteur-Persistenz, Programm-Evolution und Themen im Zeitverlauf</p>
+        </div>
+    </div>
+
+    {% if temporal %}
+    {% if temporal_chart %}
+    <p class="chart-title">Aktive Akteure im Zeitverlauf</p>
+    {{ temporal_chart }}
+    {% endif %}
+
+    {% if temporal_table %}
+    <h3>Akteur-Persistenz</h3>
+    {{ temporal_table | safe }}
+    {% endif %}
+    {% else %}
+    <div class="no-data-box">
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{# ======================================================================
+   Sektion 8 — UC 6: Akteurs-Typverteilung
+   WIPO Pub. 946: Applicant Analysis by Type
+   ====================================================================== #}
+{% if "actor_type" in uc_keys %}
+<div class="section section-portrait" id="sec-uc6">
+    <div class="section-header">
+        <span class="section-number">8</span>
+        <div class="section-title-group">
+            <h2 class="section-title">Akteurs-Typverteilung</h2>
+            <p class="section-subtitle">UC 6 — Verteilung nach Organisationstyp (Hochschule, Industrie, KMU, Forschung)</p>
+        </div>
+    </div>
+
+    {% if actor_type %}
+    {% if actor_type_chart %}
+    <p class="chart-title">Akteurs-Typen</p>
+    {{ actor_type_chart }}
+    {% endif %}
+
+    {% if actor_type_table %}
+    <h3>Typ-Verteilung</h3>
+    {{ actor_type_table | safe }}
+    {% endif %}
+
+    <div class="summary-box">
+        <h4>Akteurs-Typen (CORDIS-Klassifikation)</h4>
+        <p><strong>HES</strong> — Higher Education Sector (Hochschulen und Universitäten)<br>
+           <strong>PRC</strong> — Private Commercial (Industrie und privatwirtschaftliche Unternehmen)<br>
+           <strong>REC</strong> — Research Organisations (Öffentliche Forschungseinrichtungen)<br>
+           <strong>OTH</strong> — Other (Sonstige Organisationen)<br>
+           <strong>PUB</strong> — Public Body (Öffentliche Einrichtungen)</p>
+    </div>
+    {% else %}
+    <div class="no-data-box">
+        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{# ======================================================================
+   Sektion 9 — UC 7: Förderungsanalyse
    WIPO Pub. 946: Funding Analysis
    ====================================================================== #}
 {% if "funding" in uc_keys %}
-<div class="section section-landscape" id="sec-uc4">
+<div class="section section-landscape" id="sec-uc7">
     <div class="section-header">
-        <span class="section-number">6</span>
+        <span class="section-number">9</span>
         <div class="section-title-group">
             <h2 class="section-title">Förderungsanalyse</h2>
-            <p class="section-subtitle">UC4 — EU-Förderprogramme, Instrumente und Fördervolumen</p>
+            <p class="section-subtitle">UC 7 — EU-Förderprogramme, Instrumente und Fördervolumen</p>
         </div>
     </div>
 
@@ -537,103 +650,16 @@
 {% endif %}
 
 {# ======================================================================
-   Sektion 9 — UC5: Technologiefluss
-   WIPO Pub. 946: Technology Convergence / CPC Analysis
-   ====================================================================== #}
-{% if "cpc_flow" in uc_keys %}
-<div class="section section-landscape" id="sec-uc5">
-    <div class="section-header">
-        <span class="section-number">7</span>
-        <div class="section-title-group">
-            <h2 class="section-title">Technologiefluss</h2>
-            <p class="section-subtitle">UC5 — Jaccard-Heatmap, Co-Occurrence und Top-CPC-Paare</p>
-        </div>
-    </div>
-
-    {% if cpc_flow %}
-    {% if cpc_flow_chart %}
-    <p class="chart-title">Top CPC-Code-Paare (Co-Occurrence)</p>
-    {{ cpc_flow_chart }}
-    {% endif %}
-
-    {% if cpc_flow_table %}
-    <h3>Top CPC-Paare</h3>
-    {{ cpc_flow_table | safe }}
-    {% endif %}
-
-    <div class="summary-box">
-        <h4>Interpretation</h4>
-        <p>Der Jaccard-Index misst die Ähnlichkeit zweier CPC-Klassifikationen basierend auf
-           gemeinsam auftretenden Patentklassen. Ein hoher Wert (nahe 1) bedeutet, dass Patente
-           häufig beiden Klassen gleichzeitig zugeordnet werden — ein Indikator für
-           Technologiekonvergenz.</p>
-    </div>
-    {% else %}
-    <div class="no-data-box">
-        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
-    </div>
-    {% endif %}
-</div>
-{% endif %}
-
-{# ======================================================================
-   Sektion 10 — UC6: Geographische Verteilung
-   WIPO Pub. 946: Geographic Distribution of Patenting Activity
-   ====================================================================== #}
-{% if "geographic" in uc_keys %}
-<div class="section section-landscape" id="sec-uc6">
-    <div class="section-header">
-        <span class="section-number">8</span>
-        <div class="section-title-group">
-            <h2 class="section-title">Geographische Verteilung</h2>
-            <p class="section-subtitle">UC6 — Länderverteilung, EU-Anteil und Kooperationspaare</p>
-        </div>
-    </div>
-
-    {% if geographic %}
-    <div class="kpi-row">
-        {% if geographic.total_countries is defined %}
-        <div class="kpi-card kpi-card-primary">
-            <div class="kpi-value">{{ geographic.total_countries }}</div>
-            <div class="kpi-label">Länder</div>
-        </div>
-        {% endif %}
-        {% if geographic.country_count is defined %}
-        <div class="kpi-card kpi-card-primary">
-            <div class="kpi-value">{{ geographic.country_count }}</div>
-            <div class="kpi-label">Länder</div>
-        </div>
-        {% endif %}
-    </div>
-
-    {% if geographic_chart %}
-    <p class="chart-title">Länderverteilung nach Patenten</p>
-    {{ geographic_chart }}
-    {% endif %}
-
-    {% if geographic_table %}
-    <h3>Länder-Ranking</h3>
-    {{ geographic_table | safe }}
-    {% endif %}
-    {% else %}
-    <div class="no-data-box">
-        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
-    </div>
-    {% endif %}
-</div>
-{% endif %}
-
-{# ======================================================================
-   Sektion 11 — UC7: Forschungsimpact
+   Sektion 10 — UC 8: Forschungsimpact
    WIPO Pub. 946: Research and Academic Analysis
    ====================================================================== #}
 {% if "research_impact" in uc_keys %}
-<div class="section section-landscape" id="sec-uc7">
+<div class="section section-landscape" id="sec-uc8">
     <div class="section-header">
-        <span class="section-number">9</span>
+        <span class="section-number">10</span>
         <div class="section-title-group">
             <h2 class="section-title">Forschungsimpact</h2>
-            <p class="section-subtitle">UC7 — h-Index, Top-Journals, Zitations-Trend</p>
+            <p class="section-subtitle">UC 8 — h-Index, Top-Journals, Zitations-Trend</p>
         </div>
     </div>
 
@@ -679,28 +705,43 @@
 {% endif %}
 
 {# ======================================================================
-   Sektion 12 — UC8: Zeitliche Dynamik
-   WIPO Pub. 946: Temporal Trends
+   Sektion 11 — UC 10: Geographische Verteilung
+   WIPO Pub. 946: Geographic Distribution of Patenting Activity
    ====================================================================== #}
-{% if "temporal" in uc_keys %}
-<div class="section section-landscape" id="sec-uc8">
+{% if "geographic" in uc_keys %}
+<div class="section section-landscape" id="sec-uc10">
     <div class="section-header">
-        <span class="section-number">10</span>
+        <span class="section-number">11</span>
         <div class="section-title-group">
-            <h2 class="section-title">Zeitliche Dynamik</h2>
-            <p class="section-subtitle">UC8 — Akteur-Persistenz, Programm-Evolution und Themen im Zeitverlauf</p>
+            <h2 class="section-title">Geographische Verteilung</h2>
+            <p class="section-subtitle">UC 10 — Länderverteilung, EU-Anteil und Kooperationspaare</p>
         </div>
     </div>
 
-    {% if temporal %}
-    {% if temporal_chart %}
-    <p class="chart-title">Aktive Akteure im Zeitverlauf</p>
-    {{ temporal_chart }}
+    {% if geographic %}
+    <div class="kpi-row">
+        {% if geographic.total_countries is defined %}
+        <div class="kpi-card kpi-card-primary">
+            <div class="kpi-value">{{ geographic.total_countries }}</div>
+            <div class="kpi-label">Länder</div>
+        </div>
+        {% endif %}
+        {% if geographic.country_count is defined %}
+        <div class="kpi-card kpi-card-primary">
+            <div class="kpi-value">{{ geographic.country_count }}</div>
+            <div class="kpi-label">Länder</div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if geographic_chart %}
+    <p class="chart-title">Länderverteilung nach Patenten</p>
+    {{ geographic_chart }}
     {% endif %}
 
-    {% if temporal_table %}
-    <h3>Akteur-Persistenz</h3>
-    {{ temporal_table | safe }}
+    {% if geographic_table %}
+    <h3>Länder-Ranking</h3>
+    {{ geographic_table | safe }}
     {% endif %}
     {% else %}
     <div class="no-data-box">
@@ -711,16 +752,16 @@
 {% endif %}
 
 {# ======================================================================
-   Sektion 13 — UC9: Technologie-Cluster
+   Sektion 12 — UC 11: Technologie-Cluster
    WIPO Pub. 946: Technology Clustering
    ====================================================================== #}
 {% if "tech_cluster" in uc_keys %}
-<div class="section section-landscape" id="sec-uc9">
+<div class="section section-landscape" id="sec-uc11">
     <div class="section-header">
-        <span class="section-number">11</span>
+        <span class="section-number">12</span>
         <div class="section-title-group">
             <h2 class="section-title">Technologie-Cluster</h2>
-            <p class="section-subtitle">UC9 — Radar-Dimensionen, Cluster-Analyse und verwandte Technologiefelder</p>
+            <p class="section-subtitle">UC 11 — Radar-Dimensionen, Cluster-Analyse und verwandte Technologiefelder</p>
         </div>
     </div>
 
@@ -752,16 +793,16 @@
 {% endif %}
 
 {# ======================================================================
-   Sektion 14 — UC10: Wissenschaftsdisziplinen
+   Sektion 13 — UC 12: Wissenschaftsdisziplinen
    WIPO Pub. 946: Subject Matter Classification
    ====================================================================== #}
 {% if "euroscivoc" in uc_keys %}
-<div class="section section-portrait" id="sec-ucb">
+<div class="section section-portrait" id="sec-uc12">
     <div class="section-header">
-        <span class="section-number">12</span>
+        <span class="section-number">13</span>
         <div class="section-title-group">
             <h2 class="section-title">Wissenschaftsdisziplinen</h2>
-            <p class="section-subtitle">UC10 — EuroSciVoc-Taxonomie und Shannon-Diversitätsindex</p>
+            <p class="section-subtitle">UC 12 — EuroSciVoc-Taxonomie und Shannon-Diversitätsindex</p>
         </div>
     </div>
 
@@ -793,57 +834,16 @@
 {% endif %}
 
 {# ======================================================================
-   Sektion 15 — UC11: Akteurs-Typverteilung
-   WIPO Pub. 946: Applicant Analysis by Type
-   ====================================================================== #}
-{% if "actor_type" in uc_keys %}
-<div class="section section-portrait" id="sec-ucd">
-    <div class="section-header">
-        <span class="section-number">13</span>
-        <div class="section-title-group">
-            <h2 class="section-title">Akteurs-Typverteilung</h2>
-            <p class="section-subtitle">UC11 — Verteilung nach Organisationstyp (Hochschule, Industrie, KMU, Forschung)</p>
-        </div>
-    </div>
-
-    {% if actor_type %}
-    {% if actor_type_chart %}
-    <p class="chart-title">Akteurs-Typen</p>
-    {{ actor_type_chart }}
-    {% endif %}
-
-    {% if actor_type_table %}
-    <h3>Typ-Verteilung</h3>
-    {{ actor_type_table | safe }}
-    {% endif %}
-
-    <div class="summary-box">
-        <h4>Akteurs-Typen (CORDIS-Klassifikation)</h4>
-        <p><strong>HES</strong> — Higher Education Sector (Hochschulen und Universitäten)<br>
-           <strong>PRC</strong> — Private Commercial (Industrie und privatwirtschaftliche Unternehmen)<br>
-           <strong>REC</strong> — Research Organisations (Öffentliche Forschungseinrichtungen)<br>
-           <strong>OTH</strong> — Other (Sonstige Organisationen)<br>
-           <strong>PUB</strong> — Public Body (Öffentliche Einrichtungen)</p>
-    </div>
-    {% else %}
-    <div class="no-data-box">
-        <p>Für diesen Use-Case liegen im angefragten Zeitraum keine Ergebnisse vor.</p>
-    </div>
-    {% endif %}
-</div>
-{% endif %}
-
-{# ======================================================================
-   Sektion 16 — UC12: Erteilungsquoten
+   Sektion 14 — UC 13: Erteilungsquoten
    WIPO Pub. 946: Patent Grant Analysis
    ====================================================================== #}
 {% if "patent_grant" in uc_keys %}
-<div class="section section-landscape" id="sec-uce">
+<div class="section section-landscape" id="sec-uc13">
     <div class="section-header">
         <span class="section-number">14</span>
         <div class="section-title-group">
             <h2 class="section-title">Erteilungsquoten</h2>
-            <p class="section-subtitle">UC12 — Patentanmeldungen vs. Erteilungen und Erteilungsquote im Zeitverlauf</p>
+            <p class="section-subtitle">UC 13 — Patentanmeldungen vs. Erteilungen und Erteilungsquote im Zeitverlauf</p>
         </div>
     </div>
 
@@ -910,7 +910,7 @@
 
         <div class="quality-card quality-warning">
             <h4>Zitationsdaten</h4>
-            <p>Zitationsanalysen (UC7) basieren auf Semantic Scholar. Die Abdeckung
+            <p>Zitationsanalysen (UC 8) basieren auf Semantic Scholar. Die Abdeckung
                variiert nach Fachgebiet und kann von anderen Zitationsdatenbanken
                (Web of Science, Scopus) abweichen. Der h-Index ist außerdem
                altersabhängig und begünstigt etablierte Forschungsfelder.</p>
@@ -918,7 +918,7 @@
 
         <div class="quality-card quality-info">
             <h4>CPC-Klassifikation</h4>
-            <p>Die CPC-Analyse (UC5) basiert auf der Hauptklassifikation und bis zu
+            <p>Die CPC-Analyse (UC 3) basiert auf der Hauptklassifikation und bis zu
                5 Nebenklassifikationen pro Patent. Änderungen der CPC-Taxonomie über
                den Analysezeitraum können zu Diskontinuitäten führen.</p>
         </div>

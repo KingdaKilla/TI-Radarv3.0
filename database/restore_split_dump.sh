@@ -78,10 +78,10 @@ restore_backup() {
 }
 
 # -------------------------------------------------
-# [1/8] DB-Container starten
+# [1/9] DB-Container starten
 # -------------------------------------------------
 echo ""
-echo "[1/8] DB-Container starten..."
+echo "[1/9] DB-Container starten..."
 docker compose -f "$COMPOSE_FILE" up -d db
 sleep 5
 
@@ -102,7 +102,7 @@ done
 # [2/8] Performance-Tuning fuer schnellen Import
 # -------------------------------------------------
 echo ""
-echo "[2/8] PostgreSQL Performance-Tuning fuer Import..."
+echo "[2/9] PostgreSQL Performance-Tuning fuer Import..."
 docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "
     ALTER SYSTEM SET max_wal_size = '10GB';
     ALTER SYSTEM SET wal_level = 'minimal';
@@ -122,7 +122,7 @@ sleep 5
 # [3/8] Tabellen leeren + Sequenzen zuruecksetzen
 # -------------------------------------------------
 echo ""
-echo "[3/8] Tabellen leeren, Sequenzen zuruecksetzen..."
+echo "[3/9] Tabellen leeren, Sequenzen zuruecksetzen..."
 
 # restore_dump.sql ist im Image unter /opt/restore/ eingebacken
 if docker exec "$CONTAINER" test -f /opt/restore/restore_dump.sql; then
@@ -138,7 +138,7 @@ fi
 # [4/8] Nicht-Patent-Schemas restaurieren
 # -------------------------------------------------
 echo ""
-echo "[4/8] Nicht-Patent-Schemas restaurieren..."
+echo "[4/9] Nicht-Patent-Schemas restaurieren..."
 
 restore_backup "cordis_schema"   "${DUMP_DIR}/cordis_schema.backup"
 restore_backup "research_schema" "${DUMP_DIR}/research_schema.backup"
@@ -150,7 +150,7 @@ restore_backup "cross_schema"    "${DUMP_DIR}/cross_schema.backup"
 # [5/8] Patent-Schema: Nicht-partitionierte Tabellen
 # -------------------------------------------------
 echo ""
-echo "[5/8] Patent-Schema: Referenztabellen..."
+echo "[5/9] Patent-Schema: Referenztabellen..."
 
 restore_backup "applicants"          "${DUMP_DIR}/patent_schema/applicants.backup"
 restore_backup "cpc_descriptions"    "${DUMP_DIR}/patent_schema/cpc_descriptions.backup"
@@ -162,7 +162,7 @@ restore_backup "enrichment_progress" "${DUMP_DIR}/patent_schema/enrichment_progr
 # [6/8] Patent-Schema: Dekaden-Partitionen
 # -------------------------------------------------
 echo ""
-echo "[6/8] Patent-Dekaden restaurieren (das dauert am laengsten)..."
+echo "[6/9] Patent-Dekaden restaurieren (das dauert am laengsten)..."
 
 DECADES=("pre1980" "1980s" "1990s" "2000s" "2010s" "2020s")
 
@@ -175,10 +175,35 @@ for decade in "${DECADES[@]}"; do
 done
 
 # -------------------------------------------------
-# [7/8] Materialized Views aktualisieren
+# [7/9] Junction-Tabellen aus denormalisierten Patent-Daten ableiten
+# -------------------------------------------------
+# Die Dumps enthalten patent_cpc_*.backup und patent_applicants_*.backup,
+# aber diese sind in der aktuellen Prod-DB leer (nur Header, 1-4 KB).
+# Die Junctions werden daher aus patents.cpc_codes und patents.applicant_names
+# (denormalisierte Felder, die der EPO-Importer direkt befuellt) abgeleitet.
+# Idempotent durch ON CONFLICT DO NOTHING — bei zukuenftigen Dumps mit bereits
+# gefuellten Junction-Partitionen ist der Effekt ein No-op.
+echo ""
+echo "[7/9] Junction-Tabellen ableiten (patent_cpc, patent_applicants, applicants)..."
+
+# Skript in Container kopieren und ausfuehren
+if [ -f "database/sql/seed_junctions_production.sql" ]; then
+    docker cp "database/sql/seed_junctions_production.sql" \
+        "${CONTAINER}:/tmp/seed_junctions_production.sql"
+    docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
+        -f /tmp/seed_junctions_production.sql
+    docker exec "$CONTAINER" rm -f /tmp/seed_junctions_production.sql
+    echo -e "   ${GREEN}Junction-Ableitung abgeschlossen.${NC}"
+else
+    echo -e "   ${YELLOW}SKIP: database/sql/seed_junctions_production.sql nicht gefunden.${NC}"
+    echo -e "   ${YELLOW}UC1/UC3/UC5/UC8-Services haben dann keine Junction-Daten.${NC}"
+fi
+
+# -------------------------------------------------
+# [8/9] Materialized Views aktualisieren
 # -------------------------------------------------
 echo ""
-echo "[7/8] Materialized Views aktualisieren..."
+echo "[8/9] Materialized Views aktualisieren..."
 docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "
     REFRESH MATERIALIZED VIEW cross_schema.mv_patent_counts_by_cpc_year;
     REFRESH MATERIALIZED VIEW cross_schema.mv_cpc_cooccurrence;
@@ -192,10 +217,10 @@ docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "
 "
 
 # -------------------------------------------------
-# [8/8] Performance-Settings zuruecksetzen
+# [9/9] Performance-Settings zuruecksetzen
 # -------------------------------------------------
 echo ""
-echo "[8/8] PostgreSQL Performance-Settings zuruecksetzen..."
+echo "[9/9] PostgreSQL Performance-Settings zuruecksetzen..."
 docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "
     ALTER SYSTEM RESET max_wal_size;
     ALTER SYSTEM RESET wal_level;

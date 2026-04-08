@@ -185,6 +185,21 @@ async def weekly_import_job(app: Any) -> None:
             results["epo"] = f"fehler: {exc}"
             logger.error("scheduler_epo_fehler", error=str(exc))
 
+    # 4. Junction-Derivation (patent_cpc, patent_applicants, applicants).
+    # Wird immer nach EPO ausgefuehrt — auch bei uebersprungenem Import —
+    # damit manuelle Imports sicher abgedeckt sind. Idempotent durch
+    # ON CONFLICT DO NOTHING; bei Full-Scan auf 156 M Patents kann das
+    # 30-90 Minuten dauern. Siehe services/import-svc/src/importers/junction_deriver.py.
+    try:
+        from src.importers.junction_deriver import derive_junctions
+
+        junction_stats = await derive_junctions(pool)
+        results["junction_derivation"] = "ok"
+        logger.info("scheduler_junction_derivation_ok", stats=junction_stats)
+    except Exception as exc:
+        results["junction_derivation"] = f"fehler: {exc}"
+        logger.error("scheduler_junction_derivation_fehler", error=str(exc))
+
     duration_s = round(time.monotonic() - t0, 1)
 
     _last_run = {

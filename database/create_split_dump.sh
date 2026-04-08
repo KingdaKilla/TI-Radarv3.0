@@ -22,6 +22,17 @@
 
 set -euo pipefail
 
+# ----------------------------------------------------------------------------
+# Git-Bash auf Windows: POSIX->Windows Pfad-Konvertierung deaktivieren.
+# Ohne das wandelt Git Bash z.B. /tmp/dump_split/x in einen Windows-Pfad
+# /C:/Users/.../tmp/dump_split/x um, BEVOR docker.exe das Argument bekommt.
+# Resultat: pg_dump im Container schreibt eine "Geister-Datei" mit ":" und
+# "/" im Namen, und docker cp findet sie nicht. Wir wollen, dass POSIX-Pfade
+# 1:1 an docker.exe und damit an den Container weitergereicht werden.
+# Auf Linux/macOS hat das keine Wirkung.
+# ----------------------------------------------------------------------------
+export MSYS_NO_PATHCONV=1
+
 CONTAINER="ti-radar-db"
 DB_USER="tip_admin"
 DB_NAME="ti_radar"
@@ -30,6 +41,17 @@ DATE=$(date +%Y-%m-%d)
 # Zielverzeichnis (lokal, ausserhalb des Containers)
 BASE_DIR="${1:-/d}/ti_radar_dump_${DATE}"
 PATENT_DIR="${BASE_DIR}/patent_schema"
+
+# Windows-Style-Pfade fuer 'docker cp' (docker.exe versteht /d/ nicht).
+# cygpath -m liefert "D:/..." statt "D:\...".
+# Wenn cygpath fehlt (Linux/macOS), bleibt der Pfad unveraendert.
+if command -v cygpath >/dev/null 2>&1; then
+    WIN_BASE_DIR=$(cygpath -m "$BASE_DIR")
+    WIN_PATENT_DIR=$(cygpath -m "$PATENT_DIR")
+else
+    WIN_BASE_DIR="$BASE_DIR"
+    WIN_PATENT_DIR="$PATENT_DIR"
+fi
 
 # Temporaeres Verzeichnis im Container
 C_BASE="/tmp/dump_split"
@@ -53,7 +75,7 @@ fi
 # Verzeichnisse vorbereiten
 # -------------------------------------------------
 echo ""
-echo "[1/6] Verzeichnisse vorbereiten..."
+echo "[1/5] Verzeichnisse vorbereiten..."
 docker exec "$CONTAINER" mkdir -p "$C_PATENT"
 mkdir -p "$PATENT_DIR"
 
@@ -61,21 +83,27 @@ mkdir -p "$PATENT_DIR"
 # Schema-Only Dump (DDL)
 # -------------------------------------------------
 echo ""
-echo "[2/6] Schema-Only Dump (DDL)..."
+echo "[2/5] Schema-Only Dump (DDL)..."
 docker exec "$CONTAINER" pg_dump \
     -U "$DB_USER" -d "$DB_NAME" \
     --schema-only \
     --no-owner --no-privileges \
     -f "${C_BASE}/00_schema_only.sql"
+# Sofort nach D: kopieren und im Container loeschen
+docker cp "${CONTAINER}:${C_BASE}/00_schema_only.sql" "${WIN_BASE_DIR}/00_schema_only.sql"
+docker exec "$CONTAINER" rm -f "${C_BASE}/00_schema_only.sql"
 echo "   -> 00_schema_only.sql"
 
 # -------------------------------------------------
 # Patent-Schema: Dekaden-Split
 # -------------------------------------------------
 echo ""
-echo "[3/6] Patent-Schema: Dekaden-Split..."
+echo "[3/5] Patent-Schema: Dekaden-Split..."
 
 # Hilfsfunktion: Dumpt eine oder mehrere Partitionen in eine Datei
+# und kopiert die Datei sofort aus dem Container nach D:, damit der
+# Container-Tempspace (in der Docker-VHDX auf C:) nie ueber eine Datei
+# hinaus waechst.
 dump_partitions() {
     local label="$1"
     local outfile="$2"
@@ -88,6 +116,9 @@ dump_partitions() {
         --no-owner --no-privileges \
         "$@" \
         -f "${C_PATENT}/${outfile}"
+    # Sofort nach D: kopieren und im Container loeschen
+    docker cp "${CONTAINER}:${C_PATENT}/${outfile}" "${WIN_PATENT_DIR}/${outfile}"
+    docker exec "$CONTAINER" rm -f "${C_PATENT}/${outfile}"
 }
 
 # --- patents (Haupttabelle) ---
@@ -173,7 +204,7 @@ dump_partitions "enrichment_progress" "enrichment_progress.backup" \
 # Nicht-Patent-Schemas (je ein Dump)
 # -------------------------------------------------
 echo ""
-echo "[4/6] Schema-Dumps (cordis, research, entity, export, cross)..."
+echo "[4/5] Schema-Dumps (cordis, research, entity, export, cross)..."
 
 for schema in cordis_schema research_schema entity_schema export_schema cross_schema; do
     echo "   -> ${schema}..."
@@ -183,33 +214,24 @@ for schema in cordis_schema research_schema entity_schema export_schema cross_sc
         --no-owner --no-privileges \
         -n "$schema" \
         -f "${C_BASE}/${schema}.backup"
+    # Sofort nach D: kopieren und im Container loeschen
+    docker cp "${CONTAINER}:${C_BASE}/${schema}.backup" "${WIN_BASE_DIR}/${schema}.backup"
+    docker exec "$CONTAINER" rm -f "${C_BASE}/${schema}.backup"
 done
 
 # -------------------------------------------------
-# Aus Container kopieren
+# Container-Tempspace aufraeumen
 # -------------------------------------------------
-echo ""
-echo "[5/6] Dateien aus Container kopieren..."
-docker cp "${CONTAINER}:${C_BASE}/00_schema_only.sql" "${BASE_DIR}/00_schema_only.sql"
-
-# Patent-Schema Dateien
-for f in $(docker exec "$CONTAINER" ls "$C_PATENT"); do
-    docker cp "${CONTAINER}:${C_PATENT}/${f}" "${PATENT_DIR}/${f}"
-done
-
-# Schema-Dumps
-for schema in cordis_schema research_schema entity_schema export_schema cross_schema; do
-    docker cp "${CONTAINER}:${C_BASE}/${schema}.backup" "${BASE_DIR}/${schema}.backup"
-done
-
-# Aufraeumen im Container
+# Hinweis: Dateien wurden bereits direkt nach jedem pg_dump nach D: kopiert
+# und einzeln im Container geloescht (siehe dump_partitions() und Schema-Loop).
+# Hier nur noch das leere Temp-Verzeichnis entfernen.
 docker exec "$CONTAINER" rm -rf "$C_BASE"
 
 # -------------------------------------------------
 # Verifizierung
 # -------------------------------------------------
 echo ""
-echo "[6/6] Verifizierung..."
+echo "[5/5] Verifizierung..."
 echo ""
 echo "============================================"
 echo "Dump-Dateien:"

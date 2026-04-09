@@ -38,16 +38,20 @@ sleep 5
 # -------------------------------------------------
 echo ""
 echo "[2/7] PostgreSQL Performance-Tuning fuer Import..."
-docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "
-    ALTER SYSTEM SET max_wal_size = '10GB';
-    ALTER SYSTEM SET wal_level = 'minimal';
-    ALTER SYSTEM SET fsync = off;
-    ALTER SYSTEM SET full_page_writes = off;
-    ALTER SYSTEM SET synchronous_commit = off;
-    ALTER SYSTEM SET autovacuum = off;
-    ALTER SYSTEM SET archive_mode = off;
-    ALTER SYSTEM SET max_wal_senders = 0;
-"
+# ALTER SYSTEM darf nicht in einer Transaktion laufen; jeder Aufruf als
+# eigener psql -c Call.
+for setting in \
+    "max_wal_size = '10GB'" \
+    "wal_level = 'minimal'" \
+    "fsync = off" \
+    "full_page_writes = off" \
+    "synchronous_commit = off" \
+    "autovacuum = off" \
+    "archive_mode = off" \
+    "max_wal_senders = 0"; do
+    docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
+        -c "ALTER SYSTEM SET $setting;"
+done
 
 echo "   -> Container neustarten..."
 docker compose restart db
@@ -104,16 +108,18 @@ docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "
 # -------------------------------------------------
 echo ""
 echo "[7/7] PostgreSQL Performance-Settings zuruecksetzen..."
-docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "
-    ALTER SYSTEM RESET max_wal_size;
-    ALTER SYSTEM RESET wal_level;
-    ALTER SYSTEM RESET fsync;
-    ALTER SYSTEM RESET full_page_writes;
-    ALTER SYSTEM RESET synchronous_commit;
-    ALTER SYSTEM RESET autovacuum;
-    ALTER SYSTEM RESET archive_mode;
-    ALTER SYSTEM RESET max_wal_senders;
-"
+for setting in \
+    max_wal_size \
+    wal_level \
+    fsync \
+    full_page_writes \
+    synchronous_commit \
+    autovacuum \
+    archive_mode \
+    max_wal_senders; do
+    docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
+        -c "ALTER SYSTEM RESET $setting;"
+done
 
 docker compose restart db
 sleep 5

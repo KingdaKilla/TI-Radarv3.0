@@ -187,6 +187,28 @@ cd /pfad/zu/TI-Radarv3.0
 ./database/restore_split_dump.sh /pfad/zu/ti_radar_dump_YYYY-MM-DD
 ```
 
+Das Skript liest zwei optionale Environment-Variablen:
+
+| Variable | Default | Beschreibung |
+|---|---|---|
+| `COMPOSE_FILE` | `deploy/docker-compose.yml` | Compose-File fuer den `docker compose up -d db` Aufruf in Phase `[1/9]`. Auf dem Server `deploy/docker-compose.server.yml` setzen. |
+| `DELETE_DUMPS_AFTER_RESTORE` | `0` | Wenn `1`, wird jede `.backup`-Datei auf dem Host sofort nach ihrem erfolgreichen `pg_restore` geloescht (pro-Datei Platzsparen). `00_schema_only.sql` und `dump.sha256` bleiben erhalten. **Destruktiv** -- nach Abbruch ist kein Retry ohne erneuten Dump-Transfer moeglich. |
+
+**Aufruf auf knappem Plattenplatz** (z.B. 400 GB Server mit 73 GB Dump + ~400 GB DB):
+
+```bash
+COMPOSE_FILE=deploy/docker-compose.server.yml \
+DELETE_DUMPS_AFTER_RESTORE=1 \
+    ./database/restore_split_dump.sh /home/ben/ti_radar_dump_YYYY-MM-DD
+```
+
+Mit `DELETE_DUMPS_AFTER_RESTORE=1` verlaeuft der Speicherbedarf so:
+- **Peak waehrend eines Restores**: max 2x Dateigroesse (Host-Datei + Container-Kopie) + DB-Wachstum
+- **Nach jedem Restore**: die Host-Datei wird frei, Peak sinkt bis zum naechsten Restore
+- **Kritische Phase**: `patents_2010s.backup` (20 GB -> ~100 GB DB) und `cross_schema.backup` (37 GB -> ~65 GB DB) brauchen temporaer ~140 GB bzw. ~102 GB freien Speicher
+
+`pg_restore` Exit-Code wird streng geprueft: rc=0 (Erfolg) und rc=1 (Warnings wie "already exists") fuehren zum Loeschen; rc>1 (fataler Fehler) bricht das Skript ab, der Host-Dump bleibt fuer einen Retry erhalten.
+
 Das Skript laeuft in 9 Phasen:
 
 | Phase | Beschreibung |

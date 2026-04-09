@@ -7,6 +7,22 @@
 # Aufruf:
 #   ./database/restore_split_dump.sh /pfad/zum/dump-verzeichnis
 #
+# Environment-Variablen (optional):
+#
+#   COMPOSE_FILE=deploy/docker-compose.server.yml
+#     Compose-File fuer den "docker compose up -d db" Aufruf in Phase [1/9].
+#     Default: deploy/docker-compose.yml (lokal).
+#     Auf dem Server: COMPOSE_FILE=deploy/docker-compose.server.yml setzen.
+#
+#   DELETE_DUMPS_AFTER_RESTORE=1
+#     Loescht jede .backup-Datei auf dem HOST sofort nach ihrem erfolgreichen
+#     pg_restore, um Plattenplatz zu sparen. WICHTIG: pg_restore Exit-Code wird
+#     streng geprueft — bei rc > 1 (fatal error) wird NICHT geloescht und das
+#     Skript bricht ab. Warnings (rc==1, z.B. "already exists") gelten als OK.
+#     00_schema_only.sql und dump.sha256 bleiben IMMER erhalten.
+#     DIESE OPTION IST DESTRUKTIV — danach ist kein Restart ohne erneuten
+#     Transfer moeglich.
+#
 # Erwartet:
 #   /pfad/zum/dump-verzeichnis/
 #   ├── 00_schema_only.sql
@@ -29,7 +45,8 @@ DUMP_DIR="${1:?Bitte Dump-Verzeichnis angeben: ./restore_split_dump.sh /pfad/zum
 CONTAINER="ti-radar-db"
 DB_USER="tip_admin"
 DB_NAME="ti_radar"
-COMPOSE_FILE="${COMPOSE_FILE:-deploy/docker-compose.server.yml}"
+COMPOSE_FILE="${COMPOSE_FILE:-deploy/docker-compose.yml}"
+DELETE_DUMPS_AFTER_RESTORE="${DELETE_DUMPS_AFTER_RESTORE:-0}"
 
 # Farben fuer Terminal-Ausgabe
 RED='\033[0;31m'
@@ -41,6 +58,11 @@ echo "============================================"
 echo "TI-Radar Split-Dump Restore"
 echo "Dump-Dir: ${DUMP_DIR}"
 echo "Compose:  ${COMPOSE_FILE}"
+if [ "$DELETE_DUMPS_AFTER_RESTORE" = "1" ]; then
+    echo -e "${YELLOW}WARNUNG: DELETE_DUMPS_AFTER_RESTORE=1 aktiv${NC}"
+    echo -e "${YELLOW}  -> Jede .backup-Datei wird nach erfolgreichem Restore GELOESCHT${NC}"
+    echo -e "${YELLOW}  -> Nach Abbruch / Fehler ist kein Restart ohne erneuten Transfer moeglich${NC}"
+fi
 echo "============================================"
 
 # -------------------------------------------------
@@ -57,7 +79,13 @@ if [ ! -d "${DUMP_DIR}/patent_schema" ]; then
     exit 1
 fi
 
-# Hilfsfunktion: Backup-Datei in Container kopieren und restaurieren
+# Hilfsfunktion: Backup-Datei in Container kopieren, restaurieren,
+# strenge Exit-Code-Pruefung und optionales Loeschen nach Erfolg.
+#
+# pg_restore Exit-Codes:
+#   0  -> vollstaendiger Erfolg
+#   1  -> Warnings (z.B. Item bereits vorhanden, skip) - akzeptabel
+#   >1 -> fatal error - hier wird das Skript abgebrochen
 restore_backup() {
     local label="$1"
     local backup_file="$2"
@@ -67,14 +95,50 @@ restore_backup() {
         return 0
     fi
 
-    echo -n "   -> ${label}... "
+    local file_size
+    file_size=$(du -h "$backup_file" 2>/dev/null | cut -f1)
+    echo -n "   -> ${label} (${file_size})... "
+
     docker cp "$backup_file" "${CONTAINER}:/tmp/restore_part.backup"
-    docker exec "$CONTAINER" pg_restore \
+
+    # pg_restore Output in Variable fangen, Exit-Code explizit capturen
+    # (set -e darf hier nicht zuschlagen)
+    local pg_output=""
+    local rc=0
+    pg_output=$(docker exec "$CONTAINER" pg_restore \
         -U "$DB_USER" -d "$DB_NAME" \
         --data-only --disable-triggers \
-        /tmp/restore_part.backup 2>/dev/null || true
-    docker exec "$CONTAINER" rm -f /tmp/restore_part.backup
-    echo -e "${GREEN}OK${NC}"
+        /tmp/restore_part.backup 2>&1) || rc=$?
+
+    # Container-Kopie immer aufraeumen (Platz im Container-Temp)
+    docker exec "$CONTAINER" rm -f /tmp/restore_part.backup || true
+
+    if [ "$rc" -eq 0 ] || [ "$rc" -eq 1 ]; then
+        # Erfolg (rc=0) oder akzeptable Warnings (rc=1)
+        if [ "$rc" -eq 1 ]; then
+            echo -e "${GREEN}OK${NC} ${YELLOW}(mit Warnings)${NC}"
+        else
+            echo -e "${GREEN}OK${NC}"
+        fi
+
+        # Optional: Dump-Datei auf HOST loeschen, um Platz zu sparen
+        if [ "$DELETE_DUMPS_AFTER_RESTORE" = "1" ]; then
+            if rm -f "$backup_file"; then
+                echo -e "      ${YELLOW}-> Host-Dump geloescht (${file_size} frei)${NC}"
+            else
+                echo -e "      ${RED}-> Loeschen von $backup_file fehlgeschlagen${NC}"
+            fi
+        fi
+        return 0
+    else
+        # Fataler Fehler: NICHT loeschen, Skript abbrechen
+        echo -e "${RED}FAIL (pg_restore rc=$rc)${NC}"
+        echo "   --- pg_restore output (letzte 20 Zeilen) ---"
+        echo "$pg_output" | tail -20 | sed 's/^/     /'
+        echo "   ---"
+        echo -e "   ${RED}Abbruch. Host-Dump $backup_file bleibt fuer Retry erhalten.${NC}"
+        return "$rc"
+    fi
 }
 
 # -------------------------------------------------

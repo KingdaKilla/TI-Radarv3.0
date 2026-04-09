@@ -2,15 +2,20 @@
 
 ## Uebersicht
 
-TI-Radar nutzt eine einzelne PostgreSQL-17-Instanz mit 6 isolierten Schemas. Die Datenbank enthaelt ca. ~540M Zeilen bei einer Gesamtgroesse von ~200 GB. Fuer Vektoraehnlichkeitssuche ist pgvector installiert, fuer unscharfe Textsuche pg_trgm.
+TI-Radar nutzt eine einzelne PostgreSQL-17-Instanz mit 6 isolierten Schemas. Die Datenbank enthaelt ca. ~610M Zeilen bei einer Gesamtgroesse von ~363 GB. Fuer Vektoraehnlichkeitssuche ist pgvector installiert, fuer unscharfe Textsuche pg_trgm.
 
-**Groessenverteilung nach Schema:**
-- `patent_schema`: ~191 GB (inkl. befuellter Junction-Tabellen patent_applicants und patent_cpc)
-- `cross_schema`: ~5 GB (Materialized Views und Import-Log)
-- `cordis_schema`: ~1.7 GB
+**Groessenverteilung nach Schema (gemessen 2026-04-09, 156.4M Patents):**
+- `patent_schema`: ~217 GB
+  - `patents` (partitioned): ~151 GB
+  - `patent_applicants` (partitioned): ~30 GB / 246.9M Zeilen
+  - `patent_cpc` (partitioned): ~28 GB / 182.0M Zeilen
+  - `applicants`: ~7.5 GB / 27.5M Zeilen
+- `cross_schema`: ~65 GB (dominiert von `document_chunks` mit pgvector-Embeddings)
+- `cordis_schema`: ~1.8 GB
 - `entity_schema`: ~636 MB
+- `research_schema`, `export_schema`: < 10 MB
 
-**Speicherempfehlung:** >= 300 GB fuer das PostgreSQL-Datenverzeichnis (inkl. Headroom fuer Indexe, WAL und temporaere Dateien).
+**Speicherempfehlung:** >= 450 GB fuer das PostgreSQL-Datenverzeichnis (inkl. Headroom fuer Indexe, WAL und temporaere Dateien).
 
 ---
 
@@ -39,9 +44,9 @@ Das Modell folgt primaer dem **Kimball-Ansatz** mit Bottom-up Data Marts (Materi
 
 | Tabelle | Zeilen | Granularitaet | Schema |
 |---|---|---|---|
-| `patent_cpc` | ~237M | Ein Eintrag pro Patent-CPC-Zuordnung | `patent_schema` |
-| `patent_applicants` | ~147M | Ein Eintrag pro Patent-Anmelder-Zuordnung | `patent_schema` |
-| `patent_citations` | variabel | Ein Eintrag pro Zitationsbeziehung | `patent_schema` |
+| `patent_cpc` | ~182M | Ein Eintrag pro Patent-CPC-Zuordnung (nur Patents mit >= 2 CPC-Codes, Jaccard-Requirement) | `patent_schema` |
+| `patent_applicants` | ~247M | Ein Eintrag pro Patent-Anmelder-Zuordnung | `patent_schema` |
+| `patent_citations` | 0 (nicht befuellt) | Ein Eintrag pro Zitationsbeziehung -- XML-Parser nicht implementiert (TODO 9.17) | `patent_schema` |
 | `organizations` | 438K | Ein Eintrag pro Projektbeteiligung | `cordis_schema` |
 | `project_euroscivoc` | variabel | Ein Eintrag pro Projekt-Taxonomie-Zuordnung | `cordis_schema` |
 
@@ -49,7 +54,7 @@ Das Modell folgt primaer dem **Kimball-Ansatz** mit Bottom-up Data Marts (Materi
 
 | Tabelle | Zeilen | Dimensionstyp | Schema |
 |---|---|---|---|
-| `applicants` | ~15.5M | Akteursdimension | `patent_schema` |
+| `applicants` | ~27.5M | Akteursdimension | `patent_schema` |
 | `cpc_descriptions` | ~670 | Technologiedimension (CPC-Klassifikation) | `patent_schema` |
 | `projects` | 80.5K | Projektdimension | `cordis_schema` |
 | `euroscivoc` | ~220K | Forschungstaxonomie (hierarchisch) | `cordis_schema` |
@@ -229,14 +234,52 @@ EPO-Patentdaten und patentspezifische Analysen. Genutzt von: UC1 (Landscape), UC
 
 | Tabelle | Zeilen | Beschreibung |
 |---|---|---|
-| `patents` | ~154.8M | Haupttabelle, range-partitioned nach `publication_year` |
-| `applicants` | ~15.5M | Normalisierte Patentanmelder |
-| `patent_applicants` | ~147M | N:M-Zuordnung Patent-Anmelder, co-partitioned nach `patent_year` |
-| `patent_cpc` | ~237M | N:M-Zuordnung Patent-CPC-Klasse, co-partitioned nach `pub_year` |
-| `patent_citations` | variabel | Forward-/Backward-Zitationen zwischen Patenten |
+| `patents` | ~156.4M | Haupttabelle, range-partitioned nach `publication_year` |
+| `applicants` | ~27.5M | Normalisierte Patentanmelder (abgeleitet aus `patents.applicant_names`) |
+| `patent_applicants` | ~247M | N:M-Zuordnung Patent-Anmelder, co-partitioned nach `patent_year` |
+| `patent_cpc` | ~182M | N:M-Zuordnung Patent-CPC-Klasse, co-partitioned nach `pub_year` (nur Patents mit >= 2 CPC-Codes) |
+| `patent_citations` | 0 (leer) | Forward-/Backward-Zitationen zwischen Patenten -- nicht befuellt (TODO 9.17: XML-Parser in epo_importer.py fehlt) |
 | `cpc_descriptions` | ~670 | CPC-Subclass-Beschreibungen (Referenzdaten) |
 | `import_metadata` | variabel | Tracking verarbeiteter EPO-DOCDB-ZIP-Dateien |
 | `enrichment_progress` | variabel | Patent-Embedding-Enrichment-Tracking |
+
+#### Junction-Ableitung aus denormalisierten Patent-Feldern
+
+Die Junction-Tabellen `applicants`, `patent_applicants` und `patent_cpc` werden
+**nicht direkt vom EPO-Importer** befuellt. Der Importer schreibt beim Bulk-
+Import ausschliesslich die denormalisierten Felder `patents.applicant_names`
+(Semikolon-separierter Text) und `patents.cpc_codes` (TEXT[]). Die Junctions
+werden anschliessend in einem separaten Derivation-Schritt abgeleitet:
+
+1. **DISTINCT-Extraktion** aus `patents.applicant_names` -> `applicants.raw_name`
+   mit normalisiertem Firmensuffix-Stripping (GMBH, AG, LTD, LLC, INC, ...)
+2. **N:M-Join** ueber `applicants.raw_name` -> `patent_applicants`
+3. **LATERAL unnest(cpc_codes)** plus `substring(code, 1, 4)` fuer die 4-stellige
+   CPC-Subklasse -> `patent_cpc` (nur Patents mit `array_length(cpc_codes) >= 2`,
+   siehe Jaccard-Requirement unten)
+
+Die Ableitung ist in `database/sql/seed_junctions_production.sql` implementiert
+und wird an drei Stellen getriggert:
+- **Scheduler** (`weekly_import_job` in `services/import-svc/src/scheduler.py`) --
+  automatisch nach jedem EPO-Bulk-Import.
+- **Restore-Skript** (`database/restore_split_dump.sh` Phase `[7/9]`) --
+  automatisch nach jedem Split-Dump-Restore, falls der Dump leere oder unvoll-
+  staendige Junctions enthaelt (idempotent via `ON CONFLICT DO NOTHING`).
+- **Manuell** via `psql -f /opt/restore/seed_junctions_production.sql`
+  (im DB-Image eingebacken) oder aus dem Repo-Checkout heraus.
+
+Das Skript ist **per Dekade partitioniert** (pre1980, 1980s, 1990s, 2000s,
+2010s, 2020s+), weil ein einziger Sort/Join ueber 156M Patents die Query
+mehrere Stunden ohne Commit blockiert. Pro Dekade laufen die Stages in 3-45
+Minuten und committen zwischendurch. Stage 1 (applicants) hat eine Skip-Logik,
+die den teuren `DISTINCT`-Scan ueberspringt, wenn die Tabelle bereits
+> 5M Zeilen hat.
+
+**Typischer Full-Lauf gegen 156M Patents:**
+- Stage 1 (applicants): ~50 min
+- Stage 2 (patent_applicants, 6 Dekaden): ~130 min
+- Stage 3 (patent_cpc, 6 Dekaden): ~91 min
+- Total: ~4-5 Stunden
 
 #### patents -- Spaltenstruktur
 
@@ -282,7 +325,15 @@ Die Junction-Tabellen `patent_applicants` und `patent_cpc` sind **co-partitionie
 - tsvector-Spalten mit GIN-Index ersetzen SQLite FTS5
 - TEXT[]-Arrays mit GIN-Index fuer Laender- und CPC-Abfragen (Containment-Operatoren `@>`, `&&`)
 - Covering-Indexe auf `patent_cpc` (cpc_code, pub_year, patent_id) fuer Index-Only-Scans bei CPC-Kookkurrenz
-- Integer-PKs in Junctions: 4-Byte-Integer sparen ~3 GB gegenueber 16-Byte-UUIDs bei 237M Zeilen
+- Integer-PKs in Junctions: 4-Byte-Integer sparen ~3 GB gegenueber 16-Byte-UUIDs bei 182M Zeilen
+
+**Jaccard-Requirement fuer `patent_cpc`:** Nur Patents mit **>= 2 CPC-Codes**
+landen in der Junction (`array_length(p.cpc_codes, 1) >= 2`). Begruendung: UC5
+(CPC-Flow) berechnet pairwise Co-Occurrence via Jaccard-Koeffizient; Patents mit
+nur einem CPC-Code koennen keine Paare bilden und wuerden die Tabelle nur
+aufblaehen, ohne den Use-Case zu unterstuetzen. Patents mit einem oder keinem
+CPC-Code werden in UC1/UC5/UC8 weiterhin ueber `patents.cpc_codes` (denormalisierte
+Array-Spalte) erreichbar, die Materialized Views lesen direkt daraus.
 
 #### Trigger
 

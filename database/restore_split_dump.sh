@@ -186,16 +186,24 @@ done
 echo ""
 echo "[7/9] Junction-Tabellen ableiten (patent_cpc, patent_applicants, applicants)..."
 
-# Skript in Container kopieren und ausfuehren
+# Drei Fundstellen in dieser Reihenfolge:
+#   1. Host-Dateisystem (Repo-Checkout) - fuer lokale Entwicklung
+#   2. Im DB-Image eingebacken unter /opt/restore/ - fuer Server-Deployment
+#      wo das Repo evtl. nicht vollstaendig vorhanden ist
+#   3. Skip mit Warnung
 if [ -f "database/sql/seed_junctions_production.sql" ]; then
     docker cp "database/sql/seed_junctions_production.sql" \
         "${CONTAINER}:/tmp/seed_junctions_production.sql"
     docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
         -f /tmp/seed_junctions_production.sql
     docker exec "$CONTAINER" rm -f /tmp/seed_junctions_production.sql
-    echo -e "   ${GREEN}Junction-Ableitung abgeschlossen.${NC}"
+    echo -e "   ${GREEN}Junction-Ableitung abgeschlossen (vom Host).${NC}"
+elif docker exec "$CONTAINER" test -f /opt/restore/seed_junctions_production.sql 2>/dev/null; then
+    docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
+        -f /opt/restore/seed_junctions_production.sql
+    echo -e "   ${GREEN}Junction-Ableitung abgeschlossen (aus Image).${NC}"
 else
-    echo -e "   ${YELLOW}SKIP: database/sql/seed_junctions_production.sql nicht gefunden.${NC}"
+    echo -e "   ${YELLOW}SKIP: seed_junctions_production.sql nicht gefunden.${NC}"
     echo -e "   ${YELLOW}UC1/UC3/UC5/UC8-Services haben dann keine Junction-Daten.${NC}"
 fi
 
@@ -204,17 +212,33 @@ fi
 # -------------------------------------------------
 echo ""
 echo "[8/9] Materialized Views aktualisieren..."
-docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "
-    REFRESH MATERIALIZED VIEW cross_schema.mv_patent_counts_by_cpc_year;
-    REFRESH MATERIALIZED VIEW cross_schema.mv_cpc_cooccurrence;
-    REFRESH MATERIALIZED VIEW cross_schema.mv_yearly_tech_counts;
-    REFRESH MATERIALIZED VIEW cross_schema.mv_top_applicants;
-    REFRESH MATERIALIZED VIEW cross_schema.mv_patent_country_distribution;
-    REFRESH MATERIALIZED VIEW cross_schema.mv_project_counts_by_year;
-    REFRESH MATERIALIZED VIEW cross_schema.mv_cordis_country_pairs;
-    REFRESH MATERIALIZED VIEW cross_schema.mv_top_cordis_orgs;
-    REFRESH MATERIALIZED VIEW cross_schema.mv_funding_by_instrument;
-"
+
+# Bevorzugt via refresh_cross_schema_mvs.sql (setzt statement_timeout=0 und
+# nutzt CONCURRENTLY). Fallback: inline non-concurrent refresh.
+if [ -f "database/sql/refresh_cross_schema_mvs.sql" ]; then
+    docker cp "database/sql/refresh_cross_schema_mvs.sql" \
+        "${CONTAINER}:/tmp/refresh_cross_schema_mvs.sql"
+    docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
+        -f /tmp/refresh_cross_schema_mvs.sql
+    docker exec "$CONTAINER" rm -f /tmp/refresh_cross_schema_mvs.sql
+elif docker exec "$CONTAINER" test -f /opt/restore/refresh_cross_schema_mvs.sql 2>/dev/null; then
+    docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" \
+        -f /opt/restore/refresh_cross_schema_mvs.sql
+else
+    echo -e "   ${YELLOW}Fallback: inline MV-Refresh ohne statement_timeout=0${NC}"
+    docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -c "
+        SET statement_timeout = 0;
+        REFRESH MATERIALIZED VIEW cross_schema.mv_patent_counts_by_cpc_year;
+        REFRESH MATERIALIZED VIEW cross_schema.mv_cpc_cooccurrence;
+        REFRESH MATERIALIZED VIEW cross_schema.mv_yearly_tech_counts;
+        REFRESH MATERIALIZED VIEW cross_schema.mv_top_applicants;
+        REFRESH MATERIALIZED VIEW cross_schema.mv_patent_country_distribution;
+        REFRESH MATERIALIZED VIEW cross_schema.mv_project_counts_by_year;
+        REFRESH MATERIALIZED VIEW cross_schema.mv_cordis_country_pairs;
+        REFRESH MATERIALIZED VIEW cross_schema.mv_top_cordis_orgs;
+        REFRESH MATERIALIZED VIEW cross_schema.mv_funding_by_instrument;
+    "
+fi
 
 # -------------------------------------------------
 # [9/9] Performance-Settings zuruecksetzen

@@ -11,8 +11,10 @@ COPY database/sql/seed_junctions.sql        /docker-entrypoint-initdb.d/101_seed
 COPY database/mock_data/                    /docker-entrypoint-initdb.d/mock_data/
 
 # Restore-Werkzeuge (nicht bei Init)
-COPY database/sql/restore_dump.sql          /opt/restore/restore_dump.sql
-COPY database/restore_on_server.sh          /opt/restore/restore_on_server.sh
+COPY database/sql/restore_dump.sql               /opt/restore/restore_dump.sql
+COPY database/sql/seed_junctions_production.sql  /opt/restore/seed_junctions_production.sql
+COPY database/sql/refresh_cross_schema_mvs.sql   /opt/restore/refresh_cross_schema_mvs.sql
+COPY database/restore_on_server.sh               /opt/restore/restore_on_server.sh
 
 RUN chmod +x /docker-entrypoint-initdb.d/100_seed_mock.sh \
     && chmod +x /opt/restore/restore_on_server.sh

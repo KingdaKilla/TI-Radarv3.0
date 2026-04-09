@@ -6,7 +6,7 @@
 |---|---|---|
 | Docker Desktop | >= 4.x | `docker --version` |
 | Docker Compose Plugin | >= 2.x | `docker compose version` |
-| Festplattenspeicher | >= 5 GB | Docker-Images + Demo-Datenbank. Für Vollimport (EPO + CORDIS): ~400 GB |
+| Festplattenspeicher | >= 5 GB | Docker-Images + Demo-Datenbank. Für Vollimport (EPO + CORDIS): ~450 GB inkl. Junction-Tabellen + WAL-Headroom |
 | RAM | >= 16 GB empfohlen | PostgreSQL benötigt 8 GB (konfiguriert) |
 
 ## Schritt-für-Schritt-Setup
@@ -86,9 +86,11 @@ Die PostgreSQL-Daten werden in einem Docker-Volume am Projektstandort gespeicher
 
 **Hinweise:**
 - Das Volume wird beim ersten Start automatisch erstellt
-- Die Datenbank belegt ca. 300 GB (mit EPO-Patenten)
+- Die Datenbank belegt ca. 363 GB mit voller Datenlage (156M Patents, gefuellte
+  Junction-Tabellen, `cross_schema.document_chunks` mit pgvector-Embeddings)
 - Ohne EPO-Import (nur CORDIS-Demodaten) ca. 50 MB
-- Backup: `docker compose -f deploy/docker-compose.yml exec db pg_dump -U tip_admin ti_radar > backup.sql`
+- **Backup:** `./database/create_split_dump.sh` (partitionierter Split-Dump,
+  siehe Abschnitt [Split-Dump Backup & Restore](#split-dump-backup--restore-production-grade))
 
 ## Bulk-Daten-Import (optional)
 
@@ -110,6 +112,128 @@ Für den Erst-Import der Patent- und CORDIS-Daten stehen Bulk-Import-Pfade zur V
    ```bash
    CORDIS_BULK_PATH=./data/bulk/CORDIS
    ```
+
+## Split-Dump Backup & Restore (Production-Grade)
+
+Fuer den produktiven Datenaustausch zwischen Entwicklungs- und Zielumgebung
+steht ein partitionierter Split-Dump-Workflow zur Verfuegung. Er ist dem
+monolithischen `pg_dump` vorzuziehen, weil einzelne Patent-Dekaden individuell
+kopiert, geprueft und ggf. neu uebertragen werden koennen.
+
+### Dump erstellen
+
+```bash
+# Erzeugt D:\ti_radar_dump_YYYY-MM-DD\ mit 29 Dateien (~73 GB bei voller DB)
+./database/create_split_dump.sh
+```
+
+**Struktur des Dump-Verzeichnisses:**
+
+```
+ti_radar_dump_YYYY-MM-DD/
+├── 00_schema_only.sql                  # DDL (Schema, Partitions, Indexe, MVs)
+├── cordis_schema.backup                # data-only, custom format
+├── cross_schema.backup                 # data-only (document_chunks + MVs)
+├── entity_schema.backup
+├── export_schema.backup
+├── research_schema.backup
+├── dump.sha256                         # sha256sum fuer jede Datei
+└── patent_schema/
+    ├── patents_pre1980.backup          # Patent-Dekaden (data-only)
+    ├── patents_1980s.backup
+    ├── patents_1990s.backup
+    ├── patents_2000s.backup
+    ├── patents_2010s.backup
+    ├── patents_2020s.backup
+    ├── patent_cpc_pre1980.backup       # Junction-Partitionen (data-only)
+    ├── ... (weitere Junction-Partitionen)
+    ├── applicants.backup
+    └── cpc_descriptions.backup
+```
+
+Das Skript schreibt jede Datei zunaechst nach `/tmp/dump_split/` **im
+Container**, kopiert sie sofort nach Host und loescht die Container-Version
+(pro-Datei copy+delete). Dadurch bleibt der Container-Tempspace auf maximal
+eine Datei begrenzt -- wichtig unter Docker Desktop/Windows, wo die dynamisch
+wachsende VHDX sonst C: vollschreibt.
+
+**Windows-Besonderheit:** Das Skript setzt intern `MSYS_NO_PATHCONV=1` und
+nutzt `cygpath -m` fuer die `docker cp`-Destinations, weil Git Bash POSIX-
+Pfade wie `/d/...` sonst falsch zu `C:\d\...` konvertiert.
+
+### Transfer zum Server
+
+```bash
+# z.B. via SFTP
+sftp user@server
+sftp> mkdir ti_radar_dump_YYYY-MM-DD
+sftp> put -r ti_radar_dump_YYYY-MM-DD
+```
+
+Nach dem Transfer die Checksums auf dem Server verifizieren:
+
+```bash
+ssh user@server 'cd ti_radar_dump_YYYY-MM-DD && sha256sum -c dump.sha256'
+```
+
+Jede Datei muss `OK` zeigen. Bei Fehlern: gezielt die betroffene Datei neu
+uebertragen.
+
+### Restore auf dem Zielserver
+
+```bash
+# Voraussetzung: Repo geclonet, Docker Compose gestartet (db-Container laeuft)
+cd /pfad/zu/TI-Radarv3.0
+./database/restore_split_dump.sh /pfad/zu/ti_radar_dump_YYYY-MM-DD
+```
+
+Das Skript laeuft in 9 Phasen:
+
+| Phase | Beschreibung |
+|---|---|
+| `[1/9]` | DB-Container starten, Ready-Check |
+| `[2/9]` | Postgres Performance-Tuning fuer Import (`max_wal_size=10GB`, `fsync=off`, `synchronous_commit=off`, `autovacuum=off`) |
+| `[3/9]` | Alle Tabellen leeren, Sequenzen zuruecksetzen, Vektor-Dimensionen anpassen |
+| `[4/9]` | Nicht-Patent-Schemas restaurieren (cordis, research, entity, export, cross) |
+| `[5/9]` | Patent-Schema Referenztabellen (applicants, cpc_descriptions, citations, metadata, enrichment_progress) |
+| `[6/9]` | Patent-Dekaden restaurieren (pre1980 bis 2020s) -- laengste Phase |
+| `[7/9]` | **Junction-Tabellen ableiten** aus denormalisierten `patents.cpc_codes` / `applicant_names` (idempotent, siehe DATENMODELL.md) |
+| `[8/9]` | Materialized Views refreshen (`REFRESH CONCURRENTLY` mit `statement_timeout=0`) |
+| `[9/9]` | Performance-Settings zuruecksetzen, Container-Restart |
+
+Phase `[7/9]` laeuft das Skript `database/sql/seed_junctions_production.sql`
+aus. Es ist idempotent (alle INSERTs mit `ON CONFLICT DO NOTHING`) und kann
+gefahrlos erneut ausgefuehrt werden, wenn das Restore unterbrochen wird. Auf
+dem DB-Image ist das Skript zusaetzlich unter `/opt/restore/
+seed_junctions_production.sql` eingebacken, sodass Phase `[7/9]` auch ohne
+Repo-Checkout funktioniert.
+
+**Geschaetzte Gesamtzeit fuer einen vollen Restore (156M Patents):**
+- Patent-Dekaden-Restore: 2-3 Stunden
+- Junction-Derivation: 4-5 Stunden (primaer 2010s/2020s Decades)
+- MV-Refresh: 30-60 Minuten
+- **Total: ca. 7-9 Stunden**
+
+### Automatische Junction-Ableitung nach Imports
+
+Ausserhalb von Restores sorgt der **Scheduler** (`services/import-svc/src/
+scheduler.py`) dafuer, dass nach jedem woechentlichen EPO-Bulk-Import die
+Junction-Derivation ueber `junction_deriver.derive_junctions()` laeuft. Fuer
+den manuellen Einsatz gegen eine laufende DB:
+
+```bash
+docker cp database/sql/seed_junctions_production.sql \
+  ti-radar-db:/tmp/seed_junctions_production.sql
+docker exec ti-radar-db psql -U tip_admin -d ti_radar \
+  -f /tmp/seed_junctions_production.sql
+```
+
+Oder, wenn das Skript im Image liegt:
+
+```bash
+docker exec ti-radar-db psql -U tip_admin -d ti_radar \
+  -f /opt/restore/seed_junctions_production.sql
+```
 
 ## Auto-Seeding (Demo-Daten)
 

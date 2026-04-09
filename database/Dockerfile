@@ -15,6 +15,15 @@ COPY database/sql/restore_dump.sql               /opt/restore/restore_dump.sql
 COPY database/sql/seed_junctions_production.sql  /opt/restore/seed_junctions_production.sql
 COPY database/sql/refresh_cross_schema_mvs.sql   /opt/restore/refresh_cross_schema_mvs.sql
 COPY database/restore_on_server.sh               /opt/restore/restore_on_server.sh
+COPY database/restore_split_dump.sh              /opt/restore/restore_split_dump.sh
+
+# Repo-less Deployment: Server-Compose und .env-Vorlage ins Image
+# einbacken, damit ein Server ohne git-Checkout auskommt. Per
+# "docker create --name tmp <image>; docker cp tmp:/opt/restore/... ."
+# extrahierbar.
+COPY deploy/docker-compose.server.yml            /opt/restore/docker-compose.server.yml
+COPY .env.example                                /opt/restore/.env.example
 
 RUN chmod +x /docker-entrypoint-initdb.d/100_seed_mock.sh \
-    && chmod +x /opt/restore/restore_on_server.sh
+    && chmod +x /opt/restore/restore_on_server.sh \
+    && chmod +x /opt/restore/restore_split_dump.sh

@@ -113,6 +113,200 @@ Für den Erst-Import der Patent- und CORDIS-Daten stehen Bulk-Import-Pfade zur V
    CORDIS_BULK_PATH=./data/bulk/CORDIS
    ```
 
+## Repo-less Server Deployment (nur GHCR-Images)
+
+Fuer Produktions-Server, auf denen **kein git-Checkout** des Repos gewuenscht
+ist. Alle benoetigten Dateien werden aus dem vorgefertigten
+`ti-radar-db`-Image unter `/opt/restore/` extrahiert:
+
+| Datei | Zweck |
+|---|---|
+| `restore_split_dump.sh` | Restore-Wrapper fuer partitionierte Dumps (9 Phasen) |
+| `restore_on_server.sh` | Alternativer Wrapper fuer monolithische Dumps |
+| `docker-compose.server.yml` | Self-contained Compose-File (nur `image:`-Refs, keine `build:`) |
+| `.env.example` | Vorlage fuer `.env` |
+| `seed_junctions_production.sql` | Junction-Ableitung (wird von Phase `[7/9]` automatisch gefunden) |
+| `refresh_cross_schema_mvs.sql` | MV-Refresh (wird von Phase `[8/9]` automatisch gefunden) |
+| `restore_dump.sql` | Truncate + Sequence-Reset (wird von Phase `[3/9]` genutzt) |
+
+Voraussetzungen: Docker Engine + Compose-Plugin, Login bei ghcr.io falls
+das Image privat ist.
+
+### 1. Arbeitsverzeichnis und Image-Pull
+
+```bash
+# Einmaliges Arbeitsverzeichnis
+mkdir -p ~/ti-radar && cd ~/ti-radar
+
+# Optional: bei ghcr.io einloggen (nur noetig wenn Images privat sind)
+# echo $GHCR_PAT | docker login ghcr.io -u kingdakilla --password-stdin
+
+# DB-Image ziehen — enthaelt alle Setup-Dateien unter /opt/restore/
+docker pull ghcr.io/kingdakilla/ti-radar-db:latest
+# ...oder gepinnt auf einen Tag:
+# docker pull ghcr.io/kingdakilla/ti-radar-db:v3.2.7
+```
+
+### 2. Dateien aus dem Image extrahieren
+
+Ein temporaerer, niemals gestarteter Container dient nur als File-Quelle:
+
+```bash
+docker create --name ti-radar-extract ghcr.io/kingdakilla/ti-radar-db:latest
+
+# Bash-Wrapper (ausfuehrbar)
+docker cp ti-radar-extract:/opt/restore/restore_split_dump.sh ./restore_split_dump.sh
+docker cp ti-radar-extract:/opt/restore/restore_on_server.sh  ./restore_on_server.sh
+
+# Compose-File + .env Vorlage
+docker cp ti-radar-extract:/opt/restore/docker-compose.server.yml ./docker-compose.yml
+docker cp ti-radar-extract:/opt/restore/.env.example ./.env.example
+
+# Temporaeren Container wegwerfen
+docker rm ti-radar-extract
+
+# Ausfuehrbar machen (chmod ging beim docker cp ggf. verloren)
+chmod +x restore_split_dump.sh restore_on_server.sh
+
+ls -la
+```
+
+**Hinweis:** `docker-compose.yml` ist hier der umbenannte `server.yml`-Inhalt.
+Dadurch findet `docker compose` es automatisch im CWD und du brauchst kein
+`-f` Flag. Falls du den Namen behalten willst, verwende im Folgenden
+`docker compose -f docker-compose.server.yml ...`.
+
+### 3. `.env` konfigurieren
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Pflicht-Variablen:
+
+```
+POSTGRES_DB=ti_radar
+POSTGRES_USER=tip_admin
+POSTGRES_PASSWORD=<sicheres_passwort>
+GHCR_OWNER=kingdakilla       # fuer ghcr.io/${GHCR_OWNER}/ti-radar-* Image-Refs
+IMAGE_TAG=v3.2.7             # oder latest
+SCHEDULER_ENABLED=false      # waehrend Restore aus, spaeter auf true
+```
+
+Dateirechte absichern: `chmod 600 .env`
+
+### 4. Nur DB-Container starten (Restore-Vorbereitung)
+
+```bash
+# Nur die DB zuerst (Restore braucht keine UC-Services)
+docker compose --env-file .env pull db
+docker compose --env-file .env up -d db
+
+# Auf PostgreSQL-Ready warten
+until docker exec ti-radar-db pg_isready -U tip_admin -d ti_radar >/dev/null 2>&1; do
+    echo "warte auf DB..."; sleep 3
+done
+```
+
+Beim ersten Start laeuft automatisch das Mock-Seeding (~50 MB Demo-Daten).
+Das ist OK — Phase `[3/9]` des Restore-Skripts leert alle Tabellen wieder.
+
+### 5. Split-Dump Restore ausfuehren
+
+```bash
+# Mit DELETE_DUMPS_AFTER_RESTORE=1 auf knappem Plattenplatz
+COMPOSE_FILE=docker-compose.yml \
+DELETE_DUMPS_AFTER_RESTORE=1 \
+    ./restore_split_dump.sh /home/ben/ti_radar_dump_2026-04-08
+```
+
+Was passiert:
+- Phase `[1/9]` startet die DB (laeuft schon)
+- Phase `[3/9]` truncated alle Tabellen, holt `restore_dump.sql` aus `/opt/restore/`
+- Phase `[7/9]` ruft `seed_junctions_production.sql` auf — Fallback-Kette:
+  1. `./database/sql/seed_junctions_production.sql` (nicht vorhanden im repo-less Setup)
+  2. `/opt/restore/seed_junctions_production.sql` **im Container** ← greift hier
+- Phase `[8/9]` analog mit `refresh_cross_schema_mvs.sql`
+
+Das Skript laeuft `docker compose -f $COMPOSE_FILE up -d db` — deshalb muss
+`docker-compose.yml` im aktuellen Verzeichnis liegen. Idealerweise startest du
+den Restore in `screen`/`tmux`:
+
+```bash
+screen -S restore
+COMPOSE_FILE=docker-compose.yml DELETE_DUMPS_AFTER_RESTORE=1 \
+    ./restore_split_dump.sh /home/ben/ti_radar_dump_2026-04-08
+# Ctrl+A, D zum Detachen, "screen -r restore" zum Wiederanhaengen
+```
+
+### 6. Restlichen Stack hochfahren
+
+Nach erfolgreichem Restore (ca. 7–9 Stunden bei 156 M Patents) kann der
+Rest der Services gestartet werden:
+
+```bash
+# Scheduler wieder aktivieren
+sed -i 's/^SCHEDULER_ENABLED=false/SCHEDULER_ENABLED=true/' .env
+
+# Alle Services ziehen + starten
+docker compose --env-file .env pull
+docker compose --env-file .env up -d
+```
+
+### 7. Health Check
+
+```bash
+sleep 30
+curl http://localhost:8000/health | python3 -m json.tool
+curl "http://localhost:8000/health?deep=true" | python3 -m json.tool
+curl -I http://localhost:3000
+```
+
+Unter der Server-IP erreichbar:
+- Port 3000 — Frontend
+- Port 8000 — API
+- Port 8000/docs — Swagger
+
+**Einschraenkung:** Das Monitoring-Profil (`prometheus` + `grafana`) benoetigt
+zusaetzlich die Dateien unter `deploy/infra/prometheus/prometheus.yml` und
+`deploy/infra/grafana/*`. Diese sind NICHT im Image. Wenn du Monitoring
+willst, musst du diese Dateien entweder manuell anlegen oder das `infra/`-
+Verzeichnis aus GitHub einzeln per `curl` laden:
+
+```bash
+mkdir -p infra/prometheus infra/grafana/dashboards infra/grafana/provisioning
+curl -o infra/prometheus/prometheus.yml \
+    https://raw.githubusercontent.com/KingdaKilla/TI-Radarv3.0/master/deploy/infra/prometheus/prometheus.yml
+# ... analog fuer grafana-Dateien
+```
+
+Danach `docker compose --profile monitoring up -d`.
+
+### Updates auf eine neue Version
+
+```bash
+cd ~/ti-radar
+
+# Neues DB-Image ziehen (enthaelt ggf. aktualisierte Skripte)
+docker pull ghcr.io/kingdakilla/ti-radar-db:latest
+
+# Neue Dateien extrahieren (ueberschreibt die alten)
+docker create --name ti-radar-extract ghcr.io/kingdakilla/ti-radar-db:latest
+docker cp ti-radar-extract:/opt/restore/restore_split_dump.sh ./restore_split_dump.sh
+docker cp ti-radar-extract:/opt/restore/docker-compose.server.yml ./docker-compose.yml
+docker rm ti-radar-extract
+chmod +x restore_split_dump.sh
+
+# Alle Images refreshen und Services neu starten
+docker compose --env-file .env pull
+docker compose --env-file .env up -d
+```
+
+Deine `.env` und deine Dump-Dateien bleiben unangetastet.
+
+---
+
 ## Split-Dump Backup & Restore (Production-Grade)
 
 Fuer den produktiven Datenaustausch zwischen Entwicklungs- und Zielumgebung

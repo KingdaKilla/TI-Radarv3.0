@@ -7,13 +7,13 @@ database
 !database/restore_on_server.sh
 !database/restore_split_dump.sh
 deploy
-!deploy/docker-compose.server.yml
 docs
 tests
 scripts
 proto
 *.md
 .env
+.env.example
 .gitignore
 LICENSE
 frontend/node_modules
@@ -21,5 +21,3 @@ frontend/.next
 **/__pycache__
 **/.pytest_cache
 **/.mypy_cache
-# .env.example wird fuer das ti-radar-db Image gebraucht (repo-less
-# Deployment) — NICHT ausschliessen.

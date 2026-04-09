@@ -116,21 +116,34 @@ Für den Erst-Import der Patent- und CORDIS-Daten stehen Bulk-Import-Pfade zur V
 ## Repo-less Server Deployment (nur GHCR-Images)
 
 Fuer Produktions-Server, auf denen **kein git-Checkout** des Repos gewuenscht
-ist. Alle benoetigten Dateien werden aus dem vorgefertigten
-`ti-radar-db`-Image unter `/opt/restore/` extrahiert:
+ist. Zwei Kategorien von Dateien werden benoetigt:
+
+**Aus dem `ti-radar-db`-Image unter `/opt/restore/`** (Runtime-Artefakte,
+werden entweder direkt im Container ausgefuehrt oder per `docker cp`
+extrahiert und auf dem Host gestartet):
 
 | Datei | Zweck |
 |---|---|
-| `restore_split_dump.sh` | Restore-Wrapper fuer partitionierte Dumps (9 Phasen) |
-| `restore_on_server.sh` | Alternativer Wrapper fuer monolithische Dumps |
-| `docker-compose.server.yml` | Self-contained Compose-File (nur `image:`-Refs, keine `build:`) |
-| `.env.example` | Vorlage fuer `.env` |
-| `seed_junctions_production.sql` | Junction-Ableitung (wird von Phase `[7/9]` automatisch gefunden) |
-| `refresh_cross_schema_mvs.sql` | MV-Refresh (wird von Phase `[8/9]` automatisch gefunden) |
-| `restore_dump.sql` | Truncate + Sequence-Reset (wird von Phase `[3/9]` genutzt) |
+| `restore_split_dump.sh` | Restore-Wrapper fuer partitionierte Dumps (9 Phasen, auf Host ausgefuehrt) |
+| `restore_on_server.sh` | Alternativer Wrapper fuer monolithische Dumps (auf Host ausgefuehrt) |
+| `seed_junctions_production.sql` | Junction-Ableitung (Phase `[7/9]` findet es automatisch im Image) |
+| `refresh_cross_schema_mvs.sql` | MV-Refresh (Phase `[8/9]` findet es automatisch im Image) |
+| `restore_dump.sql` | Truncate + Sequence-Reset (Phase `[3/9]` nutzt es) |
 
-Voraussetzungen: Docker Engine + Compose-Plugin, Login bei ghcr.io falls
-das Image privat ist.
+**Aus GitHub per `curl`** (Deployment-Vorlagen, keine Runtime-Artefakte):
+
+| Datei | Raw-URL |
+|---|---|
+| `docker-compose.server.yml` | `https://raw.githubusercontent.com/KingdaKilla/TI-Radarv3.0/master/deploy/docker-compose.server.yml` |
+| `.env.example` | `https://raw.githubusercontent.com/KingdaKilla/TI-Radarv3.0/master/.env.example` |
+
+Warum die Trennung: Runtime-Artefakte (Bash-Wrapper, SQL-Skripte) werden
+beim Release automatisch mitversioniert und passen damit exakt zum Image.
+Deployment-Vorlagen (Compose, Env) sind keine Runtime-Artefakte — sie
+aendern sich selten und koennen unabhaengig vom Image gezogen werden.
+
+Voraussetzungen: Docker Engine + Compose-Plugin, `curl`, Login bei ghcr.io
+falls das Image privat ist.
 
 ### 1. Arbeitsverzeichnis und Image-Pull
 
@@ -147,26 +160,29 @@ docker pull ghcr.io/kingdakilla/ti-radar-db:latest
 # docker pull ghcr.io/kingdakilla/ti-radar-db:v3.2.7
 ```
 
-### 2. Dateien aus dem Image extrahieren
+### 2. Bash-Wrapper aus dem Image extrahieren
 
-Ein temporaerer, niemals gestarteter Container dient nur als File-Quelle:
+Ein temporaerer, niemals gestarteter Container dient nur als File-Quelle
+fuer die Bash-Wrapper:
 
 ```bash
 docker create --name ti-radar-extract ghcr.io/kingdakilla/ti-radar-db:latest
-
-# Bash-Wrapper (ausfuehrbar)
 docker cp ti-radar-extract:/opt/restore/restore_split_dump.sh ./restore_split_dump.sh
 docker cp ti-radar-extract:/opt/restore/restore_on_server.sh  ./restore_on_server.sh
-
-# Compose-File + .env Vorlage
-docker cp ti-radar-extract:/opt/restore/docker-compose.server.yml ./docker-compose.yml
-docker cp ti-radar-extract:/opt/restore/.env.example ./.env.example
-
-# Temporaeren Container wegwerfen
 docker rm ti-radar-extract
 
-# Ausfuehrbar machen (chmod ging beim docker cp ggf. verloren)
 chmod +x restore_split_dump.sh restore_on_server.sh
+```
+
+### 2b. Compose-File und Env-Vorlage von GitHub holen
+
+```bash
+BRANCH=master   # oder ein konkreter Tag wie v3.2.9
+
+curl -fsSL -o docker-compose.yml \
+    "https://raw.githubusercontent.com/KingdaKilla/TI-Radarv3.0/${BRANCH}/deploy/docker-compose.server.yml"
+curl -fsSL -o .env.example \
+    "https://raw.githubusercontent.com/KingdaKilla/TI-Radarv3.0/${BRANCH}/.env.example"
 
 ls -la
 ```
@@ -291,19 +307,23 @@ cd ~/ti-radar
 # Neues DB-Image ziehen (enthaelt ggf. aktualisierte Skripte)
 docker pull ghcr.io/kingdakilla/ti-radar-db:latest
 
-# Neue Dateien extrahieren (ueberschreibt die alten)
+# Neue Bash-Wrapper aus dem Image extrahieren (ueberschreiben die alten)
 docker create --name ti-radar-extract ghcr.io/kingdakilla/ti-radar-db:latest
 docker cp ti-radar-extract:/opt/restore/restore_split_dump.sh ./restore_split_dump.sh
-docker cp ti-radar-extract:/opt/restore/docker-compose.server.yml ./docker-compose.yml
 docker rm ti-radar-extract
 chmod +x restore_split_dump.sh
+
+# Optional: auch die Compose-Vorlage aus GitHub refreshen (selten noetig)
+# curl -fsSL -o docker-compose.yml \
+#     https://raw.githubusercontent.com/KingdaKilla/TI-Radarv3.0/master/deploy/docker-compose.server.yml
 
 # Alle Images refreshen und Services neu starten
 docker compose --env-file .env pull
 docker compose --env-file .env up -d
 ```
 
-Deine `.env` und deine Dump-Dateien bleiben unangetastet.
+Deine `.env`, dein `docker-compose.yml` und deine Dump-Dateien bleiben
+unangetastet.
 
 ---
 

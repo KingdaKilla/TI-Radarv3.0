@@ -11,18 +11,22 @@ COPY database/sql/seed_junctions.sql        /docker-entrypoint-initdb.d/101_seed
 COPY database/mock_data/                    /docker-entrypoint-initdb.d/mock_data/
 
 # Restore-Werkzeuge (nicht bei Init)
+#
+# Hier kommen nur Dateien rein, die der Container zur Laufzeit oder
+# beim Restore tatsaechlich braucht:
+#   - SQL-Skripte fuer Truncate / Junction-Ableitung / MV-Refresh
+#   - Bash-Wrapper (werden per docker cp aus dem Image extrahiert und
+#     dann auf dem Host ausgefuehrt)
+#
+# Bewusst NICHT im Image: .env.example und docker-compose.server.yml.
+# Die sind keine Runtime-Artefakte, sondern Deployment-Vorlagen; sie
+# liegen auf GitHub und koennen bei Bedarf per `curl` vom Server aus
+# geholt werden.
 COPY database/sql/restore_dump.sql               /opt/restore/restore_dump.sql
 COPY database/sql/seed_junctions_production.sql  /opt/restore/seed_junctions_production.sql
 COPY database/sql/refresh_cross_schema_mvs.sql   /opt/restore/refresh_cross_schema_mvs.sql
 COPY database/restore_on_server.sh               /opt/restore/restore_on_server.sh
 COPY database/restore_split_dump.sh              /opt/restore/restore_split_dump.sh
-
-# Repo-less Deployment: Server-Compose und .env-Vorlage ins Image
-# einbacken, damit ein Server ohne git-Checkout auskommt. Per
-# "docker create --name tmp <image>; docker cp tmp:/opt/restore/... ."
-# extrahierbar.
-COPY deploy/docker-compose.server.yml            /opt/restore/docker-compose.server.yml
-COPY .env.example                                /opt/restore/.env.example
 
 RUN chmod +x /docker-entrypoint-initdb.d/100_seed_mock.sh \
     && chmod +x /opt/restore/restore_on_server.sh \

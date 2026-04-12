@@ -449,7 +449,7 @@ Quellenuebergreifende Materialized Views fuer OLAP-Analysen und Import-Tracking.
 | `import_log` | Inkrementelles Import-Tracking (Quelle, Dateiname, Status, Dauer) |
 | `etl_checkpoints` | Per-Source Sync-State (Cursor, last_sync_at, records_synced) |
 | `etl_run_log` | ETL-Ausfuehrungshistorie (started_at, finished_at, Status, Records) |
-| `document_chunks` | RAG-Dokumenten-Chunks mit Embeddings (vector(384)) |
+| `document_chunks` | RAG-Dokumenten-Chunks mit Embeddings (Schema: vector(384), Dump: vector(1024) -- wird beim Restore via `restore_dump.sql` angepasst) |
 
 #### Materialized Views (Analytische Schicht)
 
@@ -621,6 +621,8 @@ erDiagram
 | `document_chunks.embedding` | `cross_schema` | RAG-Chunks fuer semantische Suche |
 
 **Status:** Spalten provisioniert (Typ `vector(384)`), aber noch nicht befuellt. Vorgesehen fuer kuenftige LLM-Enrichment-Pipeline.
+
+**Hinweis Dump-Kompatibilitaet:** Der Produktions-Dump verwendet fuer `document_chunks.embedding` eine andere Dimensionalitaet (`vector(1024)`). Beim Restore wird die Spalte via `restore_dump.sql` automatisch von `vector(384)` auf `vector(1024)` geaendert. Alle anderen Embedding-Spalten bleiben bei `vector(384)` und stimmen mit dem Dump ueberein.
 
 ---
 

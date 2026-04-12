@@ -37,19 +37,7 @@ Folgende Werte müssen in `.env` eingetragen werden:
 | `TI_RADAR_ADMIN_KEY` | nein | Admin-Key fuer Import-Endpunkte (leer = kein Auth) | |
 | `GRAFANA_ADMIN_PASSWORD` | nein | Grafana-Passwort (nur mit Monitoring-Profil) | `admin` |
 
-### 3. Setup-Skript ausführen
-
-```bash
-bash scripts/setup.sh
-```
-
-Das Skript:
-1. Prüft Docker-Installation
-2. Erstellt `.env` falls nicht vorhanden
-3. Generiert Protobuf-Stubs (falls grpcio-tools installiert)
-4. Baut alle Docker-Images
-
-### 4. Stack starten
+### 3. Stack starten
 
 **Lokale Entwicklung** (baut Images lokal):
 
@@ -71,7 +59,7 @@ docker compose -f deploy/docker-compose.server.yml --env-file .env up -d
 
 Beim ersten Start werden automatisch das Datenbankschema angelegt und CORDIS-Demodaten geladen.
 
-### 5. Erreichbarkeit prüfen
+### 4. Erreichbarkeit prüfen
 
 | Service | URL |
 |---|---|
@@ -157,7 +145,7 @@ mkdir -p ~/ti-radar && cd ~/ti-radar
 # DB-Image ziehen — enthaelt alle Setup-Dateien unter /opt/restore/
 docker pull ghcr.io/kingdakilla/ti-radar-db:latest
 # ...oder gepinnt auf einen Tag:
-# docker pull ghcr.io/kingdakilla/ti-radar-db:v3.2.7
+# docker pull ghcr.io/kingdakilla/ti-radar-db:v3.3.1
 ```
 
 ### 2. Bash-Wrapper aus dem Image extrahieren
@@ -206,7 +194,7 @@ POSTGRES_DB=ti_radar
 POSTGRES_USER=tip_admin
 POSTGRES_PASSWORD=<sicheres_passwort>
 GHCR_OWNER=kingdakilla       # fuer ghcr.io/${GHCR_OWNER}/ti-radar-* Image-Refs
-IMAGE_TAG=v3.2.7             # oder latest
+IMAGE_TAG=v3.3.1             # oder latest
 SCHEDULER_ENABLED=false      # waehrend Restore aus, spaeter auf true
 ```
 
@@ -429,7 +417,7 @@ Das Skript laeuft in 9 Phasen:
 |---|---|
 | `[1/9]` | DB-Container starten, Ready-Check |
 | `[2/9]` | Postgres Performance-Tuning fuer Import (`max_wal_size=10GB`, `fsync=off`, `synchronous_commit=off`, `autovacuum=off`) |
-| `[3/9]` | Alle Tabellen leeren, Sequenzen zuruecksetzen, Vektor-Dimensionen anpassen |
+| `[3/9]` | Alle Tabellen leeren, Sequenzen zuruecksetzen, `document_chunks.embedding` von vector(384) auf vector(1024) anpassen |
 | `[4/9]` | Nicht-Patent-Schemas restaurieren (cordis, research, entity, export, cross) |
 | `[5/9]` | Patent-Schema Referenztabellen (applicants, cpc_descriptions, citations, metadata, enrichment_progress) |
 | `[6/9]` | Patent-Dekaden restaurieren (pre1980 bis 2020s) -- laengste Phase |

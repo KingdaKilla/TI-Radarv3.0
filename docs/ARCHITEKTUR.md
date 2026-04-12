@@ -116,7 +116,7 @@ mappers/            Protobuf-zu-Dict- und Dict-zu-Response-Konvertierung
 
 - **Repository-Rückgabewerte:** Alle Repositories geben frozen slotted Dataclasses zurück. Zugriff immer per Attribut (`.year`, `.count`), nie per Dict-Subscript (`["year"]`).
 - **Port-Interfaces:** Definiert in `packages/shared/domain/ports/` als abstrakte Basisklassen (ABCs).
-- **Protobuf-Stubs:** Generiert via `scripts/generate_protos.sh` in `packages/shared/generated/python/`.
+- **Protobuf-Stubs:** Generiert in `packages/shared/generated/python/` (Build-Schritt im Docker-Image).
 
 ## Service-Kommunikation
 

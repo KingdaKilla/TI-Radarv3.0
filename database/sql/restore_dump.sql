@@ -68,11 +68,23 @@ TRUNCATE public.alembic_version;
 
 -- ============================================================================
 -- 2. Vektor-Dimensionen an Dump anpassen (nur noetig wenn Dump andere Dims hat)
---    Schema definiert vector(384). Auskommentiert da neuer Dump 384 verwendet.
+--    Schema definiert vector(384). Dump verwendet vector(1024).
 -- ============================================================================
 
--- ALTER TABLE cross_schema.document_chunks
---     ALTER COLUMN embedding TYPE vector(1024);
+ALTER TABLE patent_schema.patents
+    ALTER COLUMN title_embedding TYPE vector(1024);
+
+ALTER TABLE cordis_schema.projects
+    ALTER COLUMN content_embedding TYPE vector(1024);
+
+ALTER TABLE research_schema.papers
+    ALTER COLUMN abstract_embedding TYPE vector(1024);
+
+ALTER TABLE entity_schema.unified_actors
+    ALTER COLUMN name_embedding TYPE vector(1024);
+
+ALTER TABLE cross_schema.document_chunks
+    ALTER COLUMN embedding TYPE vector(1024);
 
 
 -- ============================================================================

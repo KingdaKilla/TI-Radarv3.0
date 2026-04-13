@@ -183,7 +183,7 @@ async def suggest_technologies(
             # Patent-Titel per Prefix-Suche (pg_trgm oder ILIKE)
             patent_rows = await conn.fetch(
                 """
-                SELECT title FROM patents
+                SELECT title FROM patent_schema.patents
                 WHERE title ILIKE $1
                 LIMIT 500
                 """,
@@ -194,7 +194,7 @@ async def suggest_technologies(
             # Projekt-Titel per Prefix-Suche
             project_rows = await conn.fetch(
                 """
-                SELECT title FROM projects
+                SELECT title FROM cordis_schema.projects
                 WHERE title ILIKE $1
                 LIMIT 200
                 """,

@@ -64,14 +64,14 @@ class TemporalRepository:
 
         sql = f"""
             SELECT p.publication_year AS year,
-                   a.name AS name,
+                   trim(a.name) AS name,
                    COUNT(*) AS count
             FROM patent_schema.patents p,
-                 LATERAL unnest(p.applicant_names) AS a(name)
+                 LATERAL string_to_table(p.applicant_names, '; ') AS a(name)
             WHERE {where}
               AND p.applicant_names IS NOT NULL
-              AND array_length(p.applicant_names, 1) > 0
-            GROUP BY p.publication_year, a.name
+              AND length(p.applicant_names) > 0
+            GROUP BY p.publication_year, trim(a.name)
             ORDER BY p.publication_year, count DESC
         """
 

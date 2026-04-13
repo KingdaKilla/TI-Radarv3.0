@@ -39,7 +39,7 @@ class GLEIFResult:
     lei: str | None
     legal_name: str | None
     country: str | None
-    entity_status: str | None
+    registration_status: str | None
 
 
 class GLEIFAdapter:
@@ -155,13 +155,13 @@ class GLEIFAdapter:
             async with self._pool.acquire() as conn:
                 if allow_stale:
                     sql = (
-                        "SELECT lei, legal_name, country, entity_status "
+                        "SELECT lei, legal_name, country, registration_status "
                         "FROM entity_schema.gleif_cache "
                         "WHERE raw_name = $1"
                     )
                 else:
                     sql = (
-                        "SELECT lei, legal_name, country, entity_status "
+                        "SELECT lei, legal_name, country, registration_status "
                         "FROM entity_schema.gleif_cache "
                         "WHERE raw_name = $1 "
                         "AND resolved_at > now() - INTERVAL '%d days'" % _CACHE_TTL_DAYS
@@ -176,7 +176,7 @@ class GLEIFAdapter:
                 lei=row["lei"],
                 legal_name=row["legal_name"],
                 country=row["country"],
-                entity_status=row["entity_status"],
+                registration_status=row["registration_status"],
             )
         except Exception as exc:
             logger.warning("gleif_cache_read_fehler", error=str(exc))
@@ -192,20 +192,20 @@ class GLEIFAdapter:
                 await conn.execute(
                     """
                     INSERT INTO entity_schema.gleif_cache
-                        (raw_name, lei, legal_name, country, entity_status, resolved_at)
+                        (raw_name, lei, legal_name, country, registration_status, resolved_at)
                     VALUES ($1, $2, $3, $4, $5, now())
                     ON CONFLICT (raw_name) DO UPDATE SET
                         lei = EXCLUDED.lei,
                         legal_name = EXCLUDED.legal_name,
                         country = EXCLUDED.country,
-                        entity_status = EXCLUDED.entity_status,
+                        registration_status = EXCLUDED.registration_status,
                         resolved_at = now()
                     """,
                     result.raw_name,
                     result.lei,
                     result.legal_name,
                     result.country,
-                    result.entity_status,
+                    result.registration_status,
                 )
         except Exception as exc:
             logger.warning("gleif_cache_write_fehler", error=str(exc))
@@ -295,7 +295,7 @@ class GLEIFAdapter:
                 lei=None,
                 legal_name=None,
                 country=None,
-                entity_status=None,
+                registration_status=None,
             )
 
         top = records[0]
@@ -314,5 +314,5 @@ class GLEIFAdapter:
             lei=lei if lei and len(lei) == 20 else None,
             legal_name=legal_name,
             country=country[:2] if country else None,
-            entity_status=status,
+            registration_status=status,
         )

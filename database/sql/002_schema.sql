@@ -1690,8 +1690,8 @@ GRANT USAGE ON SCHEMA patent_schema  TO svc_landscape, svc_maturity, svc_competi
     importer_epo, tip_admin, tip_readonly;
 
 GRANT USAGE ON SCHEMA cordis_schema  TO svc_landscape, svc_competitive, svc_funding,
-    svc_geographic, svc_temporal, svc_tech_cluster, svc_actor_type, svc_euroscivoc,
-    svc_publication, svc_export, svc_entity_resolution,
+    svc_geographic, svc_research_impact, svc_temporal, svc_tech_cluster, svc_actor_type,
+    svc_euroscivoc, svc_publication, svc_export, svc_entity_resolution,
     importer_cordis, tip_admin, tip_readonly;
 
 GRANT USAGE ON SCHEMA cross_schema   TO svc_landscape, svc_maturity, svc_competitive,
@@ -1746,9 +1746,23 @@ GRANT SELECT ON ALL TABLES IN SCHEMA cordis_schema TO svc_geographic;
 GRANT SELECT ON ALL TABLES IN SCHEMA cross_schema TO svc_geographic;
 GRANT SELECT ON ALL TABLES IN SCHEMA entity_schema TO svc_geographic;
 
--- UC7 Research Impact: reads + writes research_schema (cache management)
+-- UC7 Research Impact: reads + writes research_schema (cache management) + reads cordis_schema
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA research_schema TO svc_research_impact;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA research_schema TO svc_research_impact;
+GRANT SELECT ON ALL TABLES IN SCHEMA cordis_schema TO svc_research_impact;
+
+-- UC9 Tech Cluster: reads patents + CORDIS + cross-schema MVs
+GRANT SELECT ON ALL TABLES IN SCHEMA patent_schema TO svc_tech_cluster;
+GRANT SELECT ON ALL TABLES IN SCHEMA cordis_schema TO svc_tech_cluster;
+GRANT SELECT ON ALL TABLES IN SCHEMA cross_schema TO svc_tech_cluster;
+
+-- UC10 EuroSciVoc: reads CORDIS + cross-schema MVs
+GRANT SELECT ON ALL TABLES IN SCHEMA cordis_schema TO svc_euroscivoc;
+GRANT SELECT ON ALL TABLES IN SCHEMA cross_schema TO svc_euroscivoc;
+
+-- UC12 Patent Grant: reads patents + cross-schema MVs
+GRANT SELECT ON ALL TABLES IN SCHEMA patent_schema TO svc_patent_grant;
+GRANT SELECT ON ALL TABLES IN SCHEMA cross_schema TO svc_patent_grant;
 
 -- UC8 Temporal: reads patents + CORDIS + cross-schema MVs
 GRANT SELECT ON ALL TABLES IN SCHEMA patent_schema TO svc_temporal;

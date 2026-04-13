@@ -225,7 +225,7 @@ class RadarResponse(BaseModel):
     publication: dict[str, Any] = Field(default_factory=dict)
 
     # HATEOAS-Links
-    _links: HATEOASLinks = Field(default_factory=HATEOASLinks, alias="_links")
+    links: HATEOASLinks = Field(default_factory=HATEOASLinks, alias="_links")
 
     # Orchestrator-Metadaten
     uc_errors: list[UseCaseError] = Field(default_factory=list)
@@ -236,7 +236,7 @@ class RadarResponse(BaseModel):
     request_id: str = ""
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
 
-    model_config = {"populate_by_name": True}
+    model_config = {"populate_by_name": True, "serialize_by_alias": True}
 
 
 # =============================================================================

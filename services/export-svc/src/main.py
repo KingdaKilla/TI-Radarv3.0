@@ -113,15 +113,23 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         )
         app.state.db_pool = pool
         logger.info("db_pool_erstellt", dsn=_mask_dsn(settings.database_url))
-
-        # Schema und Tabellen erstellen
-        await _ensure_schema(pool)
     except Exception as exc:
         logger.warning(
             "db_pool_fehler",
             error=str(exc),
             hint="Export-Caching nicht verfuegbar — Orchestrator-Fallback aktiv",
         )
+
+    # Schema und Tabellen erstellen (nur wenn Pool vorhanden)
+    if app.state.db_pool is not None:
+        try:
+            await _ensure_schema(app.state.db_pool)
+        except Exception as exc:
+            logger.warning(
+                "export_schema_fehler",
+                error=str(exc),
+                hint="Schema/Tabellen nicht erstellt — Caching evtl. eingeschraenkt",
+            )
 
     # --- httpx.AsyncClient fuer Orchestrator ---
     client = httpx.AsyncClient(
@@ -155,9 +163,21 @@ async def _ensure_schema(pool: asyncpg.Pool) -> None:
     """Erstellt das export_schema mit Cache- und Log-Tabellen.
 
     Wird beim Startup ausgefuehrt — idempotent dank IF NOT EXISTS.
+    CREATE SCHEMA braucht DB-Level-CREATE-Berechtigung, die Service-Rollen
+    i.d.R. nicht haben. Deshalb wird das Schema-Anlegen separat gefangen —
+    wenn es bereits existiert (z.B. aus 002_schema.sql oder Dump-Restore),
+    reicht USAGE + CREATE ON SCHEMA fuer die Tabellen.
     """
     async with pool.acquire() as conn:
-        await conn.execute("CREATE SCHEMA IF NOT EXISTS export_schema;")
+        # Schema anlegen — kann fehlschlagen wenn Rolle kein CREATE hat
+        try:
+            await conn.execute("CREATE SCHEMA IF NOT EXISTS export_schema;")
+        except Exception as exc:
+            logger.info(
+                "export_schema_create_uebersprungen",
+                reason=str(exc),
+                hint="Schema existiert vermutlich bereits aus DB-Init",
+            )
 
         # Cache-Tabelle fuer Analyseergebnisse
         await conn.execute("""

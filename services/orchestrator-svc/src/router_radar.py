@@ -518,7 +518,7 @@ async def analyze_technology(
         patent_grant=panel_data.get("patent_grant", {}),
         euroscivoc=panel_data.get("euroscivoc", {}),
         publication=panel_data.get("publication", {}),
-        **{"_links": links},
+        links=links,
         uc_errors=uc_errors,
         explainability=explainability,
         total_processing_time_ms=elapsed_ms,

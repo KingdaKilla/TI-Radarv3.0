@@ -295,7 +295,7 @@ die den teuren `DISTINCT`-Scan ueberspringt, wenn die Tabelle bereits
 | `publication_year` | `SMALLINT` | Extrahiert via Trigger, Partition-Key (CHECK: 1900-2100) |
 | `filing_date` | `DATE` | Anmeldedatum (fuer UC12 Time-to-Grant) |
 | `family_id` | `TEXT` | Patentfamilien-ID |
-| `applicant_names` | `TEXT` | Legacy denormalisiertes Feld |
+| `applicant_names` | `TEXT` | Legacy denormalisiertes Feld, **Semikolon-separierter String** (`'Siemens AG; BASF SE'`). Queries muessen `string_to_table(applicant_names, '; ')` statt `unnest()` nutzen. |
 | `applicant_countries` | `TEXT[]` | Array von ISO-Laendercodes (GIN-indiziert) |
 | `cpc_codes` | `TEXT[]` | Array von CPC-Klassifikationscodes (GIN-indiziert) |
 | `ipc_codes` | `TEXT[]` | Array von IPC-Klassifikationscodes |
@@ -432,7 +432,7 @@ GLEIF gleif_cache.legal_name ────┘   Konfidenz    actor_source_mapping
 | `lei` | `CHAR(20)` | 20-stelliger LEI oder NULL (Negativ-Ergebnis) |
 | `legal_name` | `TEXT` | Offizieller Name laut GLEIF |
 | `country` | `CHAR(2)` | ISO 3166-1 Alpha-2 Laendercode |
-| `entity_status` | `VARCHAR(20)` | GLEIF Entity Status |
+| `registration_status` | `VARCHAR(20)` | GLEIF Registration Status (Spaltenname **nicht** `entity_status`) |
 | `resolved_at` | `TIMESTAMPTZ` | Zeitstempel der Cache-Aufloesung |
 
 - **TTL:** 90 Tage. Negativ-Ergebnisse (kein LEI gefunden) werden mit `lei = NULL` gecacht.
@@ -642,13 +642,18 @@ Jeder UC-Service hat eine eigene Datenbank-Rolle mit SELECT-Berechtigung auf sei
 | `svc_funding` | UC4 | `cordis_schema`, `cross_schema` |
 | `svc_cpc_flow` | UC5 | `patent_schema`, `cross_schema` |
 | `svc_geographic` | UC6 | `patent_schema`, `cordis_schema`, `cross_schema` |
-| `svc_research_impact` | UC7 | `research_schema`, `cross_schema` |
+| `svc_research_impact` | UC7 | `research_schema`, `cordis_schema` (R/W auf research_schema fuer Cache) |
 | `svc_temporal` | UC8 | `patent_schema`, `cordis_schema`, `cross_schema` |
-| `svc_tech_cluster` | UC9 | `patent_schema`, `cross_schema` |
-| `svc_euroscivoc` | UC10 | `cordis_schema` |
-| `svc_actor_type` | UC11 | `cordis_schema`, `entity_schema` (+ Schreibrecht auf `gleif_cache`) |
-| `svc_patent_grant` | UC12 | `patent_schema` |
-| `svc_publication` | UC-C | `patent_schema`, `cordis_schema`, `research_schema` |
+| `svc_tech_cluster` | UC9 | `patent_schema`, `cordis_schema`, `cross_schema` |
+| `svc_euroscivoc` | UC10 | `cordis_schema`, `cross_schema` |
+| `svc_actor_type` | UC11 | `patent_schema`, `cordis_schema`, `cross_schema`, `entity_schema` (+ Schreibrecht auf `gleif_cache`) |
+| `svc_patent_grant` | UC12 | `patent_schema`, `cross_schema` |
+| `svc_publication` | UC-C | `cordis_schema` |
+
+> **Hinweis (v3.3.3):** Nach Split-Dump-Restore fehlen haeufig die GRANT-
+> Statements fuer UC7/UC9/UC10/UC12 und `svc_export`. Das Hotfix-Skript
+> `database/sql/fix_grants.sql` stellt alle Privilegien idempotent wieder
+> her — siehe `docs/DEPLOYMENT.md` > Troubleshooting.
 
 ### Admin-Rollen
 
@@ -670,13 +675,13 @@ Jeder UC-Service hat eine eigene Datenbank-Rolle mit SELECT-Berechtigung auf sei
   UC4 Funding                 R                            R
   UC5 CPC-Flow       R                                     R
   UC6 Geographic     R        R                            R
-  UC7 Research                         R                   R
+  UC7 Research                R        R/W                  R
   UC8 Temporal       R        R                            R
-  UC9 Tech-Cluster   R                                     R
-  UC10 EuroSciVoc             R
-  UC11 Actor-Type             R                  R/W
-  UC12 Patent-Grant  R
-  UC-C Publication   R        R        R
+  UC9 Tech-Cluster   R        R                            R
+  UC10 EuroSciVoc             R                            R
+  UC11 Actor-Type    R        R                  R/W       R
+  UC12 Patent-Grant  R                                     R
+  UC-C Publication            R
   Import-Service     W        W        W         W         W        W
   Export-Service     R        R        R         R         R        R/W
 

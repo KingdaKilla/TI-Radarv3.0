@@ -145,7 +145,7 @@ mkdir -p ~/ti-radar && cd ~/ti-radar
 # DB-Image ziehen — enthaelt alle Setup-Dateien unter /opt/restore/
 docker pull ghcr.io/kingdakilla/ti-radar-db:latest
 # ...oder gepinnt auf einen Tag:
-# docker pull ghcr.io/kingdakilla/ti-radar-db:v3.3.1
+# docker pull ghcr.io/kingdakilla/ti-radar-db:v3.3.4
 ```
 
 ### 2. Bash-Wrapper aus dem Image extrahieren
@@ -194,7 +194,7 @@ POSTGRES_DB=ti_radar
 POSTGRES_USER=tip_admin
 POSTGRES_PASSWORD=<sicheres_passwort>
 GHCR_OWNER=kingdakilla       # fuer ghcr.io/${GHCR_OWNER}/ti-radar-* Image-Refs
-IMAGE_TAG=v3.3.1             # oder latest
+IMAGE_TAG=v3.3.4             # oder latest
 SCHEDULER_ENABLED=false      # waehrend Restore aus, spaeter auf true
 ```
 
@@ -633,3 +633,85 @@ docker compose -f deploy/docker-compose.yml --env-file .env up -d
 ```
 
 Das `-v` Flag löscht das Volume. Beim nächsten Start werden Schema und Demodaten neu angelegt.
+
+### Fehlende DB-Berechtigungen nach Dump-Restore (permission denied)
+
+Nach dem Restore eines Split-Dumps fehlen haeufig die GRANT-Statements fuer die
+Service-Rollen (`svc_patent_grant`, `svc_tech_cluster`, `svc_euroscivoc`,
+`svc_research_impact`, `svc_export`). In den Logs erscheint dann
+`permission denied for table patents` bzw. `permission denied for schema ...`.
+
+Ursache: `pg_dump` ohne `--no-acl` sichert die Grants **auf Objekten die im
+Dump enthalten sind**, aber Service-Rollen, die spaeter per Migration
+hinzukamen (UC7/UC9/UC10/UC12), verlieren ihre Privilegien beim Restore.
+
+Hotfix als `tip_admin` auf dem laufenden Container anwenden:
+
+```bash
+docker exec -i ti-radar-db psql -U tip_admin -d ti_radar < database/sql/fix_grants.sql
+```
+
+Das Skript ist idempotent und kann mehrfach ausgefuehrt werden. Es re-granted
+USAGE auf alle Schemas und SELECT auf alle Tabellen fuer alle 13 Service-
+Rollen. Details siehe `database/sql/fix_grants.sql`.
+
+### Orchestrator crasht mit `NameError: Fields must not use names with leading underscores`
+
+Pydantic v2 verbietet Feldnamen mit fuehrendem Underscore. Der Fehler wurde
+in `v3.3.2` behoben (HATEOAS-Feld `_links` → `links` mit Alias, sodass
+JSON-Ausgabe unveraendert bleibt). Upgrade auf `v3.3.2` oder hoeher via:
+
+```bash
+docker compose --env-file .env pull orchestrator-svc
+docker compose --env-file .env up -d orchestrator-svc
+```
+
+### Export-Service loggt `permission denied for schema export_schema`
+
+Der Export-Service versucht beim Startup `CREATE SCHEMA IF NOT EXISTS
+export_schema` auszufuehren. Die Service-Rolle `svc_export` hat aber kein
+`CREATE`-Recht auf der Datenbank. Seit `v3.3.2` faengt der Service den
+Fehler ab und faehrt weiter (Schema existiert bereits aus `002_schema.sql`).
+
+Die Warnung `export_schema_fehler` ist kosmetisch, solange `fix_grants.sql`
+ausgefuehrt wurde. Caching bleibt nutzbar.
+
+### UC8 Temporal: `function unnest(text) does not exist`
+
+Behoben in `v3.3.4`. Die Spalte `patents.applicant_names` ist ein
+Semikolon-getrennter `TEXT`-String, kein `TEXT[]`-Array. Der Temporal-
+Service nutzte faelschlicherweise `unnest()` statt `string_to_table(...,
+'; ')`. Upgrade auf `v3.3.4` oder hoeher.
+
+### Orchestrator-Suggestions: `relation "patents" does not exist`
+
+Behoben in `v3.3.4`. Der Autocomplete-Endpoint hatte die Tabellenreferenzen
+`patents` und `projects` ohne Schema-Prefix. Korrigiert zu
+`patent_schema.patents` und `cordis_schema.projects`.
+
+### UC11 Actor-Type: `column "entity_status" does not exist`
+
+Behoben in `v3.3.3`. Der GLEIF-Adapter referenzierte eine Spalte
+`entity_status`, die tatsaechliche Spalte in `entity_schema.gleif_cache`
+heisst `registration_status`. Umbenannt in allen SQL-Queries und der
+`GLEIFResult`-Dataclass.
+
+### GLEIF API 404 (fuzzy-completions)
+
+Die URL `https://api.gleif.org/api/v1/fuzzy-completions` liefert derzeit 404.
+Der Actor-Type-Service faengt den Fehler graceful ab und nutzt stale Cache
+als Fallback. Eine Anpassung auf den aktuellen GLEIF-API-Endpoint steht
+noch aus — LEI-Anreicherung ist waehrenddessen optional.
+
+### OpenAIRE 403 Forbidden
+
+Der OpenAIRE-Access-Token in `.env` kann ablaufen (Hinweis
+`openaire_token_refresh_fehlgeschlagen` im UC1-Log). Neuen Token unter
+https://www.openaire.eu/user-management beantragen und in `.env` setzen:
+
+```
+OPENAIRE_ACCESS_TOKEN=...
+OPENAIRE_REFRESH_TOKEN=...
+```
+
+Danach `docker compose restart landscape-svc`.

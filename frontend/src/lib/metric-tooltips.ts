@@ -13,6 +13,11 @@ export const METRIC_TOOLTIPS: Record<string, string> = {
     "Reifephase nach S-Kurven-Modell: Aufkommend (<10%), Wachstum (10–50%), Ausgereift (50–90%), Sättigung (>90%).",
   h_index:
     "Hirsch-Index — h Publikationen wurden jeweils mindestens h-mal zitiert. Misst den wissenschaftlichen Impact.",
+  // INFO-12: Schwellen, die der Header-Badge "… Impact (h=…)" verwendet.
+  // Werden in clusters.ts als badgeTooltips["Sehr hoher Impact (h=…)"] etc.
+  // referenziert (Single Source of Truth).
+  h_index_thresholds:
+    "h-Index-Schwellen f\u00FCr den Header-Badge: \u2265 100 = Sehr hoch \u00B7 \u2265 50 = Hoch \u00B7 \u2265 20 = Moderat \u00B7 < 20 = Gering. Quelle: clusters.ts.",
   cr4: "Concentration Ratio — Marktanteil der 4 größten Akteure. >60% = oligopolistisch.",
   jaccard:
     "Jaccard-Ähnlichkeitsindex — Misst die Überlappung zweier CPC-Code-Mengen (0 = keine, 1 = identisch).",
@@ -32,6 +37,12 @@ export const METRIC_TOOLTIPS: Record<string, string> = {
   persistence_ratio:
     "Anteil der Akteure, die auch im Folgejahr aktiv bleiben.",
   patents: "Patentanmeldungen aus der EPO DOCDB-Datenbank.",
+  patent_scope:
+    "Der Header zählt ALLE Patente (EPO DOCDB, ungefiltert). UC12 trennt Anmeldungen (Kind-Codes A*) und Erteilungen (B*). Gesamtzahl ≥ Anmeldungen + Erteilungen, da u. a. Utility Models (U) und Korrekturen zusätzlich zählen.",
+  patent_applications:
+    "Patent-Anmeldungen (EPO Kind-Codes A, A1, A2, A3, A4, A8, A9). Offenlegungsschrift vor Erteilung.",
+  patent_grants:
+    "Erteilte Patente (EPO Kind-Codes B, B1, B2, B3, B4, B8, B9). Positiv geprüft und gewährt.",
   projects: "EU-Forschungsprojekte aus der CORDIS-Datenbank.",
   publications:
     "Wissenschaftliche Publikationen aus CORDIS-Projektdaten.",

@@ -5,6 +5,13 @@
 // matrices and applying community detection / clustering algorithms. Produces
 // cluster assignments, inter-cluster linkages, and multi-dimensional scoring.
 // The frontend renders cluster network graphs, radar charts, and treemaps.
+//
+// Actor Scope (see shared.domain.actor_definitions.ActorScope):
+//   This service reports CLUSTER_MEMBER — distinct patent applicants that
+//   hold at least one CPC code which is assigned to any identified cluster.
+//   This count is typically SMALLER than UC8 (ACTIVE_IN_WINDOW) and UC11
+//   (CLASSIFIED) because it only covers applicants that appear in the CPC
+//   co-occurrence network. See KONSOLIDIERUNG.md/CRIT-3.
 // =============================================================================
 
 syntax = "proto3";
@@ -165,6 +172,9 @@ message TechClusterResponse {
   ClusteringQuality quality = 5;
 
   // Total number of actors across all clusters.
+  // Scope: CLUSTER_MEMBER (see uc9_tech_cluster.proto header for definition).
+  // This count is NOT directly comparable to UC8.total_active
+  // (ACTIVE_IN_WINDOW) or UC11.total_classified_actors (CLASSIFIED).
   int64 total_actors = 6;
 
   // Total number of CPC codes across all clusters.

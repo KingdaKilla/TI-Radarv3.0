@@ -5,6 +5,13 @@
 // players, programme evolution, and technology breadth (diversification of
 // CPC codes over time). The frontend renders stacked area charts, actor
 // timelines, and Sankey diagrams of programme transitions.
+//
+// Actor Scope (see shared.domain.actor_definitions.ActorScope):
+//   This service reports ACTIVE_IN_WINDOW — distinct patent applicants plus
+//   CORDIS participants that were active at least once within the requested
+//   time window. It is NOT identical to UC11 (CLASSIFIED — all CORDIS orgs
+//   with an activity_type) nor UC9 (CLUSTER_MEMBER — actors assigned to a
+//   tech cluster via CPC co-occurrence). See KONSOLIDIERUNG.md/CRIT-3.
 // =============================================================================
 
 syntax = "proto3";
@@ -65,7 +72,8 @@ message EntrantPersistenceTrend {
   // Number of actors from the prior year that are no longer active.
   int64 exited_actors = 4;
 
-  // Total distinct actors active in this year.
+  // Total distinct actors active in this year (scope = ACTIVE_IN_WINDOW,
+  // i.e. distinct patent applicants + CORDIS participants for the year).
   int64 total_active = 5;
 
   // Churn rate: exited / total_active(previous year).
@@ -156,6 +164,9 @@ message TechnologyBreadthEntry {
 // Summary of actor dynamics.
 message ActorDynamicsSummary {
   // Total distinct actors across the entire time range.
+  // Scope: ACTIVE_IN_WINDOW (see uc8_temporal.proto header for definition).
+  // This count is NOT directly comparable to UC9.total_actors (CLUSTER_MEMBER)
+  // or UC11.total_classified_actors (CLASSIFIED).
   int64 total_actors = 1;
 
   // Number of persistent actors (active >= 5 years).

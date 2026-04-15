@@ -19,6 +19,11 @@ from typing import Any
 import structlog
 
 from shared.domain.metrics import cagr, merge_country_data, merge_time_series
+from shared.domain.publication_definitions import (
+    PublicationScope,
+    canonical_publication_label,
+)
+from shared.domain.year_completeness import last_complete_year
 
 logger = structlog.get_logger(__name__)
 
@@ -51,6 +56,11 @@ class LandscapeResult:
     cagr_publications: float = 0.0
     cagr_funding: float = 0.0
     periods: int = 0
+
+    # MAJ-7/MAJ-8: Letztes vollstaendig abgeschlossenes Kalenderjahr.
+    # Frontend nutzt es als ReferenceArea-Cutoff fuer den Hinweis
+    # "Daten ggf. unvollstaendig". Quelle: ``last_complete_year()``.
+    data_complete_year: int = 0
 
     data_sources: list[dict[str, Any]] = field(default_factory=list)
     warnings: list[dict[str, str]] = field(default_factory=list)
@@ -100,6 +110,22 @@ class AnalyzeLandscape:
         t0 = time.monotonic()
         result = LandscapeResult()
 
+        # MAJ-7/MAJ-8: Datenvollstaendigkeits-Cutoff aus shared-Helper.
+        # Wenn der User ein Endjahr nach dem letzten vollstaendigen Jahr
+        # anfragt, wird CAGR bis dorthin gerechnet, aber das Frontend
+        # bekommt einen Hinweis (Warning + ``data_complete_year``-Feld).
+        data_complete_year = last_complete_year()
+        if end_year > data_complete_year:
+            result.warnings.append({
+                "message": (
+                    f"Endjahr {end_year} > letztes vollstaendiges Jahr "
+                    f"{data_complete_year} — CAGR wird auf vollstaendige "
+                    "Jahre beschraenkt; Trend ggf. unvollstaendig."
+                ),
+                "severity": "MEDIUM",
+                "code": "DATA_INCOMPLETE_RECENT_YEARS",
+            })
+
         # --- Parallele Datenabfragen ---
         patent_years: list = []
         patent_countries: list = []
@@ -109,6 +135,9 @@ class AnalyzeLandscape:
         top_cpc: list = []
         total_funding: float = 0.0
         funding_by_year: dict[int, float] = {}
+
+        # CRIT-1: kanonische CORDIS-Publikationszahl (Header-Summary-Quelle).
+        total_publications_cordis: int = 0
 
         tasks: list[asyncio.Task[Any]] = []
 
@@ -160,7 +189,17 @@ class AnalyzeLandscape:
             name="funding_by_year",
         ))
 
-        # OpenAIRE Publikationen (extern, optional)
+        # CRIT-1: Header-Summary ``total_publications`` aus CORDIS_LINKED-Scope.
+        # Diese Zahl MUSS mit publication-svc (UC13) identisch sein.
+        tasks.append(asyncio.create_task(
+            self._repo.count_cordis_publications(
+                technology, start_year=start_year, end_year=end_year,
+            ),
+            name="cordis_publications_total",
+        ))
+
+        # OpenAIRE Publikationen (extern, optional) — liefert nur die
+        # Zeitreihen-Trendkurve, *nicht* die Header-Gesamtzahl (CRIT-1).
         if self._openaire is not None:
             tasks.append(asyncio.create_task(
                 self._openaire.count_by_year(technology, start_year, end_year),
@@ -199,11 +238,17 @@ class AnalyzeLandscape:
                     for entry in task_result:
                         funding_by_year[entry.year] = entry.funding
                     total_funding = sum(funding_by_year.values())
+                elif name == "cordis_publications_total":
+                    total_publications_cordis = int(task_result or 0)
 
         # --- Datenquellen dokumentieren ---
         total_patents = sum(y.count for y in patent_years)
         total_projects = sum(y.count for y in project_years)
-        total_publications = _sum_counts(publication_years)
+        # CRIT-1: Header-Publikationen MUSS aus CORDIS_LINKED-Scope kommen —
+        # identisch zur Query in publication-svc.publication_summary().
+        # OpenAIRE liefert nur die Trendkurve fuer die Zeitreihe.
+        total_publications = total_publications_cordis
+        openaire_publications = _sum_counts(publication_years)
 
         data_sources: list[dict[str, Any]] = []
         if total_patents > 0:
@@ -219,10 +264,19 @@ class AnalyzeLandscape:
                 "record_count": total_projects,
             })
         if total_publications > 0:
+            # CRIT-1: kanonisches Label aus shared.domain.publication_definitions.
             data_sources.append({
-                "name": "OpenAIRE (API)",
+                "name": (
+                    f"CORDIS Publications — {canonical_publication_label(PublicationScope.CORDIS_LINKED)}"
+                ),
                 "type": "PUBLICATION",
                 "record_count": total_publications,
+            })
+        if openaire_publications > 0:
+            data_sources.append({
+                "name": "OpenAIRE (API) — Zeitreihen-Trend",
+                "type": "PUBLICATION",
+                "record_count": openaire_publications,
             })
 
         # --- Zeitreihen zusammenfuehren ---
@@ -236,11 +290,15 @@ class AnalyzeLandscape:
         )
 
         # --- CAGR berechnen ---
+        # MAJ-7/MAJ-8: ``data_complete_year`` schneidet das laufende Jahr ab,
+        # damit der Endwert nicht durch ein Teiljahr verzerrt wird.
         periods = end_year - start_year
-        cagr_patents = _safe_cagr(patent_years, periods)
-        cagr_projects = _safe_cagr(project_years, periods)
-        cagr_publications = _safe_cagr(publication_years, periods)
-        cagr_funding = _compute_funding_cagr(funding_by_year, start_year, end_year)
+        cagr_patents = _safe_cagr(patent_years, periods, data_complete_year=data_complete_year)
+        cagr_projects = _safe_cagr(project_years, periods, data_complete_year=data_complete_year)
+        cagr_publications = _safe_cagr(publication_years, periods, data_complete_year=data_complete_year)
+        cagr_funding = _compute_funding_cagr(
+            funding_by_year, start_year, end_year, data_complete_year=data_complete_year,
+        )
 
         # --- Distinct Countries zaehlen ---
         active_countries = len({str(c["country"]) for c in top_countries})
@@ -273,6 +331,7 @@ class AnalyzeLandscape:
         result.cagr_publications = cagr_publications
         result.cagr_funding = cagr_funding
         result.periods = periods
+        result.data_complete_year = data_complete_year
         result.data_sources = data_sources
         result.processing_time_ms = processing_time_ms
 
@@ -303,7 +362,7 @@ def _get(item: Any, key: str) -> Any:
 def _safe_cagr(
     yearly_data: list,
     periods: int,
-    data_complete_year: int = 2024,
+    data_complete_year: int | None = None,
 ) -> float:
     """CAGR sicher berechnen — gibt 0.0 bei unzureichenden Daten zurueck.
 
@@ -312,10 +371,15 @@ def _safe_cagr(
     Unterstuetzt sowohl dict- als auch Attribut-basierte Eintraege.
 
     Daten nach data_complete_year werden ignoriert, da unvollstaendige
-    Jahrgaenge die CAGR-Berechnung nach unten verzerren wuerden.
+    Jahrgaenge die CAGR-Berechnung nach unten verzerren wuerden. Wenn
+    nicht angegeben, wird ``last_complete_year()`` verwendet (Bug
+    MAJ-7/MAJ-8 — kein Hardcoding mehr).
     """
     if not yearly_data or periods <= 0:
         return 0.0
+
+    if data_complete_year is None:
+        data_complete_year = last_complete_year()
 
     # Nur vollstaendige Jahre beruecksichtigen
     filtered = [x for x in yearly_data if _get(x, "year") <= data_complete_year]
@@ -337,15 +401,20 @@ def _compute_funding_cagr(
     funding_by_year: dict[int, float],
     start_year: int,
     end_year: int,
-    data_complete_year: int = 2024,
+    data_complete_year: int | None = None,
 ) -> float:
     """CAGR fuer Foerdervolumen berechnen.
 
     Ueberspringt Jahre ohne Foerderung am Anfang/Ende.
-    Daten nach data_complete_year werden ignoriert (unvollstaendig).
+    Daten nach data_complete_year werden ignoriert (unvollstaendig). Wenn
+    nicht angegeben, wird ``last_complete_year()`` verwendet (Bug
+    MAJ-7/MAJ-8).
     """
     if not funding_by_year:
         return 0.0
+
+    if data_complete_year is None:
+        data_complete_year = last_complete_year()
 
     sorted_years = sorted(
         y for y, v in funding_by_year.items()

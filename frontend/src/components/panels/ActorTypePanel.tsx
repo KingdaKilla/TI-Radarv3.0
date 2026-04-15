@@ -15,6 +15,7 @@ import {
   Legend,
 } from "recharts";
 import PanelCard from "./PanelCard";
+import InfoTooltip from "@/components/ui/InfoTooltip";
 import { CHART_COLORS, PALETTE } from "@/lib/chart-colors";
 import type { ActorTypePanel as ActorTypePanelData } from "@/lib/types";
 
@@ -75,8 +76,18 @@ export default function ActorTypePanel({
         <div className="flex flex-col gap-4">
           {/* Badges */}
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <span className="badge-info">
-              {data.total_classified_actors.toLocaleString("de-DE")} Akteure
+            <span className="badge-info inline-flex items-center gap-1">
+              {data.total_classified_actors.toLocaleString("de-DE")} klassifizierte Akteure (CORDIS)
+              <InfoTooltip
+                text={
+                  `UC11 zaehlt alle CORDIS-Organisationen, fuer die ein activity_type ` +
+                  `(HES, PRC, REC, OTH, PUB) gesetzt ist ` +
+                  `(Scope: ${data.actor_scope_label ?? "klassifizierte Organisationen"}). ` +
+                  `Diese Zahl ist typischerweise groesser als UC8 (aktive Akteure im ` +
+                  `Zeitfenster) und UC9 (Cluster-Mitglieder) — unterschiedliche Scopes ` +
+                  `zaehlen unterschiedliche Populationen.`
+                }
+              />
             </span>
             {data.type_breakdown.length > 0 && (() => {
               const dominant = data.type_breakdown.reduce((best, t) => t.actor_count > best.actor_count ? t : best, data.type_breakdown[0]);

@@ -18,6 +18,12 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
+# Minimaler Relevanz-Score, ab dem ein Projekt-Match als fachlich relevant gilt.
+# Filtert Token-Split-Matches (z. B. "battery law" bei Suche nach
+# "solid state battery") heraus und verhindert so irrefuehrende
+# Disziplin-Zuordnungen wie "law" -> "Solid State Battery" (AP4 / CRIT-2).
+TS_RANK_MIN_SCORE = 0.05
+
 
 class EuroSciVocRepository:
     """Async PostgreSQL-Zugriff fuer UC10 EuroSciVoc-Analysen."""
@@ -33,8 +39,16 @@ class EuroSciVocRepository:
         end_year: int | None = None,
         limit: int = 50,
     ) -> list[dict[str, Any]]:
-        """EuroSciVoc-Disziplinen pro Technologie aus CORDIS-Projekten."""
-        conditions = ["p.search_vector @@ plainto_tsquery('english', $1)"]
+        """EuroSciVoc-Disziplinen pro Technologie aus CORDIS-Projekten.
+
+        Verwendet ts_rank_cd-Threshold (>= TS_RANK_MIN_SCORE), um fachlich
+        irrelevante Token-Split-Matches (z. B. "battery law" bei Suche nach
+        "solid state battery") auszufiltern.
+        """
+        conditions = [
+            "p.search_vector @@ plainto_tsquery('english', $1)",
+            f"ts_rank_cd(p.search_vector, plainto_tsquery('english', $1)) >= {TS_RANK_MIN_SCORE}",
+        ]
         params: list[Any] = [technology]
         idx = 2
 
@@ -60,7 +74,8 @@ class EuroSciVocRepository:
                    COUNT(DISTINCT pe.project_id)::float /
                        NULLIF((SELECT COUNT(DISTINCT p2.id)
                                FROM cordis_schema.projects p2
-                               WHERE p2.search_vector @@ plainto_tsquery('english', $1)), 0) AS share
+                               WHERE p2.search_vector @@ plainto_tsquery('english', $1)
+                                 AND ts_rank_cd(p2.search_vector, plainto_tsquery('english', $1)) >= {TS_RANK_MIN_SCORE}), 0) AS share
             FROM cordis_schema.projects p
             JOIN cordis_schema.project_euroscivoc pe ON pe.project_id = p.id
             JOIN cordis_schema.euroscivoc esv ON esv.id = pe.euroscivoc_id
@@ -92,7 +107,10 @@ class EuroSciVocRepository:
         end_year: int | None = None,
     ) -> list[dict[str, Any]]:
         """Zeitliche Entwicklung der Disziplin-Verteilung."""
-        conditions = ["p.search_vector @@ plainto_tsquery('english', $1)"]
+        conditions = [
+            "p.search_vector @@ plainto_tsquery('english', $1)",
+            f"ts_rank_cd(p.search_vector, plainto_tsquery('english', $1)) >= {TS_RANK_MIN_SCORE}",
+        ]
         params: list[Any] = [technology]
         idx = 2
 
@@ -142,7 +160,10 @@ class EuroSciVocRepository:
         limit: int = 30,
     ) -> list[dict[str, Any]]:
         """Co-Occurrence von Disziplinen in Projekten."""
-        conditions = ["p.search_vector @@ plainto_tsquery('english', $1)"]
+        conditions = [
+            "p.search_vector @@ plainto_tsquery('english', $1)",
+            f"ts_rank_cd(p.search_vector, plainto_tsquery('english', $1)) >= {TS_RANK_MIN_SCORE}",
+        ]
         params: list[Any] = [technology]
         idx = 2
 
@@ -191,26 +212,82 @@ class EuroSciVocRepository:
                 for row in rows
             ]
 
-    async def total_mapped_projects(self, technology: str) -> int:
-        """Gesamtanzahl der Projekte mit EuroSciVoc-Mapping."""
-        sql = """
+    async def total_mapped_projects(
+        self,
+        technology: str,
+        *,
+        start_year: int | None = None,
+        end_year: int | None = None,
+    ) -> int:
+        """Gesamtanzahl distinkter Projekte mit EuroSciVoc-Mapping im Zeitfenster.
+
+        MIN-10: Verwendet `COUNT(DISTINCT pe.project_id)` und denselben
+        `ts_rank_cd`-Threshold + Jahres-Scope wie `discipline_distribution`,
+        damit `total_mapped_publications` (UC10) konsistent zum Header (UC1)
+        ist und keine Mehrfach-Tag-Doppelzaehlung entsteht.
+        """
+        conditions = [
+            "p.search_vector @@ plainto_tsquery('english', $1)",
+            f"ts_rank_cd(p.search_vector, plainto_tsquery('english', $1)) >= {TS_RANK_MIN_SCORE}",
+        ]
+        params: list[Any] = [technology]
+        idx = 2
+
+        if start_year is not None:
+            conditions.append(f"EXTRACT(YEAR FROM p.start_date)::int >= ${idx}")
+            params.append(start_year)
+            idx += 1
+        if end_year is not None:
+            conditions.append(f"EXTRACT(YEAR FROM p.start_date)::int <= ${idx}")
+            params.append(end_year)
+            idx += 1
+
+        where = " AND ".join(conditions)
+        sql = f"""
             SELECT COUNT(DISTINCT pe.project_id)
             FROM cordis_schema.projects p
             JOIN cordis_schema.project_euroscivoc pe ON pe.project_id = p.id
-            WHERE p.search_vector @@ plainto_tsquery('english', $1)
+            WHERE {where}
         """
         async with self._pool.acquire() as conn:
-            return await conn.fetchval(sql, technology) or 0
+            return await conn.fetchval(sql, *params) or 0
 
-    async def total_projects(self, technology: str) -> int:
-        """Gesamtanzahl aller Projekte fuer eine Technologie."""
-        sql = """
-            SELECT COUNT(*)
+    async def total_projects(
+        self,
+        technology: str,
+        *,
+        start_year: int | None = None,
+        end_year: int | None = None,
+    ) -> int:
+        """Gesamtanzahl aller Projekte fuer eine Technologie im Zeitfenster.
+
+        MIN-10: Optionaler Jahres-Scope, damit `mapping_coverage` (UC10)
+        denselben Nenner verwendet wie der Header.
+        """
+        conditions = [
+            "p.search_vector @@ plainto_tsquery('english', $1)",
+            f"ts_rank_cd(p.search_vector, plainto_tsquery('english', $1)) >= {TS_RANK_MIN_SCORE}",
+        ]
+        params: list[Any] = [technology]
+        idx = 2
+
+        if start_year is not None:
+            conditions.append(f"EXTRACT(YEAR FROM p.start_date)::int >= ${idx}")
+            params.append(start_year)
+            idx += 1
+        if end_year is not None:
+            conditions.append(f"EXTRACT(YEAR FROM p.start_date)::int <= ${idx}")
+            params.append(end_year)
+            idx += 1
+
+        where = " AND ".join(conditions)
+        sql = f"""
+            SELECT COUNT(DISTINCT p.id)
             FROM cordis_schema.projects p
-            WHERE p.search_vector @@ plainto_tsquery('english', $1)
+            WHERE {where}
         """
         async with self._pool.acquire() as conn:
-            return await conn.fetchval(sql, technology) or 0
+            return await conn.fetchval(sql, *params) or 0
 
     async def health_check(self) -> dict[str, Any]:
         """Datenbank-Health-Check."""

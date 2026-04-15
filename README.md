@@ -1,6 +1,8 @@
 # TI-Radar -- Technology Intelligence Radar
 
-Webbasierte Analyseplattform fuer Technologie-Intelligence auf Basis von Patent- und Forschungsdaten. Das System integriert 5 Datenquellen -- EPO DOCDB (154.8M Patente), CORDIS (80.5K EU-Forschungsprojekte), OpenAIRE (Publikationen), Semantic Scholar (Zitationsanalyse) und GLEIF (Legal Entity Identifier) -- und stellt diese ueber 13 analytische Use Cases (UC1-UC12 + UC-C Publications) als interaktives Dashboard bereit.
+**Aktuelle Version:** v3.4.0 (2026-04-14) -- siehe [docs/testing/ergebnisse/konsistenz/FIX_REPORT.md](docs/testing/ergebnisse/konsistenz/FIX_REPORT.md) fuer die in dieser Version behobenen 12 Konsistenz-Bugs.
+
+Webbasierte Analyseplattform fuer Technologie-Intelligence auf Basis von Patent- und Forschungsdaten. Das System integriert 5 Datenquellen -- EPO DOCDB (154.8M Patente), CORDIS (80.5K EU-Forschungsprojekte), OpenAIRE (Publikationen), Semantic Scholar (Zitationsanalyse) und GLEIF (Legal Entity Identifier) -- und stellt diese ueber 13 analytische Use Cases (UC1-UC13) als interaktives Dashboard bereit.
 
 Entstanden im Rahmen einer Bachelorarbeit an der HWR Berlin.
 
@@ -26,6 +28,7 @@ graph TD
     Orchestrator -->|gRPC| UC10[euroscivoc-svc]
     Orchestrator -->|gRPC| UC11[actor-type-svc]
     Orchestrator -->|gRPC| UC12[patent-grant-svc]
+    Orchestrator -->|gRPC| UC13[publication-svc]
 
     UC1 --> DB
     UC2 --> DB
@@ -39,7 +42,20 @@ graph TD
     UC10 --> DB
     UC11 --> DB
     UC12 --> DB
+    UC13 --> DB
 ```
+
+## Metriken-Konsistenz (ab v3.4.0)
+
+Alle UC-uebergreifend verwendeten Kennzahlen (Publikationen, Akteure, Patente, Reifegrad-Konfidenz, vollstaendige Jahre) sind zentral in `packages/shared/domain/` definiert und strukturell vor Divergenzen geschuetzt:
+
+- `publication_definitions.py` -- `PublicationScope` (CORDIS_LINKED | OPENAIRE_MATCHED | SEMANTIC_SCHOLAR_TOP)
+- `actor_definitions.py` -- `ActorScope` (ACTIVE_IN_WINDOW | CLUSTER_MEMBER | CLASSIFIED)
+- `patent_definitions.py` -- `PatentScope` (ALL_PATENTS | APPLICATIONS_ONLY | GRANTS_ONLY) + `APPLICATION_KIND_CODES`/`GRANT_KIND_CODES`
+- `year_completeness.py` -- `last_complete_year()` als Single-Source-of-Truth fuer Zeitreihen-Endjahre
+- `metrics.py` -- `s_curve_confidence()` mit strukturellem R²-Gate (`R² < 0.5 → Konfidenz 0`)
+
+Protobuf-Feld `fit_reliability_flag` in `uc2_maturity.proto` erlaubt dem Frontend, unzuverlaessige S-Kurven-Fits explizit zu markieren.
 
 ## Voraussetzungen
 

@@ -7,6 +7,13 @@
 // PUB = Public Body) and maps patent applicants where possible.
 // The frontend renders pie/donut charts, stacked bar charts, and type-specific
 // actor rankings.
+//
+// Actor Scope (see shared.domain.actor_definitions.ActorScope):
+//   This service reports CLASSIFIED — all distinct CORDIS organisations for
+//   which an activity_type is set. It is typically the LARGEST of the three
+//   actor counts (UC8 ACTIVE_IN_WINDOW, UC9 CLUSTER_MEMBER, UC11 CLASSIFIED)
+//   because it includes every classified organisation, regardless of window.
+//   See KONSOLIDIERUNG.md/CRIT-3.
 // =============================================================================
 
 syntax = "proto3";
@@ -174,6 +181,9 @@ message ActorTypeResponse {
   repeated TypeCollaboration type_collaborations = 5;
 
   // Total number of actors with type classification.
+  // Scope: CLASSIFIED (see uc11_actor_type.proto header for definition).
+  // This count is NOT directly comparable to UC8.total_active or
+  // UC9.total_actors — see KONSOLIDIERUNG.md/CRIT-3.
   int64 total_classified_actors = 6;
 
   // Number of actors where type could not be determined.

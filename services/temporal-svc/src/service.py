@@ -35,6 +35,12 @@ except ImportError:
     uc8_temporal_pb2 = None  # type: ignore[assignment]
     uc8_temporal_pb2_grpc = None  # type: ignore[assignment]
 
+# --- Shared Domain: Akteurs-Scope (Bug CRIT-3 / AP3) ---
+# UC8 zaehlt Patent-Anmelder + CORDIS-Organisationen, die im Zeitfenster
+# aktiv waren. Scope = ACTIVE_IN_WINDOW.
+from shared.domain.actor_definitions import ActorScope, canonical_actor_label
+from shared.domain.year_completeness import last_complete_year
+
 # --- Shared Domain Metriken ---
 try:
     from shared.domain.temporal_metrics import (
@@ -58,6 +64,8 @@ from src.domain.metrics import (
     compute_technology_breadth,
 )
 from src.infrastructure.repository import TemporalRepository
+
+_UC8_ACTOR_SCOPE = ActorScope.ACTIVE_IN_WINDOW
 
 logger = structlog.get_logger(__name__)
 
@@ -378,13 +386,27 @@ class TemporalServicer(_get_base_class()):  # type: ignore[misc]
         )
 
     def _build_dict_response(self, **kwargs: Any) -> dict[str, Any]:
-        """Fallback-Response als dict."""
+        """Fallback-Response als dict.
+
+        Enthaelt das kanonische Akteurs-Scope-Label (``actor_scope_label``)
+        damit das Frontend klar zwischen UC8 (aktiv im Zeitfenster), UC9
+        (Cluster-Mitglieder) und UC11 (klassifizierte Organisationen)
+        unterscheiden kann. Siehe Bug CRIT-3 / AP3.
+
+        Enthaelt zusaetzlich ``data_complete_year`` (Bug MAJ-7/MAJ-8) —
+        damit das Frontend den ReferenceArea-Hinweis "Daten ggf.
+        unvollstaendig" rendern kann, wenn die Akteurs-Timeline ueber das
+        letzte abgeschlossene Jahr hinaus geht.
+        """
         return {
             "entrant_persistence_trend": kwargs["entrant_persistence"],
             "actor_timeline": kwargs["actor_timeline"],
             "programme_evolution": kwargs["programme_evo"],
             "technology_breadth": kwargs["tech_breadth"],
             "dynamics_summary": kwargs["dynamics_summary"],
+            "actor_scope": _UC8_ACTOR_SCOPE.value,
+            "actor_scope_label": canonical_actor_label(_UC8_ACTOR_SCOPE),
+            "data_complete_year": last_complete_year(),
             "metadata": {
                 "processing_time_ms": kwargs["processing_time_ms"],
                 "data_sources": kwargs["data_sources"],

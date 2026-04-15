@@ -3,6 +3,18 @@
 Primaere Datenquelle fuer Publikationsmetriken ist Semantic Scholar.
 CORDIS-Organisationen dienen als Proxy fuer Top-Institutionen,
 da Semantic Scholar keine Institutionsdaten liefert.
+
+**CRIT-1 — Scope-Abgrenzung:** UC7 liefert ``total_publications`` aus
+Semantic Scholar — das entspricht dem Scope
+``PublicationScope.SEMANTIC_SCHOLAR_TOP`` aus
+:mod:`shared.domain.publication_definitions` (Top-N-Publikationen der
+Top-Autoren).  Diese Zahl ist **nicht** mit dem Header (UC1) oder UC13
+vergleichbar — beide nutzen den ``CORDIS_LINKED``-Scope.
+
+Die Methode ``get_top_institutions()`` zaehlt **Organisationen** (nicht
+Publikationen) und wird ausschliesslich fuer die UI-Karte
+"Top-Institutionen" verwendet.  ``project_count`` = wie viele CORDIS-
+Projekte die Organisation mitgetragen hat — kein Publikations-Count.
 """
 
 from __future__ import annotations
@@ -12,7 +24,18 @@ from typing import Any
 import asyncpg
 import structlog
 
+from shared.domain.publication_definitions import (
+    PublicationScope,
+    canonical_publication_label,
+)
+
 logger = structlog.get_logger(__name__)
+
+# CRIT-1: UC7 verwendet den Semantic-Scholar-Scope.  Label wird zur Laufzeit
+# in den Log-/Response-Kontext aufgenommen, damit das UI "Top-Autor-
+# Publikationen" statt generisch "Publikationen" rendern kann.
+UC7_PUBLICATION_SCOPE: PublicationScope = PublicationScope.SEMANTIC_SCHOLAR_TOP
+UC7_PUBLICATION_LABEL: str = canonical_publication_label(UC7_PUBLICATION_SCOPE)
 
 
 class ResearchImpactRepository:

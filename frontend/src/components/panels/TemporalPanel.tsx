@@ -19,6 +19,7 @@ import {
 } from "recharts";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import PanelCard from "./PanelCard";
+import InfoTooltip from "@/components/ui/InfoTooltip";
 import { CHART_COLORS } from "@/lib/chart-colors";
 import type { TemporalPanel as TemporalPanelData } from "@/lib/types";
 
@@ -59,10 +60,20 @@ export default function TemporalPanel({
             const last = data.entrant_trend[data.entrant_trend.length - 1];
             const trend = netRecent > 0 ? "Wachsend" : netRecent < 0 ? "Schrumpfend" : "Stabil";
             const trendClass = netRecent > 0 ? "badge-success" : netRecent < 0 ? "badge-error" : "badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+            const scopeLabel = data.actor_scope_label ?? "aktive Akteure im Zeitfenster";
             return (
               <div className="flex flex-wrap items-center justify-center gap-2">
-                <span className="badge-info">
-                  {last.total_active.toLocaleString("de-DE")} Akteure
+                <span className="badge-info inline-flex items-center gap-1">
+                  {last.total_active.toLocaleString("de-DE")} aktive Akteure (im Zeitfenster)
+                  <InfoTooltip
+                    text={
+                      `UC8 zaehlt distinct Patent-Anmelder und CORDIS-Teilnehmer, ` +
+                      `die im ausgewaehlten Zeitfenster mindestens einmal aktiv waren ` +
+                      `(Scope: ${scopeLabel}). Diese Zahl unterscheidet sich bewusst von ` +
+                      `UC9 (Cluster-Mitglieder) und UC11 (klassifizierte Organisationen) — ` +
+                      `unterschiedliche Scopes zaehlen unterschiedliche Populationen.`
+                    }
+                  />
                 </span>
                 <span className={trendClass}>
                   {trend} ({netRecent > 0 ? "+" : ""}{netRecent.toLocaleString("de-DE")} netto)

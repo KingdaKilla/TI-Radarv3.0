@@ -2,6 +2,17 @@
 
 Abfragen fuer Patent-Erteilungsraten basierend auf EPO Kind-Codes.
 Nutzt patent_schema fuer Anmelde- und Erteilungsdaten.
+
+Bug CRIT-4 (Konsistenz-Fix): Kind-Code-Listen werden aus der zentralen
+Shared-Definition ``shared.domain.patent_definitions`` bezogen. Damit sind
+``total_applications`` und ``total_grants`` bit-fuer-bit mit dem
+ALL_PATENTS-Scope des Header-Zaehlers (UC1) abgeglichen:
+
+    header.total_patents  ==  ALL_PATENTS-Scope (kein Kind-Filter)
+    total_applications    ==  APPLICATIONS_ONLY (kind IN A*)
+    total_grants          ==  GRANTS_ONLY       (kind IN B*)
+
+Plausibilitaet: ``header.total_patents >= total_applications + total_grants``.
 """
 
 from __future__ import annotations
@@ -11,7 +22,17 @@ from typing import Any
 import asyncpg
 import structlog
 
+from shared.domain.patent_definitions import (
+    APPLICATION_KIND_CODES,
+    GRANT_KIND_CODES,
+    PatentScope,
+)
+
 logger = structlog.get_logger(__name__)
+
+# Sortierte Tupel fuer stabile SQL-Reihenfolge (einfacher zu reviewen).
+_APPLICATION_CODES_TUPLE: tuple[str, ...] = tuple(sorted(APPLICATION_KIND_CODES))
+_GRANT_CODES_TUPLE: tuple[str, ...] = tuple(sorted(GRANT_KIND_CODES))
 
 EU_EEA_COUNTRIES: frozenset[str] = frozenset({
     "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR",
@@ -21,8 +42,27 @@ EU_EEA_COUNTRIES: frozenset[str] = frozenset({
 })
 
 
+def _sql_in_list(codes: tuple[str, ...]) -> str:
+    """Rendert ein Tupel aus Kind-Codes als SQL-IN-Liste.
+
+    Beispiel: ``('A1','A2','A3')``. Nur fuer vertrauenswuerdige Konstanten
+    verwenden (die Konstanten kommen aus ``shared.domain.patent_definitions``
+    und werden nicht aus User-Input gespeist).
+    """
+    return "(" + ", ".join(f"'{c}'" for c in codes) + ")"
+
+
+_APPLICATIONS_SQL_IN = _sql_in_list(_APPLICATION_CODES_TUPLE)
+_GRANTS_SQL_IN = _sql_in_list(_GRANT_CODES_TUPLE)
+
+
 class PatentGrantRepository:
-    """Async PostgreSQL-Zugriff fuer UC12 Patent-Grant-Analysen."""
+    """Async PostgreSQL-Zugriff fuer UC12 Patent-Grant-Analysen.
+
+    Alle Kind-Code-Filter werden aus
+    ``shared.domain.patent_definitions.APPLICATION_KIND_CODES`` /
+    ``GRANT_KIND_CODES`` gespeist — siehe Bug CRIT-4.
+    """
 
     def __init__(self, pool: asyncpg.Pool) -> None:
         self._pool = pool
@@ -97,8 +137,8 @@ class PatentGrantRepository:
 
         sql = f"""
             SELECT p.publication_year AS year,
-                   COUNT(*) FILTER (WHERE p.kind IN ('A', 'A1', 'A2', 'A3', 'A4', 'A8', 'A9')) AS application_count,
-                   COUNT(*) FILTER (WHERE p.kind IN ('B', 'B1', 'B2', 'B3', 'B8')) AS grant_count
+                   COUNT(*) FILTER (WHERE p.kind IN {_APPLICATIONS_SQL_IN}) AS application_count,
+                   COUNT(*) FILTER (WHERE p.kind IN {_GRANTS_SQL_IN}) AS grant_count
             FROM patent_schema.patents p
             WHERE {where}
               AND p.publication_year IS NOT NULL
@@ -158,15 +198,15 @@ class PatentGrantRepository:
 
         sql = f"""
             SELECT c.country_code AS country_code,
-                   COUNT(*) FILTER (WHERE p.kind IN ('A', 'A1', 'A2', 'A3', 'A4', 'A8', 'A9')) AS application_count,
-                   COUNT(*) FILTER (WHERE p.kind IN ('B', 'B1', 'B2', 'B3', 'B8')) AS grant_count
+                   COUNT(*) FILTER (WHERE p.kind IN {_APPLICATIONS_SQL_IN}) AS application_count,
+                   COUNT(*) FILTER (WHERE p.kind IN {_GRANTS_SQL_IN}) AS grant_count
             FROM patent_schema.patents p,
                  LATERAL unnest(p.applicant_countries) AS c(country_code)
             WHERE {where}
               AND p.applicant_countries IS NOT NULL
               {country_eu_filter}
             GROUP BY c.country_code
-            HAVING COUNT(*) FILTER (WHERE p.kind IN ('A', 'A1', 'A2', 'A3', 'A4', 'A8', 'A9')) > 0
+            HAVING COUNT(*) FILTER (WHERE p.kind IN {_APPLICATIONS_SQL_IN}) > 0
             ORDER BY application_count DESC
             LIMIT ${limit_idx}
         """
@@ -212,8 +252,8 @@ class PatentGrantRepository:
         sql = f"""
             SELECT cpc.cpc_code,
                    COALESCE(cd.description_en, '') AS description,
-                   COUNT(*) FILTER (WHERE p.kind IN ('A', 'A1', 'A2', 'A3', 'A4', 'A8', 'A9')) AS application_count,
-                   COUNT(*) FILTER (WHERE p.kind IN ('B', 'B1', 'B2', 'B3', 'B8')) AS grant_count
+                   COUNT(*) FILTER (WHERE p.kind IN {_APPLICATIONS_SQL_IN}) AS application_count,
+                   COUNT(*) FILTER (WHERE p.kind IN {_GRANTS_SQL_IN}) AS grant_count
             FROM patent_schema.patents p,
                  LATERAL unnest(p.cpc_codes) AS cpc(cpc_code)
             LEFT JOIN patent_schema.cpc_descriptions cd
@@ -222,7 +262,7 @@ class PatentGrantRepository:
               AND p.cpc_codes IS NOT NULL
               AND array_length(p.cpc_codes, 1) > 0
             GROUP BY cpc.cpc_code, cd.description_en
-            HAVING COUNT(*) FILTER (WHERE p.kind IN ('A', 'A1', 'A2', 'A3', 'A4', 'A8', 'A9')) > 0
+            HAVING COUNT(*) FILTER (WHERE p.kind IN {_APPLICATIONS_SQL_IN}) > 0
             ORDER BY application_count DESC
             LIMIT ${limit_idx}
         """
@@ -275,7 +315,7 @@ class PatentGrantRepository:
                 ), 0) AS median_months
             FROM patent_schema.patents p
             WHERE {where}
-              AND p.kind IN ('B', 'B1', 'B2', 'B3')
+              AND p.kind IN {_GRANTS_SQL_IN}
               AND p.filing_date IS NOT NULL
               AND p.publication_date IS NOT NULL
               AND p.publication_date > p.filing_date
@@ -288,6 +328,63 @@ class PatentGrantRepository:
             return {
                 "avg_months": round(float(row["avg_months"]), 1),
                 "median_months": round(float(row["median_months"]), 1),
+            }
+
+    async def total_patent_counts(
+        self,
+        technology: str,
+        *,
+        start_year: int | None = None,
+        end_year: int | None = None,
+    ) -> dict[str, int]:
+        """Zaehlt alle drei kanonischen Patent-Scopes in einer einzigen Query.
+
+        Returns:
+            Ein Dict mit den Keys:
+              - ``PatentScope.ALL_PATENTS.value``        → total (ungefiltert)
+              - ``PatentScope.APPLICATIONS_ONLY.value``  → kind IN A*
+              - ``PatentScope.GRANTS_ONLY.value``        → kind IN B*
+
+        Die Plausibilitaetsregel
+        ``ALL_PATENTS >= APPLICATIONS_ONLY + GRANTS_ONLY`` gilt auf der
+        Datenbankebene automatisch, da alle drei Aggregationen auf
+        denselben Zeilen laufen.
+        """
+        conditions = ["p.search_vector @@ plainto_tsquery('english', $1)"]
+        params: list[Any] = [technology]
+        idx = 2
+
+        if start_year is not None:
+            conditions.append(f"p.publication_year >= ${idx}")
+            params.append(start_year)
+            idx += 1
+        if end_year is not None:
+            conditions.append(f"p.publication_year <= ${idx}")
+            params.append(end_year)
+            idx += 1
+
+        where = " AND ".join(conditions)
+
+        sql = f"""
+            SELECT COUNT(*) AS total_all,
+                   COUNT(*) FILTER (WHERE p.kind IN {_APPLICATIONS_SQL_IN}) AS total_applications,
+                   COUNT(*) FILTER (WHERE p.kind IN {_GRANTS_SQL_IN}) AS total_grants
+            FROM patent_schema.patents p
+            WHERE {where}
+        """
+
+        async with self._pool.acquire() as conn:
+            row = await conn.fetchrow(sql, *params)
+            if row is None:
+                return {
+                    PatentScope.ALL_PATENTS.value: 0,
+                    PatentScope.APPLICATIONS_ONLY.value: 0,
+                    PatentScope.GRANTS_ONLY.value: 0,
+                }
+            return {
+                PatentScope.ALL_PATENTS.value: int(row["total_all"]),
+                PatentScope.APPLICATIONS_ONLY.value: int(row["total_applications"]),
+                PatentScope.GRANTS_ONLY.value: int(row["total_grants"]),
             }
 
     async def health_check(self) -> dict[str, Any]:

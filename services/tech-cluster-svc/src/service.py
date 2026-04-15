@@ -28,11 +28,16 @@ except ImportError:
     uc9_tech_cluster_pb2 = None  # type: ignore[assignment]
     uc9_tech_cluster_pb2_grpc = None  # type: ignore[assignment]
 
+from shared.domain.actor_definitions import ActorScope, canonical_actor_label
 from shared.domain.eu_countries import EU_EEA_COUNTRIES, is_european
 from shared.domain.metrics import cagr
 from src.config import Settings
 from src.domain.metrics import compute_cluster_coherence
 from src.infrastructure.repository import TechClusterRepository
+
+# UC9 zaehlt Akteure, die via CPC-Co-Occurrence einem Tech-Cluster
+# zugeordnet wurden. Scope = CLUSTER_MEMBER. Siehe Bug CRIT-3 / AP3.
+_UC9_ACTOR_SCOPE = ActorScope.CLUSTER_MEMBER
 
 logger = structlog.get_logger(__name__)
 
@@ -204,9 +209,14 @@ class TechClusterServicer(_get_base_class()):  # type: ignore[misc]
                          total_actors: int, total_cpc_codes: int, data_sources: list[dict[str, Any]],
                          warnings: list[dict[str, str]], request_id: str, processing_time_ms: int) -> Any:
         if uc9_tech_cluster_pb2 is None or common_pb2 is None:
+            # Dict-Fallback: enthaelt das kanonische Akteurs-Scope-Label
+            # (Bug CRIT-3 / AP3) damit das Frontend klar zwischen UC8/UC9/UC11
+            # unterscheiden kann. UC9 zaehlt Cluster-Mitglieder.
             return {
                 "clusters": clusters, "actor_cpc_links": actor_cpc_links,
                 "total_actors": total_actors, "total_cpc_codes": total_cpc_codes,
+                "actor_scope": _UC9_ACTOR_SCOPE.value,
+                "actor_scope_label": canonical_actor_label(_UC9_ACTOR_SCOPE),
                 "metadata": {"processing_time_ms": processing_time_ms, "data_sources": data_sources,
                              "warnings": warnings, "request_id": request_id,
                              "timestamp": datetime.now(timezone.utc).isoformat()},

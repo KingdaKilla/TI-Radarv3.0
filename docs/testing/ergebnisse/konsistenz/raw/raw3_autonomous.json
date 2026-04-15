@@ -1,0 +1,58 @@
+{
+  "tech": "autonomous driving",
+  "header": "AUTONOMOUS DRIVING Technologie-Intelligence Analyse 734 Patente 235 EU-Projekte 0 Publikationen Phase: Reife Rückläufige Entwicklung Wettbewerbsintensiver Markt €755M Förderung Sehr hoher Forschungsimpact Geographische Perspektive Geographische Perspektive Dieser Analysebereich umfasst: UC6 Geographische Verteilung Zeigt die globale Verteilung von Patentanmeldern und Forschungsorganisa",
+  "panels": {
+    "Aktivitätstrends": {
+      "observedActive": "Aktivitätstrends",
+      "panelText": "Aktivitätstrends S-Kurve & Reife Technologiekonvergenz UC1 Technologie-Landschaft Info Patente CAGR: 11.7% Info Projekte CAGR: 8.4% Info 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026 -100% -50% 0% 50% 100% Daten ggf. unvollständig TOP CPC-KLASSEN B60W60/001 2.077 G05D1/0088 1.788 B60W2420/403 1.342 B60W40/02 1.285 B60W50/14 1.215 Nachvollziehbarkeit 2 Quellen | 11.8s"
+    },
+    "S-Kurve & Reife": {
+      "observedActive": "S-Kurve & Reife",
+      "panelText": "S-Kurve & Reife Technologiekonvergenz UC2 Reifegrad-Analyse Info Phase: Reife Info R² = 0.999 Info Wendepunkt: 2021 Info Konfidenz: 95% 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026 0 200 400 600 800 Wendepunkt Daten ggf. unvollständig Entstehung Wachstum Reife Sättigung Rückgang Nachvollziehbarkeit 1 Quelle | 11.8s"
+    },
+    "Technologiekonvergenz": {
+      "observedActive": "Technologiekonvergenz",
+      "panelText": "Technologiekonvergenz UC5 Cross-Tech Intelligence Info 10 CPC-Klassen Ø Jaccard: 0.224 Info 3 Whitespace-Lücken B60W G05D G06V G08G G01C G06F G06N B60Y G01S B60K Nachvollziehbarkeit 1 Quelle | 11.8s"
+    },
+    "Wettbewerb & HHI": {
+      "observedActive": "Wettbewerb & HHI",
+      "panelText": "Wettbewerb & HHI Dynamik & Persistenz Akteurs-Typen UC3 Wettbewerbsanalyse Info Niedrige Konzentration Info 0 6 12 18 24 FRAUNHOFERAUSTRI… TECHNISCHEUNIVER… KUNGLIGATEKNISKA… VIRTUAL VEHICLER… CHALMERSTEKNISKA… NXPSEMICONDUCTOR… RHEINISCH-WESTFAE… LUNDSUNIVERSITET PatenteProjekte Nachvollziehbarkeit 2 Quellen | 11.8s"
+    },
+    "Dynamik & Persistenz": {
+      "observedActive": "Dynamik & Persistenz",
+      "panelText": "Dynamik & Persistenz Akteurs-Typen UC8 Zeitliche Entwicklung Info 12 Akteure Schrumpfend (-293 netto) 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026 0 95 190 285 380 Daten ggf. unvollständig PersistenteNeue AkteureAusgeschieden Nachvollziehbarkeit 2 Quellen | 11.8s"
+    },
+    "Akteurs-Typen": {
+      "observedActive": "Akteurs-Typen",
+      "panelText": "Akteurs-Typen UC11 Akteurs-Typverteilung Info 1.274 Akteure Dominiert: KMU / Unternehmen KMU / UnternehmenHigher EducationResearch OrganisationOtherPublic Body Nachvollziehbarkeit 1 Quelle | 11.8s"
+    },
+    "Förderung": {
+      "observedActive": "Förderung",
+      "panelText": "Förderungsanalyse Info Gesamt: 754.8 Mio. EUR Info 235 Projekte IA RIA HORIZON-RIA HORIZON-JU-IA HORIZON-IA HORIZON-ERC SME-2 MSCA-ITN ERC-ADG HORIZON-JU-RIA ERC-COG ERC-STG HORIZO… HORIZON-… PCP HORIZON-… Nachvollziehbarkeit 1 Quelle | 11.8s"
+    },
+    "Forschungsimpact": {
+      "observedActive": "Forschungsimpact",
+      "panelText": "Forschungsimpact Info 199 Publikationen 319.5 Zitate/Pub. 15 Institutionen 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025 0 25 50 75 100 0 4500 9000 13500 18000 Daten ggf. unvollständig PublikationenZitationen Nachvollziehbarkeit 2 Quellen | 11.8s"
+    },
+    "Publikationen": {
+      "observedActive": "Publikationen",
+      "panelText": "Publikationen 60.0 Pub/Projekt DOI: 27% 2016 2017 2018 2019 2020 2021 2022 2023 2024 0 600 1200 1800 2400 Nachvollziehbarkeit 1 Quelle | 11.8s"
+    },
+    "Geographie": {
+      "observedActive": "Geographie",
+      "panelText": "Geographie Tech-Cluster EuroSciVoc Patenterteilung UC6 Geographische Verteilung Info 10 Länder Top: Deutschland 0 90 180 270 360 Deutschland Frankreich Schweden Italien Vereinigtes K… Niederlande Schweiz Spanien Belgien Österreich Nachvollziehbarkeit 2 Quellen | 11.8s"
+    },
+    "Tech-Cluster": {
+      "observedActive": "Tech-Cluster",
+      "panelText": "Tech-Cluster EuroSciVoc Patenterteilung UC9 Technologie-Cluster Info 5 Cluster 52 Akteure 238 CPC-Klassen Patente Akteure Dichte Kohärenz Wachstum CPC Section ACPC Section BCPC Section ECPC Section GCPC Section H Nachvollziehbarkeit 1 Quelle | 11.8s"
+    },
+    "EuroSciVoc": {
+      "observedActive": "EuroSciVoc",
+      "panelText": "EuroSciVoc Patenterteilung UC10 Wissenschaftsdisziplinen Info 0 Felder 234 Projekte 0% 4% 8% 12% 16% sensors autonomous vehicles automation optical sensors software radar drones 234 Projekte zugeordnet · Shannon-Index: 5.26 Nachvollziehbarkeit 1 Quelle | 11.8s"
+    },
+    "Patenterteilung": {
+      "observedActive": "Patenterteilung",
+      "panelText": "Patenterteilung UC12 Erteilungsquoten Info Quote: 40.8% Info 30.8 Mon. bis Erteilung 6.336 Anmeldungen 2.586 Erteilungen 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026 0 250 500 750 1000 0% 25% 50% 75% 100% Daten ggf. unvollständig AnmeldungenErteilungenQuote (%) Nachvollziehbarkeit 1 Quelle | 11.8s"
+    }
+  }
+}

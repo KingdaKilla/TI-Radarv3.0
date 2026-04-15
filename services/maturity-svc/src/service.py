@@ -41,8 +41,15 @@ except ImportError:
     uc2_maturity_pb2_grpc = None  # type: ignore[assignment]
 
 # --- Shared Domain Metriken ---
-from shared.domain.metrics import cagr, classify_maturity_phase, detect_decline, s_curve_confidence
+from shared.domain.metrics import (
+    R2_RELIABILITY_THRESHOLD,
+    cagr,
+    classify_maturity_phase,
+    detect_decline,
+    s_curve_confidence,
+)
 from shared.domain.scurve import fit_best_model, logistic_function, gompertz_function, richards_function
+from shared.domain.year_completeness import last_complete_year
 
 from src.config import Settings
 from src.infrastructure.repository import MaturityRepository
@@ -161,16 +168,18 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             total_patents = 0
 
         # --- Daten-Vollstaendigkeits-Cutoff ---
-        # EPO-Bulk-Daten: 2025 unvollstaendig (Nov/Dez lueckenhaft),
-        # daher nur bis einschliesslich 2024 als vollstaendig betrachten.
-        # S-Curve-Fit nur auf vollstaendige Jahre anwenden.
-        data_complete_year = 2024
+        # MAJ-7/MAJ-8: ``last_complete_year()`` aus shared-Helper liefert das
+        # letzte voll abgeschlossene Kalenderjahr (heute 2026-04-14 → 2025).
+        # S-Curve-Fit und Phasen-Klassifikation duerfen NIE Teiljahre
+        # einbeziehen, sonst wird R² fuer 2026 kuenstlich hoch und CAGR zu
+        # niedrig.  Vorher hardcoded 2024 → ab 2026 stale.
+        data_complete_year = last_complete_year()
 
         if end_year > data_complete_year:
             warnings.append({
                 "message": (
                     f"Patentdaten ab {data_complete_year + 1} möglicherweise unvollständig "
-                    f"(EPO-Bulk-Daten 2025 nur bis ca. Oktober vollständig)"
+                    f"(letztes vollständig abgeschlossenes Kalenderjahr: {data_complete_year})"
                 ),
                 "severity": "MEDIUM",
                 "code": "DATA_INCOMPLETE_RECENT_YEARS",
@@ -236,6 +245,9 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         aicc_selected = 0.0
         aicc_alternative = 0.0
         delta_aicc = 0.0
+        # Bug MAJ-9: Reliability-Flag, das die UI deterministisch bewerten kann.
+        # True nur, wenn ein Sigmoid-Fit zustande kam UND R² >= R2_RELIABILITY_THRESHOLD.
+        fit_reliability_flag = False
 
         if s_curve_result is not None:
             maturity_pct = s_curve_result["maturity_percent"]
@@ -270,31 +282,56 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             aicc_alternative = raw_alt if isinstance(raw_alt, (int, float)) and math.isfinite(raw_alt) else 0.0
             delta_aicc = s_curve_result.get("delta_aicc", 0.0)
 
-            # Gewichtete Konfidenz
+            # Gewichtete Konfidenz (s_curve_confidence gibt bei R² < 0.5 hart 0 zurueck)
             conf = s_curve_confidence(r_sq, len(all_years), cumulative[-1] if cumulative else 0)
             confidence_level = conf
 
-            # Phase via maturity_percent (Gao et al. 2013)
-            phase_en, _phase_de, _ = classify_maturity_phase(
-                combined, maturity_percent=maturity_pct, r_squared=r_sq,
-            )
+            # Bug MAJ-9: Bei unzuverlaessigem Fit (R² < Threshold) keine Phase-Sicherheit.
+            # Strukturelle Kopplung: confidence ist bereits 0 (s_curve_confidence-Gate),
+            # zusaetzlich wird das Phase-Label auf "Unknown" gesetzt und der Reliability-
+            # Flag bleibt False, damit das Frontend den Badge ausgrauen kann.
+            if r_sq < R2_RELIABILITY_THRESHOLD:
+                phase_en = "Unknown"
+                confidence_level = 0.0
+                conf = 0.0
+                confidence_lower = 0.0
+                confidence_upper = 0.0
+                years_to_next_phase = 0
+                warnings.append({
+                    "message": (
+                        f"S-Curve-Fit unzuverlaessig (R²={r_sq:.3f} < "
+                        f"{R2_RELIABILITY_THRESHOLD}) — Phase-Label nicht aussagekraeftig"
+                    ),
+                    "severity": "MEDIUM",
+                    "code": "FIT_UNRELIABLE_LOW_R2",
+                })
+            else:
+                fit_reliability_flag = True
+                # Phase via maturity_percent (Gao et al. 2013)
+                phase_en, _phase_de, _ = classify_maturity_phase(
+                    combined, maturity_percent=maturity_pct, r_squared=r_sq,
+                )
 
-            # Konfidenzintervall (einfache Schaetzung via R²)
-            spread = (1.0 - r_sq) * 20.0  # Breite abhaengig von Fit-Guete
-            confidence_lower = max(0.0, maturity_pct - spread)
-            confidence_upper = min(100.0, maturity_pct + spread)
+                # Konfidenzintervall (einfache Schaetzung via R²)
+                spread = (1.0 - r_sq) * 20.0  # Breite abhaengig von Fit-Guete
+                confidence_lower = max(0.0, maturity_pct - spread)
+                confidence_upper = min(100.0, maturity_pct + spread)
 
-            # Jahre bis zur naechsten Phase (grobe Schaetzung)
-            years_to_next_phase = _estimate_years_to_next_phase(
-                maturity_pct, growth_rate_k, sat_level, cumulative[-1] if cumulative else 0,
-            )
+                # Jahre bis zur naechsten Phase (grobe Schaetzung)
+                years_to_next_phase = _estimate_years_to_next_phase(
+                    maturity_pct, growth_rate_k, sat_level, cumulative[-1] if cumulative else 0,
+                )
         else:
-            # Fallback: Heuristik
-            phase_en, _phase_de, conf = classify_maturity_phase(combined)
-            confidence_level = conf
+            # Fallback: Kein Sigmoid-Fit moeglich. Heuristik darf KEINE Konfidenz
+            # transportieren (Bug MAJ-9), da kein R² zur Verankerung vorliegt.
+            # Konfidenz zwingend 0 ueber s_curve_confidence(0, ...) — strukturell.
+            phase_en = "Unknown"
+            conf = s_curve_confidence(0.0, len(all_years), cumulative[-1] if cumulative else 0)
+            confidence_level = conf  # immer 0.0 (R²-Kopplung in s_curve_confidence)
+            fit_reliability_flag = False
             if cumulative and cumulative[-1] > 0 and cumulative[-1] >= min_patents:
                 warnings.append({
-                    "message": "S-Curve-Fit fehlgeschlagen — Fallback auf Heuristik",
+                    "message": "S-Curve-Fit fehlgeschlagen — kein zuverlaessiges Phase-Label",
                     "severity": "MEDIUM",
                     "code": "FIT_FAILED_FALLBACK",
                 })
@@ -352,6 +389,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             aicc_selected=aicc_selected,
             aicc_alternative=aicc_alternative,
             delta_aicc=delta_aicc,
+            fit_reliability_flag=fit_reliability_flag,
         )
 
     # -----------------------------------------------------------------------
@@ -382,16 +420,20 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         warnings: list[dict[str, str]],
         request_id: str,
         processing_time_ms: int,
-        data_complete_year: int = 2024,
+        data_complete_year: int | None = None,
         aicc_selected: float = 0.0,
         aicc_alternative: float = 0.0,
         delta_aicc: float = 0.0,
+        fit_reliability_flag: bool = False,
     ) -> Any:
         """MaturityResponse aus berechneten Daten zusammenbauen.
 
         Wenn gRPC-Stubs nicht verfuegbar sind, wird ein dict zurueckgegeben
         (fuer Tests und Entwicklung ohne generierten Code).
         """
+        # MAJ-7/MAJ-8: Default-Vollstaendigkeitsjahr aus dem shared-Helper.
+        if data_complete_year is None:
+            data_complete_year = last_complete_year()
         if uc2_maturity_pb2 is None or common_pb2 is None:
             return self._build_dict_response(
                 all_years=all_years,
@@ -419,6 +461,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
                 aicc_selected=aicc_selected,
                 aicc_alternative=aicc_alternative,
                 delta_aicc=delta_aicc,
+                fit_reliability_flag=fit_reliability_flag,
             )
 
         # --- Protobuf-Messages bauen ---
@@ -512,6 +555,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             aicc_alternative=aicc_alternative,
             delta_aicc=delta_aicc,
             is_declining=is_declining,
+            fit_reliability_flag=fit_reliability_flag,
         )
 
     def _build_dict_response(
@@ -538,12 +582,16 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         warnings: list[dict[str, str]],
         request_id: str,
         processing_time_ms: int,
-        data_complete_year: int = 2024,
+        data_complete_year: int | None = None,
         aicc_selected: float = 0.0,
         aicc_alternative: float = 0.0,
         delta_aicc: float = 0.0,
+        fit_reliability_flag: bool = False,
     ) -> dict[str, Any]:
         """Fallback-Response als dict (wenn gRPC-Stubs nicht generiert)."""
+        # MAJ-7/MAJ-8: Default kommt aus dem shared-Helper, kein Hardcoding.
+        if data_complete_year is None:
+            data_complete_year = last_complete_year()
         fitted_map = {fv["year"]: fv["fitted"] for fv in s_curve_fitted}
         return {
             "s_curve_data": [
@@ -576,6 +624,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             "aicc_selected": aicc_selected,
             "aicc_alternative": aicc_alternative,
             "delta_aicc": delta_aicc,
+            "fit_reliability_flag": fit_reliability_flag,
             "metadata": {
                 "processing_time_ms": processing_time_ms,
                 "data_sources": data_sources,

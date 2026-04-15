@@ -7,6 +7,7 @@ import math
 import pytest
 
 from shared.domain.metrics import (
+    R2_RELIABILITY_THRESHOLD,
     cagr,
     classify_maturity_phase,
     cr4,
@@ -169,22 +170,74 @@ class TestSCurveConfidence:
         result = s_curve_confidence(0.99, 20, 500)
         assert result == pytest.approx(0.95)
 
-    def test_minimal_data(self):
+    def test_minimal_data_below_threshold(self):
+        """R² unterhalb Threshold → Konfidenz = 0.0 (Bug MAJ-9 Kopplung)."""
         result = s_curve_confidence(0.3, 3, 10)
-        assert 0.1 <= result <= 0.95
+        assert result == 0.0
 
-    def test_floor_at_0_1(self):
+    def test_no_floor_when_r_squared_below_threshold(self):
+        """Bei R² < Threshold greift kein Mindestwert mehr — Konfidenz = 0.0."""
         result = s_curve_confidence(0.0, 0, 0)
-        assert result >= 0.1
+        assert result == 0.0
 
     def test_cap_at_0_95(self):
         result = s_curve_confidence(1.0, 100, 10_000)
         assert result <= 0.95
 
     def test_r_squared_weight(self):
+        """Bei validem R² ≥ Threshold: höheres R² → höhere Konfidenz."""
         high = s_curve_confidence(0.9, 10, 100)
-        low = s_curve_confidence(0.1, 10, 100)
+        low = s_curve_confidence(0.5, 10, 100)
         assert high > low
+
+
+# ============================================================================
+# s_curve_confidence() — R²-Kopplung (Bug MAJ-9)
+# ============================================================================
+
+
+class TestSCurveConfidenceR2Coupling:
+    """Absicherung: R² < Threshold muss zwingend Konfidenz = 0.0 erzwingen.
+
+    Hintergrund: Das Live-System zeigte bisher R²=0.000 + 80% Konfidenz +
+    Phase-Label gleichzeitig — klassische Scheinsicherheit. Die Kopplung
+    verhindert, dass nachgelagerte Fallback-Pfade eine Konfidenz produzieren,
+    obwohl der S-Curve-Fit unbrauchbar ist.
+    """
+
+    def test_r_squared_zero_returns_zero(self):
+        """R² = 0.0 muss exakt 0.0 zurueckgeben — kein 0.1-Floor mehr."""
+        assert s_curve_confidence(0.0, 10, 100) == 0.0
+
+    def test_r_squared_below_threshold_returns_zero(self):
+        """R² = 0.3 liegt unter Threshold 0.5 → Konfidenz = 0.0."""
+        assert s_curve_confidence(0.3, 10, 100) == 0.0
+
+    def test_r_squared_just_below_threshold_returns_zero(self):
+        """R² = 0.49 liegt knapp unter Threshold → Konfidenz = 0.0."""
+        assert s_curve_confidence(0.49, 20, 500) == 0.0
+
+    def test_r_squared_at_threshold_returns_positive(self):
+        """R² = 0.5 (Grenze) → Konfidenz > 0 (Threshold ist inklusiv)."""
+        result = s_curve_confidence(0.5, 10, 100)
+        assert result > 0.0
+
+    def test_r_squared_high_returns_high_confidence(self):
+        """R² = 0.9 mit guter Datenbasis → Konfidenz > 0.7."""
+        result = s_curve_confidence(0.9, 15, 200)
+        assert result > 0.7
+
+    def test_threshold_constant_exposed(self):
+        """Konstante R2_RELIABILITY_THRESHOLD ist oeffentlich verfuegbar."""
+        assert R2_RELIABILITY_THRESHOLD == 0.5
+
+    def test_negative_r_squared_clamped_to_zero(self):
+        """Pathologisches R² < 0 (aus schlechtem Fit) → Konfidenz = 0.0."""
+        assert s_curve_confidence(-0.5, 10, 100) == 0.0
+
+    def test_none_r_squared_treated_as_zero(self):
+        """None-R² (kein Fit moeglich) → Konfidenz = 0.0."""
+        assert s_curve_confidence(None, 10, 100) == 0.0  # type: ignore[arg-type]
 
 
 # ============================================================================

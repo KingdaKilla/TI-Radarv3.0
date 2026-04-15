@@ -73,9 +73,18 @@ export default function PatentGrantPanel({
             </span>
             <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
               {data.summary.total_applications.toLocaleString("de-DE")} Anmeldungen
+              <InfoTooltip text={METRIC_TOOLTIPS.patent_applications} />
             </span>
             <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
               {data.summary.total_grants.toLocaleString("de-DE")} Erteilungen
+              <InfoTooltip text={METRIC_TOOLTIPS.patent_grants} />
+            </span>
+            <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+              {(data.summary.total_applications + data.summary.total_grants).toLocaleString(
+                "de-DE",
+              )}{" "}
+              A+B gesamt
+              <InfoTooltip text={METRIC_TOOLTIPS.patent_scope} />
             </span>
           </div>
 

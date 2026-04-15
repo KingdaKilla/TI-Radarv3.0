@@ -1,0 +1,58 @@
+{
+  "tech": "post-quantum cryptography",
+  "header": "POST-QUANTUM CRYPTOGRAPHY Technologie-Intelligence Analyse 8 Patente 33 EU-Projekte 0 Publikationen Phase: Entstehung Stagnation Wettbewerbsintensiver Markt €99M Förderung Moderater Forschungsimpact Geographische Perspektive Geographische Perspektive Dieser Analysebereich umfasst: UC6 Geographische Verteilung Zeigt die globale Verteilung von Patentanmeldern und Forschungsorganisationen",
+  "panels": {
+    "Aktivitätstrends": {
+      "observedActive": "Aktivitätstrends",
+      "panelText": "Aktivitätstrends S-Kurve & Reife Technologiekonvergenz UC1 Technologie-Landschaft Info Patente CAGR: 50.0% Info Projekte CAGR: 18.9% Info 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026 -90% 0% 90% 180% 270% Daten ggf. unvollständig TOP CPC-KLASSEN H04L9/0852 97 H04L9/3247 52 H04L9/3093 50 H04L9/0825 36 H04L9/0861 34 Nachvollziehbarkeit 2 Quellen | 5.5s"
+    },
+    "S-Kurve & Reife": {
+      "observedActive": "S-Kurve & Reife",
+      "panelText": "S-Kurve & Reife Technologiekonvergenz UC2 Reifegrad-Analyse Info Phase: Entstehung Info R² = 0.000 Info Konfidenz: 80% 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026 0 2 4 6 8 Daten ggf. unvollständig Entstehung Wachstum Reife Sättigung Rückgang Nachvollziehbarkeit 1 Quelle | 5.5s"
+    },
+    "Technologiekonvergenz": {
+      "observedActive": "Technologiekonvergenz",
+      "panelText": "Technologiekonvergenz UC5 Cross-Tech Intelligence Info 10 CPC-Klassen Ø Jaccard: 0.122 Info 10 Whitespace-Lücken H04L G06F G06N G09C G06Q H04W H10D H04B Y02D B82Y Nachvollziehbarkeit 1 Quelle | 5.5s"
+    },
+    "Wettbewerb & HHI": {
+      "observedActive": "Wettbewerb & HHI",
+      "panelText": "Wettbewerb & HHI Dynamik & Persistenz Akteurs-Typen UC3 Wettbewerbsanalyse Info Niedrige Konzentration Info 0 1 2 3 4 TELEFONICAINNOVA… AGENCIA ESTATALC… RED HAT CZECH SR… UNIVERSIDADCARLO… FRAUNHOFERAUSTRI… NARODNI URADPRO… UNIVERSITE DULUX… FONDAZIONELINKS… PatenteProjekte Nachvollziehbarkeit 2 Quellen | 5.5s"
+    },
+    "Dynamik & Persistenz": {
+      "observedActive": "Dynamik & Persistenz",
+      "panelText": "Dynamik & Persistenz Akteurs-Typen UC8 Zeitliche Entwicklung Info 17 Akteure Schrumpfend (-67 netto) 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026 0 25 50 75 100 Daten ggf. unvollständig PersistenteNeue AkteureAusgeschieden Nachvollziehbarkeit 2 Quellen | 5.5s"
+    },
+    "Akteurs-Typen": {
+      "observedActive": "Akteurs-Typen",
+      "panelText": "Akteurs-Typen UC11 Akteurs-Typverteilung Info 172 Akteure Dominiert: KMU / Unternehmen KMU / UnternehmenHigher EducationResearch OrganisationPublic BodyOther Nachvollziehbarkeit 1 Quelle | 5.5s"
+    },
+    "Förderung": {
+      "observedActive": "Förderung",
+      "panelText": "Förderungsanalyse Info Gesamt: 98.6 Mio. EUR Info 33 Projekte HORIZON-RIA HORIZON-ERC HORIZON-IA ERC-ADG RIA HORIZON-CSA HORIZON-JU-RIA ERC-COG ERC-STG HORIZON-EIC-ACC… HORIZON… HORIZO… HORIZON… Nachvollziehbarkeit 1 Quelle | 5.5s"
+    },
+    "Forschungsimpact": {
+      "observedActive": "Forschungsimpact",
+      "panelText": "Forschungsimpact Info 100 Publikationen 53.9 Zitate/Pub. 15 Institutionen 2016 2017 2019 2020 2021 2022 2023 2024 2025 2026 0 15 30 45 60 0 300 600 900 1200 PublikationenZitationen Nachvollziehbarkeit 2 Quellen | 5.5s"
+    },
+    "Publikationen": {
+      "observedActive": "Publikationen",
+      "panelText": "Publikationen 48.5 Pub/Projekt DOI: 35% 2016 2017 2018 2019 2020 2021 2022 2023 2025 0 70 140 210 280 Nachvollziehbarkeit 1 Quelle | 5.5s"
+    },
+    "Geographie": {
+      "observedActive": "Geographie",
+      "panelText": "Geographie Tech-Cluster EuroSciVoc Patenterteilung UC6 Geographische Verteilung Info 10 Länder Top: Deutschland 0 4 8 12 16 Deutschland Frankreich Niederlande Spanien Schweiz Italien Vereinigtes K… Griechenland Tschechien Österreich Nachvollziehbarkeit 2 Quellen | 5.5s"
+    },
+    "Tech-Cluster": {
+      "observedActive": "Tech-Cluster",
+      "panelText": "Tech-Cluster EuroSciVoc Patenterteilung UC9 Technologie-Cluster Info 2 Cluster 6 Akteure 21 CPC-Klassen Patente Akteure Dichte Kohärenz Wachstum CPC Section GCPC Section H Nachvollziehbarkeit 1 Quelle | 5.5s"
+    },
+    "EuroSciVoc": {
+      "observedActive": "EuroSciVoc",
+      "panelText": "EuroSciVoc Patenterteilung UC10 Wissenschaftsdisziplinen Info 0 Felder 35 Projekte 0% 25% 50% 75% 100% cryptography quantum computers software internet of things internet geometry e-commerce 35 Projekte zugeordnet · Shannon-Index: 3.12 Nachvollziehbarkeit 1 Quelle | 5.5s"
+    },
+    "Patenterteilung": {
+      "observedActive": "Patenterteilung",
+      "panelText": "Patenterteilung UC12 Erteilungsquoten Info Quote: 78.3% Info 23.8 Mon. bis Erteilung 83 Anmeldungen 65 Erteilungen 2019 2020 2021 2022 2023 2024 2025 2026 0 6 12 18 24 0% 30% 60% 90% 120% Daten ggf. unvollständig AnmeldungenErteilungenQuote (%) Nachvollziehbarkeit 1 Quelle | 5.5s"
+    }
+  }
+}

@@ -106,6 +106,7 @@ function transformMaturity(raw: any): MaturityPanel | null {
     maturity: "Reife",
     saturation: "Sättigung",
     decline: "Rückgang",
+    unknown: "Unklar",
   };
 
   // Backend liefert Protobuf-Enum-Namen (Mature, Growing, etc.)
@@ -121,9 +122,16 @@ function transformMaturity(raw: any): MaturityPanel | null {
     saturation: "saturation",
     declining: "decline",
     decline: "decline",
+    // Bug MAJ-9: Backend liefert "Unknown"/TECHNOLOGY_PHASE_UNSPECIFIED bei
+    // unzuverlaessigem Fit; Frontend muss das deterministisch als "unknown"
+    // erkennen, damit Phase-Badge ausgegraut werden kann (statt Default
+    // "emergence" anzuzeigen — das war die alte Scheinsicherheit).
+    unknown: "unknown",
+    technology_phase_unspecified: "unknown",
+    "": "unknown",
   };
-  const rawPhase = (raw.phase ?? "emergence").toLowerCase();
-  const phase = (phaseMap[rawPhase] ?? "emergence") as MaturityPanel["phase"];
+  const rawPhase = (raw.phase ?? "unknown").toString().toLowerCase();
+  const phase = (phaseMap[rawPhase] ?? "unknown") as MaturityPanel["phase"];
 
   const sCurveData = Array.isArray(raw.s_curve_data)
     ? raw.s_curve_data.map((pt: any) => ({
@@ -141,11 +149,20 @@ function transformMaturity(raw: any): MaturityPanel | null {
   const rawInflection = num(raw.model_parameters?.inflection_year);
   const inflectionYear: number | null = rawInflection > 0 ? Math.round(rawInflection) : null;
 
+  // Bug MAJ-9: R²/Konfidenz strukturell koppeln (Belt-and-Suspenders).
+  // Wenn Backend (Bug-Drift) doch Konfidenz > 0 bei R² < 0.5 schickt,
+  // erzwingt der Frontend-Gate Konfidenz = 0 und reliability_flag = false.
+  const rSquared = num(raw.r_squared);
+  const rawConfidence = num(raw.confidence?.confidence_level);
+  const backendReliability = Boolean(raw.fit_reliability_flag);
+  const isReliable = backendReliability && rSquared >= 0.5;
+  const confidence = isReliable ? rawConfidence : 0;
+
   return {
     s_curve_data: sCurveData,
     phase,
     phase_label: phaseLabels[phase] ?? phase,
-    r_squared: num(raw.r_squared),
+    r_squared: rSquared,
     saturation_level: saturation,
     inflection_year: inflectionYear,
     data_complete_year: num(raw.data_complete_year) || null,
@@ -155,7 +172,8 @@ function transformMaturity(raw: any): MaturityPanel | null {
     aicc_selected: num(raw.aicc_selected),
     aicc_alternative: num(raw.aicc_alternative),
     delta_aicc: num(raw.delta_aicc),
-    confidence: num(raw.confidence?.confidence_level),
+    confidence,
+    fit_reliability_flag: isReliable,
   };
 }
 
@@ -648,6 +666,10 @@ function transformTemporal(raw: any): TemporalPanel | null {
     emerging_topics: emergingTopics,
     declining_topics: decliningTopics,
     entrant_trend: entrantTrend,
+    actor_scope_label:
+      typeof raw.actor_scope_label === "string"
+        ? raw.actor_scope_label
+        : undefined,
   };
 }
 
@@ -694,6 +716,10 @@ function transformTechCluster(raw: any): TechClusterPanel | null {
       algorithm: quality.algorithm ?? "unknown",
       modularity: num(quality.modularity),
     },
+    actor_scope_label:
+      typeof raw.actor_scope_label === "string"
+        ? raw.actor_scope_label
+        : undefined,
   };
 }
 
@@ -748,6 +774,10 @@ function transformActorType(raw: any): ActorTypePanel | null {
     total_classified_actors: totalClassified,
     classification_coverage: classificationCoverage,
     sme_share: smeShare,
+    actor_scope_label:
+      typeof raw.actor_scope_label === "string"
+        ? raw.actor_scope_label
+        : undefined,
   };
 }
 

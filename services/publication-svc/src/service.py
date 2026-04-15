@@ -28,6 +28,7 @@ except ImportError:
     uc_c_publications_pb2 = None  # type: ignore[assignment]
     uc_c_publications_pb2_grpc = None  # type: ignore[assignment]
 
+from shared.domain.year_completeness import last_complete_year
 from src.config import Settings
 from src.domain.metrics import compute_pubs_per_million, compute_pubs_per_project
 from src.infrastructure.repository import PublicationRepository
@@ -160,6 +161,10 @@ class PublicationAnalyticsServicer(_get_base_class()):  # type: ignore[misc]
 
     def _build_response(self, **kwargs: Any) -> Any:
         if uc_c_publications_pb2 is None or common_pb2 is None:
+            # MAJ-7/MAJ-8: ``data_complete_year`` aus dem shared-Helper
+            # macht das letzte vollstaendige Kalenderjahr explizit. Das
+            # Frontend nutzt den Wert fuer den ReferenceArea-Hinweis
+            # "Daten ggf. unvollstaendig" auf dem Pub-Trend-Chart.
             return {
                 "total_publications": kwargs["total_publications"],
                 "total_projects_with_pubs": kwargs["total_projects_with_pubs"],
@@ -168,6 +173,7 @@ class PublicationAnalyticsServicer(_get_base_class()):  # type: ignore[misc]
                 "pub_trend": kwargs["pub_trend"],
                 "top_projects": kwargs["top_projects"],
                 "top_publications": kwargs["top_publications"],
+                "data_complete_year": last_complete_year(),
                 "metadata": {
                     "processing_time_ms": kwargs["processing_time_ms"],
                     "data_sources": kwargs["data_sources"],

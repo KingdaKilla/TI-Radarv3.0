@@ -145,4 +145,10 @@ message MaturityResponse {
   // konsekutiv bei maturity_percent >= 90%. Ergaenzt die S-Kurve,
   // die als monoton steigende kumulative Funktion Decline nicht abbildet.
   bool is_declining = 15;
+
+  // Bug MAJ-9: True nur wenn Sigmoid-Fit zustande kam UND R² >= 0.5
+  // (Reliability-Threshold). Frontend-Gate: Phase-Label und Konfidenz-Badge
+  // ausschliesslich bei flag == True rendern, sonst Phase ausgrauen und
+  // Konfidenz-Badge unterdruecken (Vermeidung von Scheinsicherheit).
+  bool fit_reliability_flag = 16;
 }

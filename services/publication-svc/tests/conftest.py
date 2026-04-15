@@ -1,0 +1,19 @@
+"""Conftest fuer publication-svc Tests.
+
+Fuegt Projekt-Root, Service-Root und ``packages/`` zum sys.path hinzu,
+damit sowohl ``shared.*`` als auch ``src.*`` importierbar sind.
+"""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+_SERVICE_ROOT = Path(__file__).resolve().parent.parent
+_PROJECT_ROOT = _SERVICE_ROOT.parent.parent
+_PACKAGES_ROOT = _PROJECT_ROOT / "packages"
+
+for p in (_PROJECT_ROOT, _PACKAGES_ROOT, _SERVICE_ROOT):
+    ps = str(p)
+    if ps not in sys.path:
+        sys.path.insert(0, ps)

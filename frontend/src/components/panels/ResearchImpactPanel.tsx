@@ -52,12 +52,15 @@ export default function ResearchImpactPanel({
         <div className="flex flex-col gap-4">
           {/* Key Metrics */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-lg border border-[var(--color-border)] p-2 text-center">
+            <div
+              className="rounded-lg border border-[var(--color-border)] p-2 text-center"
+              title="Publikationen der Top-N-Autoren aus Semantic Scholar. Nicht identisch mit Header/UC13 (CORDIS-Projekt-Publikationen)."
+            >
               <p className="text-lg font-bold text-[var(--color-accent)]">
                 {data.total_papers.toLocaleString("de-DE")}
               </p>
               <p className="text-[10px] text-[var(--color-text-muted)]">
-                Publikationen
+                Top-Autor-Publikationen
               </p>
             </div>
             <div className="rounded-lg border border-[var(--color-border)] p-2 text-center">

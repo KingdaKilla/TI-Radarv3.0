@@ -47,6 +47,11 @@ except ImportError:
     common_pb2 = None  # type: ignore[assignment]
     MessageToDict = None  # type: ignore[assignment]
 
+# Akteurs-Scope-Labels pro UC (Bug CRIT-3 / AP3). Wird nach dem
+# Proto->Dict-Roundtrip injiziert, damit das Frontend UC8, UC9 und UC11
+# klar voneinander unterscheiden kann.
+from src.actor_scope_injection import inject_actor_scope_label
+
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["Radar"])
@@ -150,6 +155,11 @@ def _proto_to_dict(proto_response: Any) -> dict[str, Any]:
     return {}
 
 
+# ``inject_actor_scope_label`` ist nach ``src.actor_scope_injection``
+# ausgelagert — vgl. Bug CRIT-3 / AP3. Das erleichtert Unit-Tests, weil
+# die Logik nicht auf FastAPI/Prometheus angewiesen ist.
+
+
 def _classify_grpc_error(exc: grpc.RpcError) -> tuple[str, bool]:
     """Klassifiziert einen gRPC-Fehler fuer die Fehlerberichterstattung.
 
@@ -203,6 +213,7 @@ async def _call_single_uc(
 
         duration = time.monotonic() - t0
         panel_data = _proto_to_dict(response)
+        inject_actor_scope_label(uc_name, panel_data)
 
         # Metrik: erfolgreicher Aufruf
         record_grpc_call(uc_name, "success", duration)

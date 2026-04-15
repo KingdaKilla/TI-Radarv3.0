@@ -106,7 +106,9 @@ export default function EuroSciVocPanel({
           <p className="text-xs text-[var(--color-text-muted)]">
             {data.total_mapped_publications.toLocaleString("de-DE")} Projekte
             zugeordnet &middot; Shannon-Index:{" "}
-            {data.interdisciplinarity.shannon_index.toFixed(2)}
+            {data.interdisciplinarity.active_fields < 2
+              ? "—"
+              : data.interdisciplinarity.shannon_index.toFixed(2)}
           </p>
         </div>
       )}

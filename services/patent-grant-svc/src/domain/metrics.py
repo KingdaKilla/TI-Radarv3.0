@@ -15,6 +15,15 @@ from __future__ import annotations
 
 from typing import Any
 
+# Single-source-of-truth fuer Kind-Code-Mengen (Bug CRIT-4):
+# Die lokalen APPLICATION_CODES / GRANT_CODES wurden durch zentrale Shared-
+# Definitionen ersetzt. Alte Namen bleiben als Alias bestehen, damit
+# Legacy-Importe weiter funktionieren.
+from shared.domain.patent_definitions import (
+    APPLICATION_KIND_CODES as APPLICATION_CODES,
+    GRANT_KIND_CODES as GRANT_CODES,
+)
+
 
 # Kind-Code Beschreibungen
 # EPO-Daten enthalten sowohl vollstaendige Codes (A1, B2) als auch
@@ -31,16 +40,12 @@ KIND_CODE_DESCRIPTIONS: dict[str, str] = {
     "B1": "Patent granted (no prior A with claims)",
     "B2": "Patent amended after opposition",
     "B3": "Patent limited after post-grant limitation",
+    "B4": "Patent granted (European, amended)",
     "B8": "Corrected title page of B document",
+    "B9": "Complete reprint of B document",
     "U": "Utility model",
     "D0": "INPADOC reference",
 }
-
-# Application Kind-Codes (A-Codes) — inkl. generischem 'A' aus EPO DOCDB
-APPLICATION_CODES: frozenset[str] = frozenset({"A", "A1", "A2", "A3", "A4", "A8", "A9"})
-
-# Grant Kind-Codes (B-Codes) — inkl. generischem 'B' aus EPO DOCDB
-GRANT_CODES: frozenset[str] = frozenset({"B", "B1", "B2", "B3", "B8"})
 
 
 def compute_grant_rate(applications: int, grants: int) -> float:

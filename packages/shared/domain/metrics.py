@@ -8,6 +8,12 @@ from __future__ import annotations
 import math
 from typing import Any
 
+# Schwellwert, unterhalb dessen ein S-Kurven-Fit als unzuverlaessig gilt
+# (Bug MAJ-9). Bei R² < 0.5 wird die Konfidenz zwingend auf 0.0 gesetzt,
+# damit nachgelagerte UI-Komponenten keine Scheinsicherheit (z.B. "R²=0 +
+# Konfidenz 80 % + Phase: Emerging") mehr erzeugen koennen.
+R2_RELIABILITY_THRESHOLD: float = 0.5
+
 
 def cagr(first_value: float, last_value: float, periods: int) -> float:
     """
@@ -90,11 +96,28 @@ def s_curve_confidence(
     - Datenabdeckung (Jahre): 20% Gewicht (15+ Jahre = voll)
     - Stichprobengroesse (Patente): 20% Gewicht (200+ Patente = voll)
 
-    Returns: Wert zwischen 0.1 und 0.95
+    R²-Kopplung (Bug MAJ-9): Wenn ``r_squared < R2_RELIABILITY_THRESHOLD`` (0.5),
+    gibt die Funktion hart ``0.0`` zurueck. Ein unzuverlaessiger Fit darf nicht
+    mit Datenabdeckung/Stichprobengroesse kompensiert werden, sonst entstehen
+    Scheinsicherheiten (z.B. R²=0 + 80 % Konfidenz + Phase-Label).
+
+    Args:
+        r_squared: R²-Wert des Fits (0..1). ``None`` oder Werte < 0 werden wie 0 behandelt.
+        n_years: Anzahl Jahre mit Datenpunkten.
+        total_patents: Gesamt-Sample-Groesse (kumulativ am Ende der Reihe).
+
+    Returns:
+        Wert in [0.0, 0.95]. Exakt 0.0 wenn R² < R2_RELIABILITY_THRESHOLD;
+        sonst min. 0.1 (Floor) bis max. 0.95 (Cap).
     """
+    # Kopplung: R² unter Threshold oder fehlend → Konfidenz = 0 (keine Kompensation).
+    r_sq = r_squared if r_squared is not None else 0.0
+    if r_sq < R2_RELIABILITY_THRESHOLD:
+        return 0.0
+
     data_factor = min(1.0, n_years / 15.0)
     sample_factor = min(1.0, total_patents / 200.0)
-    raw = (r_squared or 0.0) * 0.6 + data_factor * 0.2 + sample_factor * 0.2
+    raw = r_sq * 0.6 + data_factor * 0.2 + sample_factor * 0.2
     return round(min(0.95, max(0.1, raw)), 2)
 
 

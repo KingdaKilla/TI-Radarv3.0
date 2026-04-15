@@ -13,9 +13,14 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
+  ReferenceArea,
 } from "recharts";
 import PanelCard from "./PanelCard";
 import { SEMANTIC_COLORS } from "@/lib/chart-colors";
+import {
+  resolveProjectsCount,
+  buildPublicationCalcRow,
+} from "@/lib/publication-calc";
 import type { PublicationPanel as PublicationPanelData } from "@/lib/types";
 
 interface PublicationPanelProps {
@@ -24,6 +29,17 @@ interface PublicationPanelProps {
   error: string | null;
   onDetailClick?: () => void;
   queryTimeSeconds?: number;
+  /** MIN-11: Externer (Header-)Projektzaehler. Wenn gesetzt, wird er
+   *  fuer die explizite "Pub/Projekt × Projekte ≈ Publikationen"-Rechnung
+   *  bevorzugt, damit die UI dieselbe Bezugsgroesse wie der Header (UC1)
+   *  zeigt. Faellt sonst auf `data.total_projects_with_pubs` zurueck. */
+  projectsCount?: number;
+  /** MAJ-7/MAJ-8: Letztes vollstaendig abgeschlossenes Kalenderjahr.
+   *  Wenn die Pub-Trend-Daten ueber dieses Jahr hinausgehen, zeigt der
+   *  Chart eine ReferenceArea „Daten ggf. unvollstaendig" — exakt wie
+   *  LandscapePanel/MaturityPanel.  Bisher fehlte der Hinweis trotz
+   *  Bedarf laut KONSOLIDIERUNG.md MAJ-8. */
+  dataCompleteYear?: number;
 }
 
 export default function PublicationPanel({
@@ -32,6 +48,8 @@ export default function PublicationPanel({
   error,
   onDetailClick,
   queryTimeSeconds,
+  projectsCount,
+  dataCompleteYear,
 }: PublicationPanelProps) {
   return (
     <PanelCard
@@ -58,6 +76,33 @@ export default function PublicationPanel({
               DOI: {(data.doi_coverage * 100).toFixed(0)}%
             </span>
           </div>
+
+          {/* CRIT-1 / MIN-11: Explizite Rechnung sichtbar machen, damit Nutzer
+              nachvollziehen, wie sich total_publications zusammensetzt.
+              MIN-11: Wenn ein externer Projektzaehler (z. B. Header/UC1)
+              uebergeben wird, hat dieser Vorrang -- so passt die Rechnung
+              numerisch zum Header-Wert. */}
+          {(() => {
+            const projects = resolveProjectsCount(
+              projectsCount,
+              data.total_projects_with_pubs,
+            );
+            const text = buildPublicationCalcRow(
+              data.publications_per_project,
+              projects,
+              data.total_publications,
+            );
+            if (text === null) return null;
+            return (
+              <p
+                data-testid="publication-calc-row"
+                className="text-center text-[11px] text-[var(--color-text-muted)]"
+                title="CORDIS-Projekt-Publikationen: dieselbe Query wie im Header (UC1)."
+              >
+                {text}
+              </p>
+            );
+          })()}
 
           {/* Bar Chart: Publication Trend */}
           <div className="h-[clamp(13rem,40vh,28rem)]" aria-label="Publikationstrend pro Jahr">
@@ -99,6 +144,22 @@ export default function PublicationPanel({
                   name="Publikationen"
                   radius={[2, 2, 0, 0]}
                 />
+                {dataCompleteYear &&
+                  data.pub_trend.length > 0 &&
+                  data.pub_trend[data.pub_trend.length - 1].year > dataCompleteYear && (
+                    <ReferenceArea
+                      x1={dataCompleteYear}
+                      x2={data.pub_trend[data.pub_trend.length - 1].year}
+                      fill="#9ca3af"
+                      fillOpacity={0.15}
+                      label={{
+                        value: "Daten ggf. unvollständig",
+                        position: "insideTop",
+                        fontSize: 9,
+                        fill: "#9ca3af",
+                      }}
+                    />
+                  )}
               </BarChart>
             </ResponsiveContainer>
           </div>

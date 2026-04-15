@@ -17,6 +17,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import PanelCard from "./PanelCard";
+import InfoTooltip from "@/components/ui/InfoTooltip";
 import { PALETTE } from "@/lib/chart-colors";
 import type { TechClusterPanel as TechClusterPanelData, TechCluster } from "@/lib/types";
 
@@ -102,8 +103,18 @@ export default function TechClusterPanel({
             <span className="badge-info">
               {data.quality.num_clusters} Cluster
             </span>
-            <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-              {data.total_actors.toLocaleString("de-DE")} Akteure
+            <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 inline-flex items-center gap-1">
+              {data.total_actors.toLocaleString("de-DE")} Cluster-Mitglieder
+              <InfoTooltip
+                text={
+                  `UC9 zaehlt Akteure, die mindestens einen CPC-Code innerhalb eines ` +
+                  `identifizierten Tech-Clusters halten ` +
+                  `(Scope: ${data.actor_scope_label ?? "Cluster-Mitglieder"}). ` +
+                  `Diese Zahl ist typischerweise kleiner als UC8 (aktive Akteure im ` +
+                  `Zeitfenster) und UC11 (klassifizierte Organisationen) — ` +
+                  `unterschiedliche Scopes zaehlen unterschiedliche Populationen.`
+                }
+              />
             </span>
             <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
               {data.total_cpc_codes} CPC-Klassen

@@ -1,7 +1,14 @@
-"""PublicationRepository — PostgreSQL-Datenbankzugriff fuer UC-C.
+"""PublicationRepository — PostgreSQL-Datenbankzugriff fuer UC-C (UC13).
 
 Abfragen fuer Publikations-Impact-Chain aus cordis_schema.publications.
 Verknuepft Publikationen mit Projekten ueber project_id.
+
+**CRIT-1 — Master-Scope:** Dieses Repository nutzt den Scope
+``PublicationScope.CORDIS_LINKED`` aus
+:mod:`shared.domain.publication_definitions`.  Dieselbe Query-Definition
+wird auch vom landscape-svc (UC1 Header) in ``count_cordis_publications``
+verwendet — so ist garantiert, dass Header.total_publications ==
+UC13.total_publications fuer identische Parameter.
 
 Hinweis: publication_date ist bei vielen CORDIS-Publikationen NULL.
 Daher wird p.start_date als primaerer Zeitfilter verwendet.

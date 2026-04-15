@@ -107,6 +107,12 @@ const PHASE_CONFIG: Record<
     description:
       "Die Technologie zeigt Anzeichen eines Rückgangs. Die Patentaktivität nimmt ab, möglicherweise zugunsten neuerer Alternativen.",
   },
+  unknown: {
+    label: "Unklar",
+    color: "#9ca3af",
+    description:
+      "Fit unzuverlässig (R² < 0.5 oder zu wenige Datenpunkte). Die Phase-Einordnung ist nicht belastbar — bitte Ergebnisse mit Vorsicht interpretieren.",
+  },
 };
 
 // ── Component ──

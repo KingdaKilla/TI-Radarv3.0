@@ -6,11 +6,13 @@ AsyncMock-Objekte ersetzt. Kein IO, kein gRPC, kein Protobuf.
 
 from __future__ import annotations
 
+from datetime import date
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from shared.domain.result_types import CountryCount, CpcCount, FundingYear, YearCount
+from shared.domain.year_completeness import last_complete_year
 from src.use_case import AnalyzeLandscape, LandscapeResult, _compute_funding_cagr, _safe_cagr
 
 
@@ -46,6 +48,11 @@ def _make_repo(**overrides: object) -> AsyncMock:
         "funding_by_year",
         [FundingYear(year=2020, funding=1_000_000.0, count=5),
          FundingYear(year=2024, funding=2_000_000.0, count=8)],
+    )
+    # AP2 CRIT-1: Header-Summary muss ``total_publications`` aus dem
+    # CORDIS_LINKED-Scope beziehen.  Das Repository liefert die Zahl direkt.
+    repo.count_cordis_publications.return_value = overrides.get(
+        "cordis_publications_total", 2_456,
     )
 
     return repo
@@ -86,7 +93,9 @@ class TestAnalyzeLandscapeNormal:
 
         assert result.total_patents == 300  # 100 + 200
         assert result.total_projects == 30  # 10 + 20
-        assert result.total_publications == 130  # 50 + 80
+        # CRIT-1: Header.total_publications kommt aus Repo (CORDIS_LINKED-Scope),
+        # nicht mehr aus OpenAIRE.  Default im Fixture: 2_456.
+        assert result.total_publications == 2_456
         assert result.total_funding == 3_000_000.0  # 1M + 2M
 
     async def test_periods_calculated(self):
@@ -143,15 +152,22 @@ class TestAnalyzeLandscapeNormal:
         assert result.cagr_funding > 0.0
 
     async def test_without_openaire(self):
-        """Ohne OpenAIRE-Adapter werden keine Publikationsdaten abgefragt."""
+        """Ohne OpenAIRE-Adapter gibt es nur CORDIS-Publikationen (keine Trendkurve).
+
+        CRIT-1: Die Header-Zahl kommt weiterhin aus dem Repo — OpenAIRE liefert
+        nur die *optionale* Zeitreihe.
+        """
         repo = _make_repo()
         uc = AnalyzeLandscape(repo=repo, openaire=None)
 
         result = await uc.execute("quantum", start_year=2020, end_year=2024)
 
-        assert result.total_publications == 0
-        source_types = [ds["type"] for ds in result.data_sources]
-        assert "PUBLICATION" not in source_types
+        # total_publications kommt vom Repo (Default 2_456).
+        assert result.total_publications == 2_456
+        # Die PUBLICATION-Datenquelle kommt jetzt aus CORDIS (nicht OpenAIRE).
+        pub_sources = [ds for ds in result.data_sources if ds.get("type") == "PUBLICATION"]
+        assert len(pub_sources) == 1
+        assert "CORDIS" in pub_sources[0]["name"]
 
     async def test_processing_time_positive(self):
         repo = _make_repo()
@@ -187,6 +203,7 @@ class TestAnalyzeLandscapeEmpty:
             project_countries=[],
             top_cpc=[],
             funding_by_year=[],
+            cordis_publications_total=0,
         )
         uc = AnalyzeLandscape(repo=repo, openaire=None)
 
@@ -236,15 +253,19 @@ class TestAnalyzeLandscapeErrors:
         assert result.total_projects == 30  # 10 + 20
 
     async def test_failed_openaire_adds_warning(self):
-        """Fehlgeschlagene OpenAIRE-Query erzeugt Warning."""
-        repo = _make_repo()
+        """Fehlgeschlagene OpenAIRE-Query erzeugt Warning — Header bleibt aus CORDIS.
+
+        CRIT-1: OpenAIRE liefert nur die Zeitreihen-Trendkurve.  Wenn sie
+        ausfaellt, bleibt ``total_publications`` dennoch aus dem Repo gefuellt.
+        """
+        repo = _make_repo(cordis_publications_total=789)
         openaire = _make_openaire()
         openaire.count_by_year.side_effect = ConnectionError("OpenAIRE down")
         uc = AnalyzeLandscape(repo=repo, openaire=openaire)
 
         result = await uc.execute("ai", start_year=2020, end_year=2024)
 
-        assert result.total_publications == 0
+        assert result.total_publications == 789  # Header unveraendert aus CORDIS
         warning_codes = [w["code"] for w in result.warnings]
         assert any("PUBLICATION_YEARS" in code for code in warning_codes)
 
@@ -334,3 +355,164 @@ class TestLandscapeResult:
         """LandscapeResult nutzt __slots__ fuer Speichereffizienz."""
         result = LandscapeResult()
         assert not hasattr(result, "__dict__")
+
+
+# ---------------------------------------------------------------------------
+# Tests: CRIT-1 — Publikations-Triplet
+# ---------------------------------------------------------------------------
+
+class TestAnalyzeLandscapePublicationScopeCrit1:
+    """Header ``total_publications`` MUSS aus CORDIS-Scope kommen (Bug CRIT-1).
+
+    Vor AP2: Header bezog ``total_publications`` aus OpenAIRE (Faktor 1580
+    abweichend von UC13 bei mRNA).  Ab AP2: derselbe CORDIS_LINKED-Query
+    wie in publication-svc — Konsistenz strukturell erzwungen.
+    """
+
+    async def test_total_publications_comes_from_repo_not_openaire(self):
+        """Selbst wenn OpenAIRE divergierende Zahlen liefert, gewinnt das Repo."""
+        repo = _make_repo(cordis_publications_total=2_456)
+        openaire = _make_openaire(
+            # OpenAIRE liefert *fiktive* 311.500 (der CRIT-1-Worst-Case),
+            # der Use-Case darf diese NICHT als Header-Total verwenden.
+            publication_years=[{"year": 2020, "count": 150_000},
+                               {"year": 2024, "count": 161_500}],
+        )
+        uc = AnalyzeLandscape(repo=repo, openaire=openaire)
+
+        result = await uc.execute("mRNA", start_year=2015, end_year=2025)
+
+        assert result.total_publications == 2_456, (
+            "Header.total_publications muss aus CORDIS-Repo kommen, nicht OpenAIRE."
+        )
+
+    async def test_repo_method_count_cordis_publications_is_called(self):
+        """Der Use-Case ruft die neue Master-Methode auf."""
+        repo = _make_repo(cordis_publications_total=1_000)
+        uc = AnalyzeLandscape(repo=repo, openaire=None)
+
+        await uc.execute("quantum computing", start_year=2020, end_year=2024)
+
+        repo.count_cordis_publications.assert_called_once()
+
+    async def test_without_openaire_still_has_publications_from_repo(self):
+        """Ohne OpenAIRE-Adapter liefert das Repo weiterhin Publikationen."""
+        repo = _make_repo(cordis_publications_total=789)
+        uc = AnalyzeLandscape(repo=repo, openaire=None)
+
+        result = await uc.execute("ai", start_year=2020, end_year=2024)
+
+        assert result.total_publications == 789
+
+    async def test_publication_scope_label_cordis_linked(self):
+        """Die Data-Source-Liste enthaelt das kanonische Label aus shared.domain."""
+        from shared.domain.publication_definitions import (
+            PublicationScope,
+            canonical_publication_label,
+        )
+        repo = _make_repo(cordis_publications_total=42)
+        uc = AnalyzeLandscape(repo=repo, openaire=None)
+
+        result = await uc.execute("5g", start_year=2020, end_year=2024)
+
+        cordis_label = canonical_publication_label(PublicationScope.CORDIS_LINKED)
+        pub_sources = [ds for ds in result.data_sources if ds.get("type") == "PUBLICATION"]
+        # Mindestens eine PUBLICATION-Datenquelle MUSS das CORDIS-Label tragen.
+        assert any(cordis_label in ds.get("name", "") for ds in pub_sources), (
+            f"Erwartet '{cordis_label}' in data_sources, gefunden: {pub_sources}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Tests: AP8 — data_complete_year aus shared-Helper, kein Hardcoding
+# ---------------------------------------------------------------------------
+
+
+class TestAnalyzeLandscapeDataCompleteYearMaj7Maj8:
+    """LandscapeResult MUSS ``data_complete_year`` ausweisen.
+
+    Bug MAJ-7/MAJ-8: Header zeigte CAGR auf Basis unvollstaendiger Jahre,
+    Frontend hatte keinen Hinweis, ob das Endjahr vollstaendig ist. Nach
+    AP8 wird ``data_complete_year`` aus
+    :func:`shared.domain.year_completeness.last_complete_year` abgeleitet
+    und im Result mitgegeben.
+    """
+
+    async def test_data_complete_year_field_present(self):
+        repo = _make_repo()
+        uc = AnalyzeLandscape(repo=repo, openaire=None)
+
+        result = await uc.execute("ai", start_year=2020, end_year=2024)
+
+        assert hasattr(result, "data_complete_year")
+
+    async def test_data_complete_year_uses_helper(self):
+        """Default-Wert kommt aus ``last_complete_year()`` (heute 2025)."""
+        repo = _make_repo()
+        uc = AnalyzeLandscape(repo=repo, openaire=None)
+
+        result = await uc.execute("ai", start_year=2020, end_year=2026)
+
+        # Helper liefert 2025 bei heute 2026-04-14, aktuell mind. 2024.
+        assert result.data_complete_year == last_complete_year()
+        assert result.data_complete_year >= 2024
+
+    async def test_cagr_clipped_to_complete_years(self):
+        """CAGR ignoriert Daten nach ``data_complete_year``.
+
+        Selbst wenn das Repo Jahre bis 2026 liefert, darf CAGR nur ueber
+        Jahre bis ``last_complete_year()`` berechnet werden. ``cagr()``
+        gibt Prozentwerte zurueck.
+        """
+        # Repo liefert 2020 -> 100, 2026 -> 1_000_000 (kuenstlich hoher Spike
+        # im laufenden Jahr).  CAGR muss diesen Spike ignorieren.
+        repo = _make_repo(
+            patent_years=[
+                YearCount(year=2020, count=100),
+                YearCount(year=2025, count=200),
+                YearCount(year=2026, count=1_000_000),
+            ],
+        )
+        uc = AnalyzeLandscape(repo=repo, openaire=None)
+
+        result = await uc.execute("ai", start_year=2020, end_year=2026)
+
+        # Mit dem Spike (1_000_000): CAGR wuerde > 300% sein.
+        # Geclippt (100 → 200, 5 Jahre): ca. 14.87%.
+        assert 0.0 < result.cagr_patents < 50.0, (
+            f"CAGR {result.cagr_patents:.2f}% deutet auf nicht-geclipptes "
+            "Spike-Jahr 2026 hin."
+        )
+
+    async def test_warning_when_end_year_after_data_complete_year(self):
+        """Wenn das User-Endjahr > ``last_complete_year()`` ist, MUSS
+        eine Warning mit Code ``DATA_INCOMPLETE_RECENT_YEARS`` gesetzt werden.
+        """
+        repo = _make_repo()
+        uc = AnalyzeLandscape(repo=repo, openaire=None)
+
+        result = await uc.execute("ai", start_year=2020, end_year=2026)
+
+        codes = [w["code"] for w in result.warnings]
+        assert "DATA_INCOMPLETE_RECENT_YEARS" in codes
+
+
+class TestSafeCagrUsesYearHelper:
+    """``_safe_cagr`` MUSS standardmaessig ``last_complete_year()`` nutzen.
+
+    Vorher hardcoded 2024 — das laeuft ab 2026 in eine zu kurze Reihe.
+    Nach AP8 ist der Default dynamisch.
+    """
+
+    def test_safe_cagr_default_clip_dynamic(self):
+        # Daten von 2020-2026, ohne explizites data_complete_year-Argument.
+        data = [
+            YearCount(year=2020, count=100),
+            YearCount(year=2025, count=200),
+            YearCount(year=2026, count=999_999),
+        ]
+        result = _safe_cagr(data, periods=6)
+        # Heute = 2026: last_complete_year() = 2025 ⇒ Spike (2026) ist raus.
+        # Erwartet: moderate CAGR von 100 → 200 ueber 5 Jahre ≈ 14.87 (Prozent).
+        # ``cagr()`` gibt Prozentwerte zurueck; ohne Clip waere CAGR > 300%.
+        assert 0.0 < result < 50.0

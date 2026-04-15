@@ -52,6 +52,7 @@ except ImportError:
         compute_venue_distribution as _compute_venue_distribution,
     )
 
+from shared.domain.year_completeness import last_complete_year
 from src.config import Settings
 from src.domain.metrics import compute_i10_index
 from src.infrastructure.repository import ResearchImpactRepository
@@ -147,8 +148,15 @@ class ResearchImpactServicer(_get_base_class()):  # type: ignore[misc]
                 technology, year_start=start_year, year_end=end_year,
             )
             if papers:
+                # CRIT-1: Scope-Label aus shared.domain anhaengen, damit das
+                # Frontend (Panel + Detail) "Top-Autor-Publikationen" statt
+                # generisch "Publikationen" rendern kann.
+                from src.infrastructure.repository import UC7_PUBLICATION_LABEL
                 data_sources.append({
-                    "name": "Semantic Scholar Academic Graph API",
+                    "name": (
+                        f"Semantic Scholar Academic Graph API — "
+                        f"{UC7_PUBLICATION_LABEL}"
+                    ),
                     "type": "PUBLICATION",
                     "record_count": len(papers),
                 })
@@ -414,7 +422,12 @@ class ResearchImpactServicer(_get_base_class()):  # type: ignore[misc]
         request_id: str = "",
         processing_time_ms: int = 0,
     ) -> dict[str, Any]:
-        """Fallback-Response als dict."""
+        """Fallback-Response als dict.
+
+        Bug MAJ-7/MAJ-8: ``data_complete_year`` aus dem shared-Helper
+        macht den Cutoff explizit, damit das Frontend bei Citation-Trend-
+        Daten bis 2026 den Hinweis "Daten ggf. unvollstaendig" rendert.
+        """
         return {
             "h_index": h_index,
             "avg_citations": avg_citations,
@@ -428,6 +441,7 @@ class ResearchImpactServicer(_get_base_class()):  # type: ignore[misc]
             "open_access_share": open_access_share,
             "i10_index": i10_index,
             "top_institutions": top_institutions or [],
+            "data_complete_year": last_complete_year(),
             "metadata": {
                 "processing_time_ms": processing_time_ms,
                 "data_sources": data_sources or [],

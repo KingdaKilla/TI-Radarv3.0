@@ -54,3 +54,10 @@ TI-Radar_MVP_v3.0_Praesentation.pptx
 # Docs assets (diagrams, backgrounds)
 docs/backgrounds/
 docs/diagrams/
+
+# Playwright MCP session artifacts (local)
+.playwright-mcp/
+
+# TypeScript build info
+tsconfig.tsbuildinfo
+**/tsconfig.tsbuildinfo

@@ -118,6 +118,20 @@ mappers/            Protobuf-zu-Dict- und Dict-zu-Response-Konvertierung
 - **Port-Interfaces:** Definiert in `packages/shared/domain/ports/` als abstrakte Basisklassen (ABCs).
 - **Protobuf-Stubs:** Generiert in `packages/shared/generated/python/` (Build-Schritt im Docker-Image).
 
+## Shared-Domain-Kernmodule (ab v3.4.0)
+
+Um UC-übergreifende Metriken-Divergenzen strukturell auszuschließen, existieren zentrale Master-Definitionen in `packages/shared/domain/`:
+
+| Modul | Zweck | Garantie |
+|---|---|---|
+| `publication_definitions.py` | `PublicationScope`-Enum + `canonical_publication_label()` | Header, UC7 und UC13 verwenden dokumentierte Scopes — keine unbemerkten Query-Divergenzen mehr |
+| `actor_definitions.py` | `ActorScope`-Enum + `canonical_actor_label()` | UC8/UC9/UC11 liefern Scope-Label mit der Antwort; Frontend zeigt pro Panel klaren Kontext |
+| `patent_definitions.py` | `PatentScope`-Enum + `APPLICATION_KIND_CODES`, `GRANT_KIND_CODES` | Landscape-Header und UC12 zählen konsistent; Kind-Codes zentral |
+| `year_completeness.py` | `last_complete_year()`, `is_year_complete()`, `clip_to_complete_years()` | Alle Zeitreihen haben einen Single-Source-of-Truth für das letzte vollständige Jahr |
+| `metrics.py` | `s_curve_confidence()` mit R²-Gate, `hhi_concentration_level()`, `cagr()` | Konfidenz < R² ist strukturell ausgeschlossen: R² < 0.5 → Konfidenz 0 |
+
+Services dürfen eigene SQL-Queries schreiben, müssen aber die Enum-Werte + Kind-Code-Konstanten dieser Module verwenden. Abweichungen werden durch Cross-Service-Konsistenztests in `tests/integration/test_{publication,actor,patent}_consistency.py` erkannt.
+
 ## Service-Kommunikation
 
 ### Intern: gRPC

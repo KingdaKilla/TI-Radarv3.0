@@ -61,6 +61,7 @@ from shared.domain.eu_countries import EU_EEA_COUNTRIES, is_european
 
 # --- Metrics (pure functions) ---
 from shared.domain.metrics import (
+    R2_RELIABILITY_THRESHOLD,
     cagr,
     classify_maturity_phase,
     hhi_concentration_level,
@@ -69,6 +70,29 @@ from shared.domain.metrics import (
     merge_time_series,
     s_curve_confidence,
     yoy_growth,
+)
+
+# --- Actor / Publication / Patent master-definitions (Bugs CRIT-1/3/4) ---
+from shared.domain.actor_definitions import (
+    ActorScope,
+    canonical_actor_label,
+)
+from shared.domain.patent_definitions import (
+    APPLICATION_KIND_CODES,
+    GRANT_KIND_CODES,
+    PatentScope,
+    canonical_patent_label,
+)
+from shared.domain.publication_definitions import (
+    PublicationScope,
+    canonical_publication_label,
+)
+
+# --- Year completeness (Bugs MAJ-7 / MAJ-8) ---
+from shared.domain.year_completeness import (
+    clip_to_complete_years,
+    is_year_complete,
+    last_complete_year,
 )
 
 # --- Domain models ---
@@ -122,12 +146,19 @@ from shared.domain.temporal_metrics import (
 )
 
 __all__ = [
+    # patent_definitions
+    "APPLICATION_KIND_CODES",
     "CPC_CLASS_DESCRIPTIONS",
     # cpc_descriptions
     "CPC_SECTION_DESCRIPTIONS",
     "CPC_SUBCLASS_DESCRIPTIONS",
     # eu_countries
     "EU_EEA_COUNTRIES",
+    "GRANT_KIND_CODES",
+    # metrics constants
+    "R2_RELIABILITY_THRESHOLD",
+    # actor_definitions
+    "ActorScope",
     # models
     "ApiAlert",
     "CompetitivePanel",
@@ -138,6 +169,10 @@ __all__ = [
     "JaccardConfidence",
     "LandscapePanel",
     "MaturityPanel",
+    # patent_definitions
+    "PatentScope",
+    # publication_definitions
+    "PublicationScope",
     "ResearchImpactPanel",
     "SamplingResult",
     "StratumInfo",
@@ -161,9 +196,17 @@ __all__ = [
     "build_year_data_from_aggregates",
     # metrics
     "cagr",
+    # actor_definitions helper
+    "canonical_actor_label",
+    # patent_definitions helper
+    "canonical_patent_label",
+    # publication_definitions helper
+    "canonical_publication_label",
     # api_health
     "check_jwt_expiry",
     "classify_maturity_phase",
+    # year_completeness
+    "clip_to_complete_years",
     "describe_cpc",
     "detect_runtime_failures",
     "estimate_jaccard_confidence",
@@ -188,6 +231,10 @@ __all__ = [
     "hhi_concentration_level",
     "hhi_index",
     "is_european",
+    # year_completeness
+    "is_year_complete",
+    # year_completeness
+    "last_complete_year",
     "levenshtein_similarity",
     # scurve
     "logistic_function",

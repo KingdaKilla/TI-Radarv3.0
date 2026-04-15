@@ -1,0 +1,58 @@
+{
+  "tech": "perovskite solar cell",
+  "header": "PEROVSKITE SOLAR CELL Technologie-Intelligence Analyse 101 Patente 140 EU-Projekte 0 Publikationen Phase: Reife Rückläufige Entwicklung Wettbewerbsintensiver Markt €222M Förderung Hoher Forschungsimpact Geographische Perspektive Geographische Perspektive Dieser Analysebereich umfasst: UC6 Geographische Verteilung Zeigt die globale Verteilung von Patentanmeldern und Forschungsorganisati",
+  "panels": {
+    "Aktivitätstrends": {
+      "observedActive": "Aktivitätstrends",
+      "panelText": "Aktivitätstrends S-Kurve & Reife Technologiekonvergenz UC1 Technologie-Landschaft Info Patente CAGR: 4.1% Info Projekte CAGR: 9.8% Info 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026 -120% -60% 0% 60% 120% Daten ggf. unvollständig TOP CPC-KLASSEN Y02E10/549 5.076 H10K30/50 2.035 H10K71/12 1.750 H10K85/50 1.708 H10K30/40 1.281 Nachvollziehbarkeit 2 Quellen | 5.9s"
+    },
+    "S-Kurve & Reife": {
+      "observedActive": "S-Kurve & Reife",
+      "panelText": "S-Kurve & Reife Technologiekonvergenz UC2 Reifegrad-Analyse Info Phase: Reife Info R² = 1.000 Info Wendepunkt: 2021 Info Konfidenz: 82% 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026 0 20 40 60 80 Wendepunkt Daten ggf. unvollständig Entstehung Wachstum Reife Sättigung Rückgang Nachvollziehbarkeit 1 Quelle | 5.9s"
+    },
+    "Technologiekonvergenz": {
+      "observedActive": "Technologiekonvergenz",
+      "panelText": "Technologiekonvergenz UC5 Cross-Tech Intelligence Info 10 CPC-Klassen Ø Jaccard: 0.198 Info 10 Whitespace-Lücken Y02E H10K Y02P H10F H01G C07F C23C C07D B82Y C07C Nachvollziehbarkeit 1 Quelle | 5.9s"
+    },
+    "Wettbewerb & HHI": {
+      "observedActive": "Wettbewerb & HHI",
+      "panelText": "Wettbewerb & HHI Dynamik & Persistenz Akteurs-Typen UC3 Wettbewerbsanalyse Info Niedrige Konzentration Info 0 4 8 12 16 FRAUNHOFERAUSTRI… SAULE SPOLKAAKCY… UNIVERSITATJAUME… AGENCIA ESTATALC… FUNDACIOINSTITUT… UNIVERSITY OFSTU… DYENAMO AB SOLAVENI GMBH PatenteProjekte Nachvollziehbarkeit 2 Quellen | 5.9s"
+    },
+    "Dynamik & Persistenz": {
+      "observedActive": "Dynamik & Persistenz",
+      "panelText": "Dynamik & Persistenz Akteurs-Typen UC8 Zeitliche Entwicklung Info 9 Akteure Schrumpfend (-70 netto) 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026 0 25 50 75 100 Daten ggf. unvollständig PersistenteNeue AkteureAusgeschieden Nachvollziehbarkeit 2 Quellen | 5.9s"
+    },
+    "Akteurs-Typen": {
+      "observedActive": "Akteurs-Typen",
+      "panelText": "Akteurs-Typen UC11 Akteurs-Typverteilung Info 280 Akteure Dominiert: Higher Education Higher EducationKMU / UnternehmenResearch OrganisationOtherPublic Body Nachvollziehbarkeit 1 Quelle | 5.9s"
+    },
+    "Förderung": {
+      "observedActive": "Förderung",
+      "panelText": "Förderungsanalyse Info Gesamt: 221.8 Mio. EUR Info 140 Projekte HORIZON-RIA RIA HORIZON-IA HORIZON-ERC ERC-STG IA HORIZON-EIC HORIZON-… MSCA-IF ERC-COG MSCA-ITN HORIZON-… ERC-ADG Nachvollziehbarkeit 1 Quelle | 5.9s"
+    },
+    "Forschungsimpact": {
+      "observedActive": "Forschungsimpact",
+      "panelText": "Forschungsimpact Info 100 Publikationen 363.5 Zitate/Pub. 15 Institutionen 2016 2017 2018 2019 2020 2021 2022 2023 2024 0 5 10 15 20 0 2000 4000 6000 8000 PublikationenZitationen Nachvollziehbarkeit 2 Quellen | 5.9s"
+    },
+    "Publikationen": {
+      "observedActive": "Publikationen",
+      "panelText": "Publikationen 21.3 Pub/Projekt DOI: 56% 2016 2017 2018 2019 2020 2021 2022 2023 2024 0 200 400 600 800 Nachvollziehbarkeit 1 Quelle | 5.9s"
+    },
+    "Geographie": {
+      "observedActive": "Geographie",
+      "panelText": "Geographie Tech-Cluster EuroSciVoc Patenterteilung UC6 Geographische Verteilung Info 10 Länder Top: Deutschland 0 15 30 45 60 Deutschland Schweiz Vereinigtes K… Italien Spanien Frankreich Niederlande Polen Belgien Schweden Nachvollziehbarkeit 2 Quellen | 5.9s"
+    },
+    "Tech-Cluster": {
+      "observedActive": "Tech-Cluster",
+      "panelText": "Tech-Cluster EuroSciVoc Patenterteilung UC9 Technologie-Cluster Info 5 Cluster 39 Akteure 118 CPC-Klassen Patente Akteure Dichte Kohärenz Wachstum CPC Section BCPC Section CCPC Section GCPC Section HCPC Section Y Nachvollziehbarkeit 1 Quelle | 5.9s"
+    },
+    "EuroSciVoc": {
+      "observedActive": "EuroSciVoc",
+      "panelText": "EuroSciVoc Patenterteilung UC10 Wissenschaftsdisziplinen Info 1 Feld 134 Projekte 0% 0% 1% 1% 1% nanotechnology 134 Projekte zugeordnet · Shannon-Index: 4.87 Nachvollziehbarkeit 1 Quelle | 5.9s"
+    },
+    "Patenterteilung": {
+      "observedActive": "Patenterteilung",
+      "panelText": "Patenterteilung UC12 Erteilungsquoten Info Quote: 9.3% Info 28.1 Mon. bis Erteilung 5.462 Anmeldungen 506 Erteilungen 2016 2017 2018 2019 2020 2021 2022 2023 2024 2025 2026 0 300 600 900 1200 0% 25% 50% 75% 100% AnmeldungenErteilungenQuote (%) Nachvollziehbarkeit 1 Quelle | 5.9s"
+    }
+  }
+}

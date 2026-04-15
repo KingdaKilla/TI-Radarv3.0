@@ -34,9 +34,19 @@ from typing import Any
 import asyncpg
 import structlog
 
+from shared.domain.patent_definitions import PatentScope, canonical_patent_label
 from shared.domain.result_types import CountryCount, CpcCount, FundingYear, YearCount
 
 logger = structlog.get_logger(__name__)
+
+# Bug CRIT-4: Der Header (UC1) zaehlt Patente im Scope
+# ``PatentScope.ALL_PATENTS`` — d.h. OHNE Kind-Code-Filter. UC12 zaehlt
+# dagegen in den Scopes ``APPLICATIONS_ONLY`` (A*) bzw. ``GRANTS_ONLY`` (B*).
+# Die Plausibilitaetsregel ist:
+#     ALL_PATENTS >= APPLICATIONS_ONLY + GRANTS_ONLY
+# (Rest = Kind-Codes wie U, D0 oder leer.)
+_HEADER_PATENT_SCOPE: PatentScope = PatentScope.ALL_PATENTS
+_HEADER_PATENT_LABEL: str = canonical_patent_label(_HEADER_PATENT_SCOPE)
 
 # EU/EEA-Laendercodes fuer european_only-Filter
 EU_EEA_COUNTRIES: frozenset[str] = frozenset({
@@ -86,6 +96,13 @@ class LandscapeRepository:
         european_only: bool = False,
     ) -> list[YearCount]:
         """Patentanzahl pro Jahr fuer eine Technologie.
+
+        Scope: ``PatentScope.ALL_PATENTS`` — d.h. *alle* Patente werden
+        gezaehlt, unabhaengig vom EPO-Kind-Code (A*, B*, U, D0, leer).
+        Dies ist die Header-Semantik aus UC1 (``total_patents``) und
+        muss konsistent zur Plausibilitaetsregel
+        ``ALL_PATENTS >= APPLICATIONS_ONLY + GRANTS_ONLY`` bleiben
+        (siehe Bug CRIT-4, ``shared.domain.patent_definitions``).
 
         Nutzt tsvector-Volltextsuche auf patent_schema.patents.search_vector.
         Partition Pruning ueber publication_year (WHERE-Klausel).
@@ -442,6 +459,74 @@ class LandscapeRepository:
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(sql, *params)
             return [CountryCount(country=row["country"], count=row["count"]) for row in rows]
+
+    # -----------------------------------------------------------------------
+    # Publikations-Abfragen (CRIT-1: CORDIS_LINKED-Scope)
+    # -----------------------------------------------------------------------
+
+    async def count_cordis_publications(
+        self,
+        technology: str,
+        *,
+        start_year: int | None = None,
+        end_year: int | None = None,
+    ) -> int:
+        """Gesamtzahl CORDIS-Projekt-Publikationen fuer eine Technologie.
+
+        Master-Query fuer das Header-Summary (UC1 ``total_publications``).
+        Nutzt den Scope ``PublicationScope.CORDIS_LINKED`` aus
+        :mod:`shared.domain.publication_definitions`.
+
+        **Kritisch fuer CRIT-1:** publication-svc (UC13) verwendet dieselbe
+        SQL-Definition in ``publication_summary()``.  Beide Services muessen
+        fuer dieselben Parameter identische Zahlen liefern — sonst ergibt
+        sich die frueher beobachtete Divergenz Header ≠ UC13 (Faktor bis
+        1580 bei mRNA).
+
+        Args:
+            technology: Suchbegriff fuer Volltextsuche (``plainto_tsquery``).
+            start_year: Erstes Jahr (inklusiv), ``None`` = unbeschraenkt.
+            end_year: Letztes Jahr (inklusiv), ``None`` = unbeschraenkt.
+
+        Returns:
+            Gesamtzahl der Publikationen aus ``cordis_schema.publications``,
+            deren zugehoeriges Projekt die Volltext-Suche matcht und im
+            Zeitraum ``[start_year, end_year]`` startet.
+        """
+        # SQL-Parameter dynamisch aufbauen, damit None-Filter wegfallen.
+        conditions = ["p.search_vector @@ plainto_tsquery('english', $1)"]
+        params: list[Any] = [technology]
+        idx = 2
+
+        if start_year is not None:
+            conditions.append(f"p.start_date >= make_date(${idx}, 1, 1)")
+            params.append(start_year)
+            idx += 1
+
+        if end_year is not None:
+            conditions.append(f"p.start_date < make_date(${idx} + 1, 1, 1)")
+            params.append(end_year)
+            idx += 1
+
+        where = " AND ".join(conditions)
+
+        sql = f"""
+            SELECT COUNT(*) AS total_publications
+            FROM cordis_schema.publications pub
+            JOIN cordis_schema.projects p ON pub.project_id = p.id
+            WHERE {where}
+        """
+
+        logger.debug(
+            "query_cordis_publications",
+            technology=technology,
+            start_year=start_year,
+            end_year=end_year,
+        )
+
+        async with self._pool.acquire() as conn:
+            count = await conn.fetchval(sql, *params)
+            return int(count or 0)
 
     async def funding_by_year(
         self,

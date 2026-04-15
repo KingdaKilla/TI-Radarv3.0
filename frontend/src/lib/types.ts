@@ -48,7 +48,7 @@ export interface MaturityDataPoint {
 }
 
 export interface MaturityPanel {
-  phase: "emergence" | "growth" | "maturity" | "saturation" | "decline";
+  phase: "emergence" | "growth" | "maturity" | "saturation" | "decline" | "unknown";
   phase_label: string;
   s_curve_data: MaturityDataPoint[];
   inflection_year: number | null;
@@ -62,6 +62,8 @@ export interface MaturityPanel {
   aicc_alternative: number;
   delta_aicc: number;
   confidence: number;
+  /** Bug MAJ-9: True nur bei Sigmoid-Fit mit R² >= 0.5. UI-Gate gegen Scheinsicherheit. */
+  fit_reliability_flag: boolean;
 }
 
 export interface CompetitorEntry {
@@ -233,6 +235,8 @@ export interface TemporalPanel {
   emerging_topics: string[];
   declining_topics: string[];
   entrant_trend: EntrantTrendPoint[];
+  /** Scope-Label (Bug CRIT-3 / AP3). UC8 = "aktive Akteure im Zeitfenster". */
+  actor_scope_label?: string;
 }
 
 // ── Tier-2 Panel Types ──
@@ -259,6 +263,8 @@ export interface TechClusterPanel {
     algorithm: string;
     modularity: number;
   };
+  /** Scope-Label (Bug CRIT-3 / AP3). UC9 = "Cluster-Mitglieder". */
+  actor_scope_label?: string;
 }
 
 export interface EuroSciVocField {
@@ -309,6 +315,8 @@ export interface ActorTypePanel {
   total_classified_actors: number;
   classification_coverage: number;
   sme_share: number;
+  /** Scope-Label (Bug CRIT-3 / AP3). UC11 = "klassifizierte Organisationen". */
+  actor_scope_label?: string;
 }
 
 export interface GrantRateYearEntry {

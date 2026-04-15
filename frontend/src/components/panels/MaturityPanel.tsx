@@ -31,6 +31,10 @@ interface MaturityPanelProps {
   queryTimeSeconds?: number;
 }
 
+// Bug MAJ-9: R²-Schwellwert ab dem ein Sigmoid-Fit als zuverlaessig gilt.
+// Identisch zu shared.domain.metrics.R2_RELIABILITY_THRESHOLD.
+const R2_RELIABILITY_THRESHOLD = 0.5;
+
 const PHASE_CONFIG: Record<
   MaturityPanelData["phase"],
   { label: string; color: string; bgClass: string }
@@ -60,6 +64,11 @@ const PHASE_CONFIG: Record<
     color: "#ef4444",
     bgClass: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
   },
+  unknown: {
+    label: "Unklar",
+    color: "#9ca3af",
+    bgClass: "bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  },
 };
 
 export default function MaturityPanel({
@@ -85,13 +94,30 @@ export default function MaturityPanel({
         <div className="flex flex-col gap-4">
           {/* Phase and Confidence Indicators */}
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <span
-              className={clsx("badge font-semibold", phaseInfo.bgClass)}
-              aria-label={`Reifephase: ${phaseInfo.label}`}
-            >
-              Phase: {phaseInfo.label}
-              <InfoTooltip text={METRIC_TOOLTIPS.phase} />
-            </span>
+            {(() => {
+              // Bug MAJ-9: Fit unzuverlaessig -> Phase-Badge ausgrauen,
+              // Konfidenz-Badge unterdruecken. Quelle der Wahrheit ist
+              // primaer das Backend-Flag (fit_reliability_flag), R² ist
+              // die zusaetzliche Belt-and-Suspenders-Bedingung.
+              const fitUnreliable =
+                !data.fit_reliability_flag ||
+                data.r_squared < R2_RELIABILITY_THRESHOLD;
+              const phaseBadgeClass = fitUnreliable
+                ? "bg-gray-200 text-gray-500 dark:bg-gray-800 dark:text-gray-500"
+                : phaseInfo.bgClass;
+              const phaseTooltip = fitUnreliable
+                ? `Fit unzuverlässig bei R² < ${R2_RELIABILITY_THRESHOLD.toFixed(1)} — Phase-Label ignorieren`
+                : METRIC_TOOLTIPS.phase;
+              return (
+                <span
+                  className={clsx("badge font-semibold", phaseBadgeClass)}
+                  aria-label={`Reifephase: ${phaseInfo.label}${fitUnreliable ? " (unzuverlässig)" : ""}`}
+                >
+                  Phase: {phaseInfo.label}
+                  <InfoTooltip text={phaseTooltip} />
+                </span>
+              );
+            })()}
             <span
               className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
               aria-label={`R-Quadrat: ${data.r_squared.toFixed(3)}`}
@@ -105,14 +131,19 @@ export default function MaturityPanel({
                 <InfoTooltip text={METRIC_TOOLTIPS.inflection_year} />
               </span>
             )}
-            {data.confidence > 0 && (
-              <span
-                className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                aria-label={`Konfidenz: ${Math.round(data.confidence * 100)}%`}
-              >
-                Konfidenz: {Math.round(data.confidence * 100)}%
-              </span>
-            )}
+            {/* Bug MAJ-9: Konfidenz-Badge nur rendern wenn Fit zuverlaessig
+                und Konfidenz > 0. Verhindert die Scheinsicherheit
+                "R² = 0.000 + Konfidenz: 80%". */}
+            {data.confidence > 0 &&
+              data.fit_reliability_flag &&
+              data.r_squared >= R2_RELIABILITY_THRESHOLD && (
+                <span
+                  className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                  aria-label={`Konfidenz: ${Math.round(data.confidence * 100)}%`}
+                >
+                  Konfidenz: {Math.round(data.confidence * 100)}%
+                </span>
+              )}
           </div>
 
           {/* S-Curve Chart */}

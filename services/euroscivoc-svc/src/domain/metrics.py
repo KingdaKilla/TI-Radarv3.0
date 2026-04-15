@@ -11,15 +11,31 @@ from typing import Any
 
 
 def compute_shannon_index(counts: dict[str, int]) -> float:
-    """Shannon-Diversitaetsindex fuer Disziplin-Verteilung."""
+    """Shannon-Diversitaetsindex fuer Disziplin-Verteilung.
+
+    Definition: H = -Sigma(p_i * log2(p_i)).
+
+    Defensive Sonderfaelle:
+    - Leere Eingabe -> 0.0
+    - Eine einzige Kategorie (mit count > 0) -> 0.0
+      (math: -1 * log2(1) = 0, exakt).
+
+    Das Early-Return bei weniger als 2 nicht-leeren Kategorien verhindert,
+    dass Float-Rundung oder vergessene Aggregationen einen Wert > 0 liefern.
+    """
     total = sum(counts.values())
     if total <= 0:
         return 0.0
+
+    # Defensive: Bei <2 Kategorien ist Shannon per Definition 0.
+    non_zero = [c for c in counts.values() if c > 0]
+    if len(non_zero) < 2:
+        return 0.0
+
     shannon = 0.0
-    for count in counts.values():
-        if count > 0:
-            p = count / total
-            shannon -= p * math.log2(p)
+    for count in non_zero:
+        p = count / total
+        shannon -= p * math.log2(p)
     return round(shannon, 4)
 
 

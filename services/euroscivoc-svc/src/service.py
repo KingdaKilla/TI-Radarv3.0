@@ -86,12 +86,18 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
         warnings: list[dict[str, str]] = []
         data_sources: list[dict[str, Any]] = []
 
+        # MIN-10: Alle Aggregat-Queries muessen denselben Tech- + Jahres-Scope
+        # nutzen wie `discipline_distribution`, sonst divergiert
+        # `total_mapped_publications` (UC10) vom Header/UC1
+        # (Live-Beobachtung mRNA: 387 vs. 307). `total_mapped_projects` zaehlt
+        # `COUNT(DISTINCT project_id)` und darf nicht aus disciplines summiert
+        # werden (Doppelzaehlung bei Mehrfach-Tags).
         tasks = [
             asyncio.create_task(self._repo.discipline_distribution(technology, start_year=start_year, end_year=end_year), name="disciplines"),
             asyncio.create_task(self._repo.discipline_trend(technology, start_year=start_year, end_year=end_year), name="trend"),
             asyncio.create_task(self._repo.cross_disciplinary_links(technology, start_year=start_year, end_year=end_year), name="links"),
-            asyncio.create_task(self._repo.total_mapped_projects(technology), name="total_mapped"),
-            asyncio.create_task(self._repo.total_projects(technology), name="total_projects"),
+            asyncio.create_task(self._repo.total_mapped_projects(technology, start_year=start_year, end_year=end_year), name="total_mapped"),
+            asyncio.create_task(self._repo.total_projects(technology, start_year=start_year, end_year=end_year), name="total_projects"),
         ]
 
         disciplines: list[dict[str, Any]] = []
@@ -119,12 +125,15 @@ class EuroSciVocServicer(_get_base_class()):  # type: ignore[misc]
                 total_projects = int(result)
 
         # --- Metriken berechnen ---
-        disc_counts = {str(d["label"]): int(d["project_count"]) for d in disciplines}
+        # FIX (AP4 / CRIT-2): Shannon darf nur ueber FIELD-Level-Kategorien
+        # berechnet werden, damit er konsistent mit `active_fields` ist.
+        # Zuvor wurden ALLE Hierarchie-Level (Field + Subfields + Leaf-Topics)
+        # aggregiert, was bei 1 FIELD mit mehreren Subfields Shannon > 0 lieferte.
+        fields = [d for d in disciplines if str(d.get("level", "")).upper() in ("FIELD", "1")]
+        disc_counts = {str(d["label"]): int(d["project_count"]) for d in fields}
         shannon = compute_shannon_index(disc_counts)
         simpson = compute_simpson_index(disc_counts)
 
-        # Felder zaehlen (Level = FIELD)
-        fields = [d for d in disciplines if str(d.get("level", "")).upper() in ("FIELD", "1")]
         active_fields = len(fields)
         active_disciplines = len(disciplines)
         is_interdisciplinary = classify_interdisciplinarity(shannon, active_fields)

@@ -28,6 +28,8 @@ except ImportError:
     uc12_patent_grant_pb2 = None  # type: ignore[assignment]
     uc12_patent_grant_pb2_grpc = None  # type: ignore[assignment]
 
+from shared.domain.patent_definitions import PatentScope
+from shared.domain.year_completeness import last_complete_year
 from src.config import Settings
 from src.domain.metrics import KIND_CODE_DESCRIPTIONS, compute_grant_rate, compute_grant_rate_summary
 from src.infrastructure.repository import PatentGrantRepository
@@ -87,6 +89,10 @@ class PatentGrantServicer(_get_base_class()):  # type: ignore[misc]
             asyncio.create_task(self._repo.grant_rate_by_country(technology, start_year=start_year, end_year=end_year, european_only=european_only), name="country_rates"),
             asyncio.create_task(self._repo.grant_rate_by_cpc(technology, start_year=start_year, end_year=end_year), name="cpc_rates"),
             asyncio.create_task(self._repo.avg_time_to_grant(technology, start_year=start_year, end_year=end_year), name="time_to_grant"),
+            # Bug CRIT-4: Master-Totals werden direkt aus einem einzigen
+            # Aggregations-SQL gezogen, damit APPLICATIONS + GRANTS
+            # konsistent mit dem ALL_PATENTS-Scope des Headers sind.
+            asyncio.create_task(self._repo.total_patent_counts(technology, start_year=start_year, end_year=end_year), name="totals"),
         ]
 
         kind_codes: list[dict[str, Any]] = []
@@ -94,6 +100,7 @@ class PatentGrantServicer(_get_base_class()):  # type: ignore[misc]
         country_rates: list[dict[str, Any]] = []
         cpc_rates: list[dict[str, Any]] = []
         time_to_grant: dict[str, float] = {"avg_months": 0.0, "median_months": 0.0}
+        totals: dict[str, int] = {}
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
         for task, result in zip(tasks, results, strict=False):
@@ -112,10 +119,18 @@ class PatentGrantServicer(_get_base_class()):  # type: ignore[misc]
                 cpc_rates = cast(list[dict[str, Any]], result)
             elif name == "time_to_grant":
                 time_to_grant = cast(dict[str, float], result)
+            elif name == "totals":
+                totals = cast(dict[str, int], result)
 
         # --- Summary berechnen ---
-        total_applications = sum(int(y.get("application_count", 0)) for y in year_trend)
-        total_grants = sum(int(y.get("grant_count", 0)) for y in year_trend)
+        # Primaerquelle: total_patent_counts — konsistent mit UC1-Header.
+        # Fallback: Aggregation aus year_trend (z.B. wenn totals-Query fehlschlug).
+        if totals:
+            total_applications = int(totals.get(PatentScope.APPLICATIONS_ONLY.value, 0))
+            total_grants = int(totals.get(PatentScope.GRANTS_ONLY.value, 0))
+        else:
+            total_applications = sum(int(y.get("application_count", 0)) for y in year_trend)
+            total_grants = sum(int(y.get("grant_count", 0)) for y in year_trend)
         summary = compute_grant_rate_summary(
             total_applications,
             total_grants,
@@ -147,12 +162,17 @@ class PatentGrantServicer(_get_base_class()):  # type: ignore[misc]
 
     def _build_response(self, **kwargs: Any) -> Any:
         if uc12_patent_grant_pb2 is None or common_pb2 is None:
+            # MAJ-7/MAJ-8: ``data_complete_year`` markiert das letzte
+            # vollstaendige Kalenderjahr. Das Frontend nutzt den Wert,
+            # um auf dem Anmeldungs/Erteilungs-Chart einen
+            # ReferenceArea-Hinweis "Daten ggf. unvollstaendig" zu rendern.
             return {
                 "summary": kwargs["summary"],
                 "year_trend": kwargs["year_trend"],
                 "kind_code_distribution": kwargs["kind_codes"],
                 "country_grant_rates": kwargs["country_rates"],
                 "cpc_grant_rates": kwargs["cpc_rates"],
+                "data_complete_year": last_complete_year(),
                 "metadata": {
                     "processing_time_ms": kwargs["processing_time_ms"],
                     "data_sources": kwargs["data_sources"],

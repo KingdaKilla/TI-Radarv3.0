@@ -8,6 +8,7 @@
 
 import { FileText, FlaskConical, BookOpen } from "lucide-react";
 import type { ClusterData } from "@/lib/clusters";
+import InfoTooltip from "@/components/ui/InfoTooltip";
 
 interface ExecutiveSummaryProps {
   data: ClusterData["summary"];
@@ -75,15 +76,27 @@ export default function ExecutiveSummary({ data }: ExecutiveSummaryProps) {
         })}
       </div>
 
-      {/* KPI Badges */}
+      {/* KPI Badges
+          AP7 / MAJ-5 + MAJ-6: Phase, Trend, Konzentration und Impact
+          stehen seit dem AP7-Refactor als *getrennte* Eintraege im
+          `data.badges`-Array (siehe `buildClusterData` in
+          `frontend/src/lib/clusters.ts`).  Damit erscheinen sie hier
+          automatisch als vier eigene Pills — keine konkatenierten
+          Phase+Trend-Strings ("Reife + Rueckläufige Entwicklung") und
+          kein hartcodiertes "Wettbewerbsintensiv"-Fallback mehr.
+          INFO-12: Falls fuer einen Badge ein Tooltip-Text in
+          `badgeTooltips` hinterlegt ist (z. B. h-Index-Schwellen),
+          wird neben dem Badge ein InfoTooltip-Icon gerendert. */}
       <div className="mt-5 flex flex-wrap justify-center gap-2">
         {data.badges.map((badge, i) => {
+          const tooltip = data.badgeTooltips?.[badge];
           return (
             <span
               key={i}
               className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium border border-[var(--color-accent)]/20 bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
             >
               {badge}
+              {tooltip && <InfoTooltip text={tooltip} />}
             </span>
           );
         })}

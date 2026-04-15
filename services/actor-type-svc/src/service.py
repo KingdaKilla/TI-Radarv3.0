@@ -28,10 +28,15 @@ except ImportError:
     uc11_actor_type_pb2 = None  # type: ignore[assignment]
     uc11_actor_type_pb2_grpc = None  # type: ignore[assignment]
 
+from shared.domain.actor_definitions import ActorScope, canonical_actor_label
 from src.config import Settings
 from src.domain.metrics import compute_sme_share, compute_type_breakdown
 from src.infrastructure.gleif_adapter import GLEIFAdapter
 from src.infrastructure.repository import ActorTypeRepository
+
+# UC11 zaehlt CORDIS-Organisationen mit aktiver Typ-Klassifikation
+# (HES, PRC, REC, OTH, PUB). Scope = CLASSIFIED. Siehe Bug CRIT-3 / AP3.
+_UC11_ACTOR_SCOPE = ActorScope.CLASSIFIED
 
 logger = structlog.get_logger(__name__)
 
@@ -163,12 +168,17 @@ class ActorTypeServicer(_get_base_class()):  # type: ignore[misc]
 
     def _build_response(self, **kwargs: Any) -> Any:
         if uc11_actor_type_pb2 is None or common_pb2 is None:
+            # Dict-Fallback fuer REST/JSON: enthaelt das kanonische
+            # Akteurs-Scope-Label (Bug CRIT-3 / AP3) damit das Frontend
+            # klar zwischen UC8/UC9/UC11-Zaehlungen unterscheiden kann.
             return {
                 "type_breakdown": kwargs["type_breakdown"],
                 "type_trend": kwargs["type_trend"],
                 "top_actors_by_type": kwargs["top_actors"],
                 "total_classified_actors": kwargs["total_classified"],
                 "sme_share": kwargs["sme_share"],
+                "actor_scope": _UC11_ACTOR_SCOPE.value,
+                "actor_scope_label": canonical_actor_label(_UC11_ACTOR_SCOPE),
                 "metadata": {
                     "processing_time_ms": kwargs["processing_time_ms"],
                     "data_sources": kwargs["data_sources"],

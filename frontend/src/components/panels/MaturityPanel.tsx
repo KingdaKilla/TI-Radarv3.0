@@ -115,6 +115,14 @@ export default function MaturityPanel({
                 >
                   Phase: {phaseInfo.label}
                   <InfoTooltip text={phaseTooltip} />
+                  {/* Overfitting-Warnung: zusaetzlicher InfoTooltip neben
+                      der Phase-Badge, wenn Backend R² > 0.98 bei n < 30
+                      Datenpunkten gemeldet hat. */}
+                  {data.overfit_warning === true && (
+                    <InfoTooltip
+                      text="Fit moeglicherweise ueberangepasst: R² > 0,98 bei < 30 Datenpunkten"
+                    />
+                  )}
                 </span>
               );
             })()}

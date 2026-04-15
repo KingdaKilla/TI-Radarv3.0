@@ -94,11 +94,26 @@ class GLEIFAdapter:
             await self._write_cache(result)
             return result
         except Exception as exc:
-            logger.warning(
-                "GLEIF Entity Resolution fehlgeschlagen",
-                name=name,
-                error=str(exc),
-            )
+            # HTTP 404 ist bei GLEIF *fachlich erwartbar*: nur LEI-pflichtige
+            # Entitaeten (Finanzwesen) sind registriert. Staatliche
+            # Forschungsinstitute (CNRS, IMEC, CEA, ETHZ, ...) haben
+            # systembedingt keinen LEI. Daher 404 nur als debug loggen —
+            # echte Stoerungen (5xx/403/Timeout/ConnectError) bleiben warning.
+            if (
+                isinstance(exc, httpx.HTTPStatusError)
+                and exc.response.status_code == 404
+            ):
+                logger.debug(
+                    "gleif_lei_not_found",
+                    name=name,
+                    status_code=404,
+                )
+            else:
+                logger.warning(
+                    "GLEIF Entity Resolution fehlgeschlagen",
+                    name=name,
+                    error=str(exc),
+                )
             # 3. Stale Cache als Fallback
             stale = await self._read_cache(name, allow_stale=True)
             if stale is not None:

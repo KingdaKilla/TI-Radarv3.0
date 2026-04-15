@@ -7,6 +7,8 @@ import math
 import pytest
 
 from shared.domain.metrics import (
+    OVERFIT_MIN_DATAPOINTS,
+    OVERFIT_R2_THRESHOLD,
     R2_RELIABILITY_THRESHOLD,
     cagr,
     classify_maturity_phase,
@@ -14,6 +16,7 @@ from shared.domain.metrics import (
     detect_decline,
     hhi_concentration_level,
     hhi_index,
+    is_potentially_overfit,
     merge_country_data,
     merge_time_series,
     s_curve_confidence,
@@ -432,3 +435,50 @@ class TestMergeCountryData:
     def test_empty(self):
         result = merge_country_data([], [])
         assert result == []
+
+
+# ============================================================================
+# is_potentially_overfit() — Overfitting-Warnung fuer UC2 Maturity
+# ============================================================================
+
+
+class TestOverfitWarning:
+    """Overfitting-Heuristik fuer S-Curve-Fits (3-Parameter Sigmoid).
+
+    Hintergrund: R² nahe 1.0 bei wenigen Datenpunkten ist ein klassisches
+    Overfitting-Signal. Die bestehende R²-Kopplung (MAJ-9) greift nur den
+    umgekehrten Fall (R² < 0.5 → Konfidenz 0). Overfitting blieb bisher
+    unbemerkt — Live-Fall: Semiconductor Laser v3.4.0 hatte R²=0.9983 bei
+    nur n=9 vollstaendigen Jahresdatenpunkten.
+
+    Schwellen: R² > OVERFIT_R2_THRESHOLD (0.98) UND n < OVERFIT_MIN_DATAPOINTS (30).
+    """
+
+    def test_high_r2_few_datapoints_triggers_warning(self):
+        """R² = 0.99 bei n = 10 -> Warnung."""
+        assert is_potentially_overfit(0.99, 10) is True
+
+    def test_exactly_at_n_threshold_no_warning(self):
+        """n = 30 ist EXAKT an der Schwelle -> keine Warnung (strikt <)."""
+        assert is_potentially_overfit(0.99, 30) is False
+
+    def test_r2_below_threshold_no_warning(self):
+        """R² = 0.97 liegt unter Overfit-Schwelle -> keine Warnung."""
+        assert is_potentially_overfit(0.97, 10) is False
+
+    def test_n_just_below_threshold_warning(self):
+        """n = 29 (knapp unter 30) mit hohem R² -> Warnung."""
+        assert is_potentially_overfit(0.99, 29) is True
+
+    def test_none_r_squared_no_warning(self):
+        """None-R² (kein Fit moeglich) -> keine Warnung (defensiv)."""
+        assert is_potentially_overfit(None, 5) is False
+
+    def test_zero_r_squared_no_warning(self):
+        """R² = 0.0 liegt deutlich unter Schwelle -> keine Warnung."""
+        assert is_potentially_overfit(0.0, 5) is False
+
+    def test_constants_exposed(self):
+        """Konstanten OVERFIT_R2_THRESHOLD und OVERFIT_MIN_DATAPOINTS sind oeffentlich."""
+        assert OVERFIT_R2_THRESHOLD == 0.98
+        assert OVERFIT_MIN_DATAPOINTS == 30

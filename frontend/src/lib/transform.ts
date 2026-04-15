@@ -174,6 +174,9 @@ function transformMaturity(raw: any): MaturityPanel | null {
     delta_aicc: num(raw.delta_aicc),
     confidence,
     fit_reliability_flag: isReliable,
+    // Overfitting-Warnung: Backend liefert overfit_warning als bool, wenn
+    // R² > 0.98 UND n < 30. Feld ist optional (aeltere Backends kennen es nicht).
+    overfit_warning: Boolean(raw.overfit_warning),
   };
 }
 

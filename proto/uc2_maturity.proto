@@ -151,4 +151,11 @@ message MaturityResponse {
   // ausschliesslich bei flag == True rendern, sonst Phase ausgrauen und
   // Konfidenz-Badge unterdruecken (Vermeidung von Scheinsicherheit).
   bool fit_reliability_flag = 16;
+
+  // Overfitting-Warnung: True wenn R² > 0.98 bei < 30 Datenpunkten.
+  // Ergaenzt fit_reliability_flag um den umgekehrten Fall ("Fit zu gut
+  // bei zu wenig Daten"). Live-Fall Semiconductor Laser v3.4.0: R² = 0.9983
+  // bei n = 9 vollstaendigen Jahren — klassisches 3-Parameter Sigmoid-Overfit.
+  // Frontend zeigt bei True einen zusaetzlichen InfoTooltip neben der Phase.
+  bool overfit_warning = 17;
 }

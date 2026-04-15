@@ -46,6 +46,7 @@ from shared.domain.metrics import (
     cagr,
     classify_maturity_phase,
     detect_decline,
+    is_potentially_overfit,
     s_curve_confidence,
 )
 from shared.domain.scurve import fit_best_model, logistic_function, gompertz_function, richards_function
@@ -248,6 +249,10 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         # Bug MAJ-9: Reliability-Flag, das die UI deterministisch bewerten kann.
         # True nur, wenn ein Sigmoid-Fit zustande kam UND R² >= R2_RELIABILITY_THRESHOLD.
         fit_reliability_flag = False
+        # Overfitting-Warnung: R² > 0.98 bei n < 30 Datenpunkten ist ein
+        # klassisches Overfitting-Signal (3-Parameter Sigmoid mit wenig Daten).
+        # Ergaenzt fit_reliability_flag um den umgekehrten Fall "Fit zu gut".
+        overfit_warning = False
 
         if s_curve_result is not None:
             maturity_pct = s_curve_result["maturity_percent"]
@@ -307,6 +312,19 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
                 })
             else:
                 fit_reliability_flag = True
+                # Overfitting-Pruefung: nur sinnvoll bei zuverlaessigem Fit.
+                # Basis ist die Anzahl der Jahre, die tatsaechlich in den Fit
+                # eingingen (fit_years — schliesst Teiljahre via data_complete_year aus).
+                overfit_warning = is_potentially_overfit(r_sq, len(fit_years))
+                if overfit_warning:
+                    warnings.append({
+                        "message": (
+                            f"Hoher R²-Wert ({r_sq:.3f}) bei nur {len(fit_years)} "
+                            "Datenpunkten — Fit moeglicherweise ueberangepasst"
+                        ),
+                        "severity": "MEDIUM",
+                        "code": "FIT_POTENTIALLY_OVERFIT",
+                    })
                 # Phase via maturity_percent (Gao et al. 2013)
                 phase_en, _phase_de, _ = classify_maturity_phase(
                     combined, maturity_percent=maturity_pct, r_squared=r_sq,
@@ -390,6 +408,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             aicc_alternative=aicc_alternative,
             delta_aicc=delta_aicc,
             fit_reliability_flag=fit_reliability_flag,
+            overfit_warning=overfit_warning,
         )
 
     # -----------------------------------------------------------------------
@@ -425,6 +444,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         aicc_alternative: float = 0.0,
         delta_aicc: float = 0.0,
         fit_reliability_flag: bool = False,
+        overfit_warning: bool = False,
     ) -> Any:
         """MaturityResponse aus berechneten Daten zusammenbauen.
 
@@ -462,6 +482,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
                 aicc_alternative=aicc_alternative,
                 delta_aicc=delta_aicc,
                 fit_reliability_flag=fit_reliability_flag,
+                overfit_warning=overfit_warning,
             )
 
         # --- Protobuf-Messages bauen ---
@@ -539,7 +560,10 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
-        return uc2_maturity_pb2.MaturityResponse(
+        # ``overfit_warning`` ist Proto-Feld 17 — erst ab regeneriertem Stub
+        # verfuegbar. Defensive Konstruktion: Feld nur setzen, wenn der
+        # Message-Type es unterstuetzt (vermeidet Crash bei veralteten Stubs).
+        response_kwargs: dict[str, Any] = dict(
             s_curve_data=s_curve_data,
             phase=phase_enum,
             maturity_percent=maturity_pct,
@@ -557,6 +581,9 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             is_declining=is_declining,
             fit_reliability_flag=fit_reliability_flag,
         )
+        if "overfit_warning" in uc2_maturity_pb2.MaturityResponse.DESCRIPTOR.fields_by_name:
+            response_kwargs["overfit_warning"] = overfit_warning
+        return uc2_maturity_pb2.MaturityResponse(**response_kwargs)
 
     def _build_dict_response(
         self,
@@ -587,6 +614,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         aicc_alternative: float = 0.0,
         delta_aicc: float = 0.0,
         fit_reliability_flag: bool = False,
+        overfit_warning: bool = False,
     ) -> dict[str, Any]:
         """Fallback-Response als dict (wenn gRPC-Stubs nicht generiert)."""
         # MAJ-7/MAJ-8: Default kommt aus dem shared-Helper, kein Hardcoding.
@@ -625,6 +653,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             "aicc_alternative": aicc_alternative,
             "delta_aicc": delta_aicc,
             "fit_reliability_flag": fit_reliability_flag,
+            "overfit_warning": overfit_warning,
             "metadata": {
                 "processing_time_ms": processing_time_ms,
                 "data_sources": data_sources,

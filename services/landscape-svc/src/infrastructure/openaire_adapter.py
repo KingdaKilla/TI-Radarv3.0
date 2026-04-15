@@ -41,6 +41,18 @@ logger = structlog.get_logger(__name__)
 _cached_token: str = ""
 _cached_token_exp: float = 0.0
 
+# ---------------------------------------------------------------------------
+# Modul-Level Token-Invalid-Flag
+# ---------------------------------------------------------------------------
+# Wird gesetzt, sobald der Refresh-Token-Endpunkt einen 4xx-Fehler liefert
+# (abgelaufener oder widerrufener Token). Das ist ein Konfigurationsfehler,
+# kein transientes Problem: die nachfolgenden API-Calls liefern alle 403
+# Forbidden. Wir unterdruecken diese vorhersehbaren Warnings (Log-Spam
+# mit 22+ Zeilen pro Analyse) und senken sie auf `debug`. Die fachliche
+# Behandlung (Fallback auf CORDIS) bleibt unveraendert.
+# Der Flag wird beim naechsten erfolgreichen Token-Refresh zurueckgesetzt.
+_token_invalid: bool = False
+
 _REFRESH_URL = (
     "https://services.openaire.eu/uoa-user-management"
     "/api/users/getAccessToken"
@@ -58,6 +70,16 @@ _BACKOFF_FACTOR = 2.0
 # Cache-Konfiguration
 # ---------------------------------------------------------------------------
 _CACHE_TTL_DAYS = 7
+
+
+def _reset_token_invalid_flag() -> None:
+    """Setzt das Modul-Level Token-Invalid-Flag zurueck.
+
+    Hauptsaechlich fuer Tests: zwischen Testfaellen muss der Flag-Zustand
+    reproduzierbar sein, da `_token_invalid` ein Modul-Level-Singleton ist.
+    """
+    global _token_invalid  # noqa: PLW0603
+    _token_invalid = False
 
 
 def _normalize_query(query: str) -> str:
@@ -150,7 +172,7 @@ class OpenAIREAdapter:
         3. Refresh-Token vorhanden? -> neues Access-Token holen
         4. Fallback: altes Token verwenden (ggf. niedrigere Rate-Limits)
         """
-        global _cached_token, _cached_token_exp  # noqa: PLW0603
+        global _cached_token, _cached_token_exp, _token_invalid  # noqa: PLW0603
 
         # Kein Token und kein Refresh-Token -> oeffentlicher Zugang
         if not self._token and not self._refresh_token:
@@ -173,6 +195,10 @@ class OpenAIREAdapter:
             return
 
         # 3. Refresh-Token vorhanden? -> neues Access-Token holen
+        # Wenn Flag bereits gesetzt ist (voriger Refresh schlug mit 4xx fehl),
+        # versuchen wir es dennoch einmal pro Analyse — das Token koennte
+        # zwischenzeitlich erneuert worden sein. Schlaegt es wieder fehl,
+        # wird das Flag einfach beibehalten.
         if self._refresh_token:
             try:
                 async with httpx.AsyncClient(timeout=self._timeout) as client:
@@ -187,13 +213,51 @@ class OpenAIREAdapter:
                     self._token = new_token
                     _cached_token = new_token
                     _cached_token_exp = _token_expiry(new_token)
+                    # Erfolgreicher Refresh -> Flag zuruecksetzen,
+                    # Warnings wieder aktivieren.
+                    _token_invalid = False
                     logger.info(
                         "openaire_token_erneuert",
                         gueltig_min=round((_cached_token_exp - time.time()) / 60, 1),
                     )
                     return
+            except httpx.HTTPStatusError as exc:
+                # 4xx beim Refresh = Konfigurationsfehler (abgelaufener oder
+                # widerrufener Refresh-Token). Einmal klar loggen, dann die
+                # vorhersehbare 403-Kaskade unterdruecken.
+                status = exc.response.status_code
+                if 400 <= status < 500 and not _token_invalid:
+                    _token_invalid = True
+                    logger.warning(
+                        "openaire_token_refresh_fehlgeschlagen",
+                        fehler=str(exc),
+                        status=status,
+                        hinweis=(
+                            "Refresh-Token ungueltig/abgelaufen — bitte "
+                            "OPENAIRE_REFRESH_TOKEN in .env erneuern "
+                            "(siehe docs/DEPLOYMENT.md#openaire-token-erneuern). "
+                            "Folgende 403-Meldungen werden bis zum naechsten "
+                            "erfolgreichen Refresh auf debug-Level unterdrueckt."
+                        ),
+                    )
+                else:
+                    # 5xx oder bereits bekannter Konfigurationsfehler:
+                    # leise loggen (debug), um Log-Spam zu vermeiden.
+                    logger.debug(
+                        "openaire_token_refresh_fehlgeschlagen",
+                        fehler=str(exc),
+                        status=status,
+                    )
             except Exception as exc:
-                logger.warning("openaire_token_refresh_fehlgeschlagen", fehler=str(exc))
+                # Transiente Fehler (Netzwerk, Timeout) — einmalige Warnung.
+                if not _token_invalid:
+                    logger.warning(
+                        "openaire_token_refresh_fehlgeschlagen", fehler=str(exc),
+                    )
+                else:
+                    logger.debug(
+                        "openaire_token_refresh_fehlgeschlagen", fehler=str(exc),
+                    )
 
         # 4. Fallback: altes Token verwenden (ggf. niedrigere Rate-Limits)
 
@@ -412,6 +476,13 @@ class OpenAIREAdapter:
             )
             return []
 
+        # Bei bekanntem Konfigurationsfehler (Refresh-Token ungueltig) sind
+        # 403-Fehler vorhersehbar — auf debug-Level absenken, um Log-Spam
+        # (22+ Zeilen pro Analyse) zu vermeiden. Die fachliche Behandlung
+        # (Fallback auf CORDIS) bleibt unveraendert.
+        log_jahr_fehler = logger.debug if _token_invalid else logger.warning
+        log_teilergebnis = logger.debug if _token_invalid else logger.warning
+
         yearly: list[dict[str, int]] = []
         fehler_count = 0
         for result in results:
@@ -419,13 +490,13 @@ class OpenAIREAdapter:
                 yearly.append(result)
             elif isinstance(result, Exception):
                 fehler_count += 1
-                logger.warning(
+                log_jahr_fehler(
                     "openaire_jahr_fehlgeschlagen",
                     fehler=str(result),
                 )
 
         if fehler_count > 0:
-            logger.warning(
+            log_teilergebnis(
                 "openaire_teilergebnis",
                 erfolg=len(yearly),
                 fehlgeschlagen=fehler_count,

@@ -64,6 +64,13 @@ export interface MaturityPanel {
   confidence: number;
   /** Bug MAJ-9: True nur bei Sigmoid-Fit mit R² >= 0.5. UI-Gate gegen Scheinsicherheit. */
   fit_reliability_flag: boolean;
+  /**
+   * Overfitting-Warnung: True wenn R² > 0.98 bei n < 30 Datenpunkten.
+   * Ergaenzt fit_reliability_flag um den umgekehrten Fall ("Fit zu gut bei
+   * zu wenig Daten"). Live-Fall Semiconductor Laser v3.4.0: R² = 0.9983
+   * bei n = 9 Jahren — klassisches 3-Parameter Sigmoid-Overfit.
+   */
+  overfit_warning?: boolean;
 }
 
 export interface CompetitorEntry {

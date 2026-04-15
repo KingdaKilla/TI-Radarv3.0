@@ -15,6 +15,7 @@ diese Funktion, statt rohe Heuristik-Konfidenzen direkt durchzureichen.
 from __future__ import annotations
 
 import asyncio
+import math
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -271,3 +272,73 @@ class TestDataCompleteYearMaj7Maj8:
 
         # Niemals < 2025, solange wir nach dem 1.1.2026 sind.
         assert response["data_complete_year"] >= 2025
+
+
+# ---------------------------------------------------------------------------
+# Tests: Overfitting-Warnung (R² > 0.98 bei n < 30 Datenpunkten)
+# ---------------------------------------------------------------------------
+
+
+class TestOverfitWarningResponse:
+    """Response-Flag ``overfit_warning`` ergaenzt ``fit_reliability_flag``.
+
+    Unterschied: ``fit_reliability_flag`` prueft "Fit zu schlecht" (R² < 0.5);
+    ``overfit_warning`` prueft "Fit zu gut bei zu wenig Daten" — klassischer
+    Overfitting-Fall eines 3-Parameter Sigmoid-Fits (Semiconductor Laser
+    v3.4.0 Live-Lauf: R² = 0.9983 bei n = 9).
+    """
+
+    def test_overfit_warning_true_for_few_strong_sigmoid_points(self):
+        """9 Datenpunkte mit sauberer Sigmoid-Form -> R² > 0.98 -> overfit_warning True."""
+        # Kleine Zeitreihe (2016-2024) mit starker Sigmoid-Kurve.
+        # Logistische kumulative Form: saubere S-Kurve, n = 9.
+        year_counts = {
+            2016: 2,
+            2017: 5,
+            2018: 12,
+            2019: 25,
+            2020: 40,
+            2021: 30,
+            2022: 15,
+            2023: 7,
+            2024: 3,
+        }
+        servicer = _make_servicer(year_counts)
+        request = _FakeRequest(start_year=2016, end_year=2024)
+        response = _run(servicer.AnalyzeMaturity(request, context=None))
+
+        # Vorbedingung: R² muss >= 0.98 liegen, sonst ist Test nicht aussagekraeftig.
+        assert response["r_squared"] > 0.98, (
+            f"Fixture nicht geeignet: R²={response['r_squared']} muss > 0.98 sein"
+        )
+        # Kernaussage: Warnung ist aktiv.
+        assert response["overfit_warning"] is True
+        # Fit-Reliability bleibt True (Fit ist ja "gut" im R²-Sinn)
+        assert response["fit_reliability_flag"] is True
+
+    def test_overfit_warning_false_for_many_datapoints(self):
+        """>= 30 vollstaendige Datenpunkte -> overfit_warning False."""
+        # 40 Jahre saubere Sigmoid-Kurve: Zeitraum 1985..2024.
+        # Auch bei hohem R² darf kein Overfit-Flag gesetzt werden.
+        # Logistische jaehrliche Raten (Glocke um inflection ~ 2005).
+        year_counts = {}
+        for offset, year in enumerate(range(1985, 2025)):
+            # Bell-shape: jaehrliche Raten um Inflection = 2005
+            distance = abs(year - 2005)
+            count = max(1, int(100 * math.exp(-0.05 * distance * distance)))
+            year_counts[year] = count
+
+        servicer = _make_servicer(year_counts)
+        request = _FakeRequest(start_year=1985, end_year=2024)
+        response = _run(servicer.AnalyzeMaturity(request, context=None))
+
+        assert response["overfit_warning"] is False
+
+    def test_overfit_warning_false_when_no_fit(self):
+        """Ohne Fit (zu wenige Patente) -> overfit_warning False (defensiv)."""
+        # 3 Jahre, Gesamtsumme unter min_patents_for_fit -> kein Fit
+        servicer = _make_servicer({2010: 1, 2011: 1, 2012: 1})
+        request = _FakeRequest()
+        response = _run(servicer.AnalyzeMaturity(request, context=None))
+
+        assert response["overfit_warning"] is False

@@ -706,12 +706,51 @@ noch aus — LEI-Anreicherung ist waehrenddessen optional.
 ### OpenAIRE 403 Forbidden
 
 Der OpenAIRE-Access-Token in `.env` kann ablaufen (Hinweis
-`openaire_token_refresh_fehlgeschlagen` im UC1-Log). Neuen Token unter
-https://www.openaire.eu/user-management beantragen und in `.env` setzen:
+`openaire_token_refresh_fehlgeschlagen` im UC1-Log). Siehe
+[OpenAIRE-Token erneuern](#openaire-token-erneuern).
 
-```
-OPENAIRE_ACCESS_TOKEN=...
-OPENAIRE_REFRESH_TOKEN=...
-```
+UC1 faellt bei ungueltigem Token automatisch auf die CORDIS-Zeitreihen
+zurueck. Ab Version `v3.3.5` wird nur noch eine einzige Warning geloggt;
+die nachfolgende 403-Kaskade (22+ Zeilen pro Analyse) laeuft auf
+`debug`-Level, bis der naechste Refresh erfolgreich ist.
+
+### OpenAIRE-Token erneuern
+
+1. Einloggen auf <https://www.openaire.eu/user-management> (bzw. das
+   Personal-Dashboard unter <https://graph.openaire.eu>) und unter
+   **Personal Access Token** einen neuen **Refresh-Token** erzeugen.
+   Der Token ist ueblicherweise 1 Jahr gueltig; der aus ihm abgeleitete
+   Access-Token wird vom Adapter automatisch alle paar Stunden erneuert.
+2. Werte in `.env` aktualisieren (nur `OPENAIRE_REFRESH_TOKEN` ist
+   zwingend, `OPENAIRE_ACCESS_TOKEN` darf leer bleiben — der Adapter
+   holt sich das Access-Token beim ersten Request selbst):
+
+   ```env
+   OPENAIRE_REFRESH_TOKEN=eyJhbGciOiJIUzI1...<neuer_token>
+   OPENAIRE_ACCESS_TOKEN=
+   ```
+
+3. Nur den UC1-Landscape-Service neu starten (die Modul-Level-
+   Token-Caches leben im Prozess):
+
+   ```bash
+   docker compose -f deploy/docker-compose.yml --env-file .env \
+       up -d --force-recreate ti-radar-uc1
+   ```
+
+4. Im Log pruefen, dass der Refresh funktioniert. Erwartet wird genau
+   eine `openaire_token_erneuert`-Zeile mit `gueltig_min`-Feld,
+   *keine* `openaire_token_refresh_fehlgeschlagen`-Warnings mehr:
+
+   ```bash
+   docker compose logs ti-radar-uc1 --since 5m | \
+       grep -E "openaire_token_(erneuert|refresh_fehlgeschlagen)"
+   ```
+
+   Zusaetzlicher Smoke-Test: einmal UC1 via Orchestrator ansprechen
+   (z.B. Analyse "quantum computing" im Frontend starten) und im Log
+   nach `openaire_request status=200` suchen. Bei Erfolg werden die
+   Jahreszaehlungen wieder aus OpenAIRE geliefert statt aus dem
+   CORDIS-Fallback.
 
 Danach `docker compose restart landscape-svc`.

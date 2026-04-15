@@ -14,6 +14,35 @@ from typing import Any
 # Konfidenz 80 % + Phase: Emerging") mehr erzeugen koennen.
 R2_RELIABILITY_THRESHOLD: float = 0.5
 
+# Overfitting-Schwellen fuer 3-Parameter Sigmoid-Fits. R² > 0.98 bei weniger
+# als 30 Datenpunkten ist ein klassisches Overfitting-Signal: der Fit hat
+# mehr Freiheitsgrade als die Datenbasis erlaubt (Live-Fall Semiconductor
+# Laser v3.4.0: R² = 0.9983 bei n = 9 vollstaendigen Jahren).
+OVERFIT_R2_THRESHOLD: float = 0.98
+OVERFIT_MIN_DATAPOINTS: int = 30
+
+
+def is_potentially_overfit(r_squared: float | None, n_data_points: int) -> bool:
+    """True wenn R² > OVERFIT_R2_THRESHOLD und n < OVERFIT_MIN_DATAPOINTS.
+
+    Ergaenzt die R²-Kopplung (Bug MAJ-9): ``fit_reliability_flag`` fängt den
+    Fall "Fit zu schlecht" (R² < 0.5); diese Funktion markiert den umgekehrten
+    Fall "Fit verdaechtig gut bei zu wenig Daten".
+
+    Defensiv: ``None``-R² (kein Fit zustande gekommen) ergibt ``False``, damit
+    der Fallback-Pfad keine falsche Warnung setzt.
+
+    Args:
+        r_squared: R²-Wert des Fits (0..1), oder ``None``.
+        n_data_points: Anzahl der Datenpunkte die in den Fit eingingen.
+
+    Returns:
+        ``True`` nur wenn R² > OVERFIT_R2_THRESHOLD UND n < OVERFIT_MIN_DATAPOINTS.
+    """
+    if r_squared is None:
+        return False
+    return r_squared > OVERFIT_R2_THRESHOLD and n_data_points < OVERFIT_MIN_DATAPOINTS
+
 
 def cagr(first_value: float, last_value: float, periods: int) -> float:
     """

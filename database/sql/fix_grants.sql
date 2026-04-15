@@ -110,6 +110,14 @@ GRANT SELECT ON ALL TABLES IN SCHEMA research_schema TO svc_export;
 GRANT SELECT ON ALL TABLES IN SCHEMA entity_schema TO svc_export;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA export_schema TO svc_export;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA export_schema TO svc_export;
+-- svc_export legt beim Startup fehlende Tabellen/Indizes in export_schema an
+-- (idempotent per CREATE ... IF NOT EXISTS). Dazu ist CREATE ON SCHEMA noetig.
+GRANT CREATE ON SCHEMA export_schema TO svc_export;
+-- Future tables (z.B. nach Dump-Restore mit neu angelegten Objekten):
+ALTER DEFAULT PRIVILEGES IN SCHEMA export_schema
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO svc_export;
+ALTER DEFAULT PRIVILEGES IN SCHEMA export_schema
+    GRANT USAGE ON SEQUENCES TO svc_export;
 
 -- Entity resolution
 GRANT SELECT ON ALL TABLES IN SCHEMA patent_schema TO svc_entity_resolution;

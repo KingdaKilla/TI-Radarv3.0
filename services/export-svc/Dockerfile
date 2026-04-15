@@ -69,9 +69,15 @@ RUN chown -R appuser:appuser /app
 USER appuser
 
 # Konfigurierbare Umgebungsvariablen (Defaults fuer Container)
+# HINWEIS: appuser hat kein Home-Verzeichnis (useradd -r ohne -m).
+# Matplotlib + Fontconfig brauchen writable Cache-Pfade —
+# deshalb werden sie nach /tmp umgeleitet (von appuser beschreibbar).
 ENV HOST=0.0.0.0 \
     PORT=8020 \
-    LOG_LEVEL=INFO
+    LOG_LEVEL=INFO \
+    MPLCONFIGDIR=/tmp/matplotlib \
+    XDG_CACHE_HOME=/tmp/.cache \
+    FONTCONFIG_PATH=/etc/fonts
 
 # Health Check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

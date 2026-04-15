@@ -1784,6 +1784,12 @@ GRANT SELECT ON ALL TABLES IN SCHEMA research_schema TO svc_export;
 GRANT SELECT ON ALL TABLES IN SCHEMA entity_schema TO svc_export;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA export_schema TO svc_export;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA export_schema TO svc_export;
+-- svc_export legt beim Startup fehlende Tabellen/Indizes idempotent an:
+GRANT CREATE ON SCHEMA export_schema TO svc_export;
+ALTER DEFAULT PRIVILEGES IN SCHEMA export_schema
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO svc_export;
+ALTER DEFAULT PRIVILEGES IN SCHEMA export_schema
+    GRANT USAGE ON SEQUENCES TO svc_export;
 
 -- Entity resolution: reads patents + CORDIS, writes entity_schema
 GRANT SELECT ON ALL TABLES IN SCHEMA patent_schema TO svc_entity_resolution;

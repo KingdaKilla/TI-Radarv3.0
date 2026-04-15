@@ -160,27 +160,22 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 async def _ensure_schema(pool: asyncpg.Pool) -> None:
-    """Erstellt das export_schema mit Cache- und Log-Tabellen.
+    """Stellt sicher, dass export_schema + Tabellen existieren.
 
-    Wird beim Startup ausgefuehrt — idempotent dank IF NOT EXISTS.
-    CREATE SCHEMA braucht DB-Level-CREATE-Berechtigung, die Service-Rollen
-    i.d.R. nicht haben. Deshalb wird das Schema-Anlegen separat gefangen —
-    wenn es bereits existiert (z.B. aus 002_schema.sql oder Dump-Restore),
-    reicht USAGE + CREATE ON SCHEMA fuer die Tabellen.
+    Idempotent dank IF NOT EXISTS. Fehlende CREATE-Berechtigungen werden
+    toleriert: Schema und Tabellen sollten bereits aus `database/sql/002_schema.sql`
+    (Docker-Init) oder Dump-Restore vorhanden sein. Wenn `svc_export` weder
+    CREATE auf Datenbank noch CREATE auf Schema hat, uebernimmt der Service
+    stillschweigend den Betrieb im Read-Only-/Best-Effort-Modus.
+
+    Jede DDL-Anweisung ist einzeln gefangen, damit eine Permission-Verweigerung
+    nicht die nachfolgenden uebersprungt.
     """
-    async with pool.acquire() as conn:
-        # Schema anlegen — kann fehlschlagen wenn Rolle kein CREATE hat
-        try:
-            await conn.execute("CREATE SCHEMA IF NOT EXISTS export_schema;")
-        except Exception as exc:
-            logger.info(
-                "export_schema_create_uebersprungen",
-                reason=str(exc),
-                hint="Schema existiert vermutlich bereits aus DB-Init",
-            )
-
-        # Cache-Tabelle fuer Analyseergebnisse
-        await conn.execute("""
+    ddl_statements: list[tuple[str, str]] = [
+        ("schema", "CREATE SCHEMA IF NOT EXISTS export_schema;"),
+        (
+            "analysis_cache",
+            """
             CREATE TABLE IF NOT EXISTS export_schema.analysis_cache (
                 id              BIGSERIAL PRIMARY KEY,
                 cache_key       TEXT UNIQUE NOT NULL,
@@ -193,22 +188,19 @@ async def _ensure_schema(pool: asyncpg.Pool) -> None:
                 created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 expires_at      TIMESTAMPTZ NOT NULL
             );
-        """)
-
-        # Index fuer Cache-Lookups
-        await conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_cache_key
-            ON export_schema.analysis_cache (cache_key);
-        """)
-
-        # Index fuer Cache-Bereinigung
-        await conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_cache_expires
-            ON export_schema.analysis_cache (expires_at);
-        """)
-
-        # Export-Log fuer Audit-Trail
-        await conn.execute("""
+            """,
+        ),
+        (
+            "idx_cache_key",
+            "CREATE INDEX IF NOT EXISTS idx_cache_key ON export_schema.analysis_cache (cache_key);",
+        ),
+        (
+            "idx_cache_expires",
+            "CREATE INDEX IF NOT EXISTS idx_cache_expires ON export_schema.analysis_cache (expires_at);",
+        ),
+        (
+            "export_log",
+            """
             CREATE TABLE IF NOT EXISTS export_schema.export_log (
                 id              BIGSERIAL PRIMARY KEY,
                 technology      TEXT NOT NULL,
@@ -221,9 +213,28 @@ async def _ensure_schema(pool: asyncpg.Pool) -> None:
                 client_ip       TEXT DEFAULT '',
                 request_id      TEXT DEFAULT ''
             );
-        """)
+            """,
+        ),
+    ]
 
-    logger.info("export_schema_initialisiert")
+    skipped: list[str] = []
+    async with pool.acquire() as conn:
+        for label, sql in ddl_statements:
+            try:
+                await conn.execute(sql)
+            except Exception as exc:
+                skipped.append(label)
+                logger.info(
+                    "export_schema_ddl_uebersprungen",
+                    step=label,
+                    reason=str(exc),
+                    hint="Objekt existiert vermutlich bereits oder Rolle hat keine CREATE-Berechtigung",
+                )
+
+    if skipped:
+        logger.info("export_schema_initialisiert", skipped=skipped)
+    else:
+        logger.info("export_schema_initialisiert")
 
 
 # ---------------------------------------------------------------------------

@@ -23,6 +23,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import Settings
+from src.db_schema import ensure_schema as _ensure_schema
 from src.router_export import router as export_router
 
 logger = structlog.get_logger(__name__)
@@ -159,82 +160,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("export_svc_shutdown_abgeschlossen")
 
 
-async def _ensure_schema(pool: asyncpg.Pool) -> None:
-    """Stellt sicher, dass export_schema + Tabellen existieren.
-
-    Idempotent dank IF NOT EXISTS. Fehlende CREATE-Berechtigungen werden
-    toleriert: Schema und Tabellen sollten bereits aus `database/sql/002_schema.sql`
-    (Docker-Init) oder Dump-Restore vorhanden sein. Wenn `svc_export` weder
-    CREATE auf Datenbank noch CREATE auf Schema hat, uebernimmt der Service
-    stillschweigend den Betrieb im Read-Only-/Best-Effort-Modus.
-
-    Jede DDL-Anweisung ist einzeln gefangen, damit eine Permission-Verweigerung
-    nicht die nachfolgenden uebersprungt.
-    """
-    ddl_statements: list[tuple[str, str]] = [
-        ("schema", "CREATE SCHEMA IF NOT EXISTS export_schema;"),
-        (
-            "analysis_cache",
-            """
-            CREATE TABLE IF NOT EXISTS export_schema.analysis_cache (
-                id              BIGSERIAL PRIMARY KEY,
-                cache_key       TEXT UNIQUE NOT NULL,
-                technology      TEXT NOT NULL,
-                start_year      INTEGER NOT NULL,
-                end_year        INTEGER NOT NULL,
-                european_only   BOOLEAN NOT NULL DEFAULT FALSE,
-                use_cases       TEXT[] NOT NULL DEFAULT '{}',
-                result_json     JSONB NOT NULL,
-                created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                expires_at      TIMESTAMPTZ NOT NULL
-            );
-            """,
-        ),
-        (
-            "idx_cache_key",
-            "CREATE INDEX IF NOT EXISTS idx_cache_key ON export_schema.analysis_cache (cache_key);",
-        ),
-        (
-            "idx_cache_expires",
-            "CREATE INDEX IF NOT EXISTS idx_cache_expires ON export_schema.analysis_cache (expires_at);",
-        ),
-        (
-            "export_log",
-            """
-            CREATE TABLE IF NOT EXISTS export_schema.export_log (
-                id              BIGSERIAL PRIMARY KEY,
-                technology      TEXT NOT NULL,
-                export_format   TEXT NOT NULL,
-                use_cases       TEXT[] NOT NULL DEFAULT '{}',
-                row_count       INTEGER NOT NULL DEFAULT 0,
-                file_size_bytes BIGINT NOT NULL DEFAULT 0,
-                duration_ms     INTEGER NOT NULL DEFAULT 0,
-                created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                client_ip       TEXT DEFAULT '',
-                request_id      TEXT DEFAULT ''
-            );
-            """,
-        ),
-    ]
-
-    skipped: list[str] = []
-    async with pool.acquire() as conn:
-        for label, sql in ddl_statements:
-            try:
-                await conn.execute(sql)
-            except Exception as exc:
-                skipped.append(label)
-                logger.info(
-                    "export_schema_ddl_uebersprungen",
-                    step=label,
-                    reason=str(exc),
-                    hint="Objekt existiert vermutlich bereits oder Rolle hat keine CREATE-Berechtigung",
-                )
-
-    if skipped:
-        logger.info("export_schema_initialisiert", skipped=skipped)
-    else:
-        logger.info("export_schema_initialisiert")
+# Schema-Bootstrap-Logik liegt in src/db_schema.py (read-first, vermeidet DB-Log-Spam)
+# und wird oben als _ensure_schema importiert.
 
 
 # ---------------------------------------------------------------------------

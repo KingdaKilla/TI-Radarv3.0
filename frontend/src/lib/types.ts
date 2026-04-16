@@ -7,7 +7,7 @@
 
 export interface RadarRequest {
   technology: string;
-  time_range: number;
+  years: number;
   european_only: boolean;
   use_cases: string[];
   top_n: number;

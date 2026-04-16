@@ -79,7 +79,7 @@ export default function SearchBar({ onSubmit, isLoading }: SearchBarProps) {
       setShowSuggestions(false);
       onSubmit({
         technology: technology.trim(),
-        time_range: timeRange,
+        years: timeRange,
         european_only: europeanOnly,
         use_cases: [...USE_CASES],
         top_n: 10,
@@ -96,7 +96,7 @@ export default function SearchBar({ onSubmit, isLoading }: SearchBarProps) {
       // Auto-submit on suggestion click
       onSubmit({
         technology: suggestion,
-        time_range: timeRange,
+        years: timeRange,
         european_only: europeanOnly,
         use_cases: [...USE_CASES],
         top_n: 10,

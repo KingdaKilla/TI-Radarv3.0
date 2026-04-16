@@ -28,7 +28,7 @@ import { USE_CASES } from "@/lib/types";
 function buildRequest(technology: string, useMock: boolean): RadarRequest {
   return {
     technology: technology.trim(),
-    time_range: 10,
+    years: 10,
     european_only: false,
     use_cases: [...USE_CASES],
     top_n: 10,

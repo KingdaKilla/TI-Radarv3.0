@@ -24,7 +24,7 @@ export function useRadarQuery(params: RadarRequest | null) {
     queryKey: radarKeys.analyze(
       params ?? {
         technology: "",
-        time_range: 10,
+        years: 10,
         european_only: false,
         use_cases: [...USE_CASES],
         top_n: 10,

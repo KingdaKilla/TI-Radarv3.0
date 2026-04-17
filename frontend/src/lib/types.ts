@@ -71,6 +71,24 @@ export interface MaturityPanel {
    * bei n = 9 Jahren — klassisches 3-Parameter Sigmoid-Overfit.
    */
   overfit_warning?: boolean;
+  /**
+   * Bug v3.4.7/A-002 / B-9: Deterministisches Backend-Flag für Rückgang.
+   * Backend setzt seit v3.4.7: `is_declining = cagr < 0 OR (maturity_pct >= 90
+   * AND detect_decline(...))`. Frontend sollte direkt dieses Flag für
+   * Phase-vs-Trend-Konflikt-Erkennung nutzen statt Regex-Heuristik.
+   */
+  is_declining?: boolean;
+  /**
+   * Bug v3.4.7/C-004: Empirischer CAGR (naiv end/start, trim-last-year).
+   * Methodisch identisch zu landscape.patent_cagr. Ersetzt den alten
+   * (Fit-basierten) `cagr`-Wert nicht — beide werden parallel geliefert.
+   */
+  empirical_cagr?: number;
+  /**
+   * Bug v3.4.7/C-004: Momentane Wachstumsrate aus dem S-Curve-Fit
+   * (Gompertz/Logistic/Richards). Ersetzt semantisch den alten `cagr`-Wert.
+   */
+  fitted_growth_rate?: number;
 }
 
 export interface CompetitorEntry {

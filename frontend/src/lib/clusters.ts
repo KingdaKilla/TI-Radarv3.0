@@ -152,16 +152,24 @@ export function buildClusterData(data: RadarResponse): ClusterData {
   const trendLabel = cagr !== undefined ? trendFromCagr(cagr) : undefined;
   const trendBadge = trendLabel !== undefined ? `Trend: ${trendLabel}` : undefined;
 
-  // Bug v3.4.7/A-002: Phase-vs-Trend-Widerspruch detektieren.
+  // Bug v3.4.7/A-002 (v3.4.8-refinement): Phase-vs-Trend-Widerspruch detektieren.
   // Beispiel (mRNA): phase="Wachstum" + trend="Rückgang" nebeneinander → verwirrend.
-  // Wenn beide Labels sich widersprechen, wird ein drittes Badge "⚠ Datenlücke 2026"
-  // ergänzt, damit Nutzer weiß: das Rumpfjahr verzerrt eine der beiden Metriken.
-  const phaseLabel = data.maturity?.phase_label ?? "";
-  const phaseSuggestsGrowth = /wachstum|emerging|entstehung/i.test(phaseLabel);
-  const phaseSuggestsDecline = /rückgang|decline|abschwung/i.test(phaseLabel);
+  // Primary-Signal: Enum-Feld `phase` (sprachneutral, seit v3.4.7 vom Backend
+  // deterministisch). Zusätzlich wird Backend-Flag `is_declining` gegengecheckt.
+  // Kein Regex auf localized `phase_label` mehr — das war in v3.4.7 fragil für
+  // englische Labels.
+  const phaseEnum = data.maturity?.phase;
+  const isDeclining = data.maturity?.is_declining === true;
+  const phaseSuggestsGrowth =
+    phaseEnum === "emergence" || phaseEnum === "growth";
+  const phaseSuggestsDecline =
+    phaseEnum === "decline" || phaseEnum === "saturation" || isDeclining;
   const phaseTrendConflict =
     (phaseSuggestsGrowth && trendLabel === "Rückgang") ||
-    (phaseSuggestsDecline && trendLabel === "Wachstum");
+    (phaseSuggestsDecline && trendLabel === "Wachstum") ||
+    // Backend-Deterministic: wenn is_declining=true, darf Trend nicht "Wachstum"
+    // sein — das wäre ein Widerspruch im Backend-State.
+    (isDeclining && trendLabel === "Wachstum");
   const conflictBadge = phaseTrendConflict
     ? "⚠ Trend-Diskrepanz"
     : undefined;

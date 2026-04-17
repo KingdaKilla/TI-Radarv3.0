@@ -6,6 +6,13 @@
 -- Tuned for: 8 GB container RAM, SSD storage, 154M+ row patent dataset.
 -- ============================================================================
 
+-- Connections
+-- max_connections: 13 UC-Services × 10 Pool + Orchestrator/Export/Import + Headroom.
+-- Default ist 100 — bei parallelen Radar-Requests reicht das nicht
+-- (Pool-Contention → Queries laufen in Orchestrator-Timeouts).
+-- Hinweis: Änderung erfordert DB-Restart (docker compose restart db).
+ALTER SYSTEM SET max_connections = '200';
+
 -- Memory
 -- shared_buffers: 25% of container RAM.
 ALTER SYSTEM SET shared_buffers = '2GB';

@@ -1244,31 +1244,27 @@ COMMENT ON MATERIALIZED VIEW cross_schema.mv_funding_by_instrument IS
 -- Cached analysis results (keyed by technology + time range + UC)
 -- --------------------------------------------------------------------------
 
+-- Kanonische Definition — identisch zu services/export-svc/src/db_schema.py.
+-- Ein Row = ein kompletter Radar-Request (use_cases als Array), keyed per cache_key.
 CREATE TABLE export_schema.analysis_cache (
-    id                  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    technology          TEXT NOT NULL,
-    start_year          SMALLINT,
-    end_year            SMALLINT,
-    use_case            VARCHAR(10) NOT NULL,        -- 'UC1'..'UC8'
-    result_json         JSONB NOT NULL,              -- full UC response as JSONB
-    european_only       BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-    expires_at          TIMESTAMPTZ NOT NULL DEFAULT (now() + INTERVAL '24 hours'),
-    request_hash        TEXT NOT NULL,                -- SHA-256 of canonical request for dedup
-
-    CONSTRAINT uq_analysis_cache UNIQUE (request_hash, use_case),
-    CONSTRAINT ck_use_case CHECK (
-        use_case IN ('UC1', 'UC2', 'UC3', 'UC4', 'UC5', 'UC6', 'UC7', 'UC8')
-    )
+    id              BIGSERIAL PRIMARY KEY,
+    cache_key       TEXT UNIQUE NOT NULL,            -- SHA-256 hash of request key
+    technology      TEXT NOT NULL,
+    start_year      INTEGER NOT NULL,
+    end_year        INTEGER NOT NULL,
+    european_only   BOOLEAN NOT NULL DEFAULT FALSE,
+    use_cases       TEXT[] NOT NULL DEFAULT '{}',    -- which UCs are in this cached response
+    result_json     JSONB NOT NULL,                  -- full RadarResponse as JSONB
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at      TIMESTAMPTZ NOT NULL             -- application sets TTL (default 24h)
 );
 
-CREATE INDEX idx_ac_technology ON export_schema.analysis_cache (technology);
-CREATE INDEX idx_ac_expires ON export_schema.analysis_cache (expires_at);
-CREATE INDEX idx_ac_result ON export_schema.analysis_cache USING gin (result_json);
+CREATE INDEX idx_cache_key ON export_schema.analysis_cache (cache_key);
+CREATE INDEX idx_cache_expires ON export_schema.analysis_cache (expires_at);
 
 COMMENT ON TABLE export_schema.analysis_cache IS
-    'Cached analysis results per UC + technology + time range. 24h default TTL. '
-    'Enables instant re-rendering and CSV/PDF export without re-computation.';
+    'Gecachte Radar-Responses (ein Row = ein kompletter Request mit use_cases-Array). '
+    'TTL via expires_at (default 24h applikativ). Lookup per cache_key.';
 
 
 -- --------------------------------------------------------------------------
@@ -1298,26 +1294,26 @@ COMMENT ON TABLE export_schema.report_templates IS
 -- Export history / audit log
 -- --------------------------------------------------------------------------
 
+-- Kanonische Definition — identisch zu services/export-svc/src/db_schema.py.
 CREATE TABLE export_schema.export_log (
-    id                  BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    technology          TEXT NOT NULL,
-    start_year          SMALLINT,
-    end_year            SMALLINT,
-    use_cases           TEXT[] NOT NULL,
-    format              VARCHAR(10) NOT NULL,
-    template_id         INTEGER REFERENCES export_schema.report_templates(id),
-    row_count           INTEGER,
-    file_size_bytes     BIGINT,
-    duration_ms         INTEGER,
-    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-    request_id          TEXT                         -- correlation with gRPC request_id
+    id              BIGSERIAL PRIMARY KEY,
+    technology      TEXT NOT NULL,
+    export_format   TEXT NOT NULL,                 -- 'csv', 'pdf', 'xlsx', 'json'
+    use_cases       TEXT[] NOT NULL DEFAULT '{}',
+    row_count       INTEGER NOT NULL DEFAULT 0,
+    file_size_bytes BIGINT NOT NULL DEFAULT 0,
+    duration_ms     INTEGER NOT NULL DEFAULT 0,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    client_ip       TEXT DEFAULT '',
+    request_id      TEXT DEFAULT ''                -- correlation with gRPC request_id
 );
 
 CREATE INDEX idx_el_technology ON export_schema.export_log (technology);
 CREATE INDEX idx_el_created ON export_schema.export_log (created_at);
 
 COMMENT ON TABLE export_schema.export_log IS
-    'Audit trail of all export operations. Tracks what was exported, when, and how large.';
+    'Audit-Trail aller Export-Operationen (PDF/CSV/XLSX/JSON). '
+    'Trackt technology, Format, Use-Cases, Größe und Dauer. Kein Datenbezug.';
 
 
 -- ============================================================================

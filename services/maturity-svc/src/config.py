@@ -26,7 +26,10 @@ class Settings(BaseSettings):
     metrics_port: int = 9092
 
     # --- Timeouts ---
-    db_query_timeout_s: float = 30.0
+    # Symmetrisch zum Orchestrator-Timeout (60s). Niedrigerer Wert würde
+    # dazu führen, dass die Maturity-S-Curve-Queries vom asyncpg-Pool
+    # abgebrochen werden, bevor der Orchestrator den gRPC-Call cancelt.
+    db_query_timeout_s: float = 60.0
 
     # --- S-Curve Konfiguration ---
     min_patents_for_fit: int = 30

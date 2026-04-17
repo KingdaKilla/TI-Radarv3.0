@@ -26,7 +26,11 @@ class Settings(BaseSettings):
     metrics_port: int = 9093
 
     # --- Timeouts ---
-    db_query_timeout_s: float = 30.0
+    # Symmetrisch zum Orchestrator-Timeout (60s). Niedrigerer Wert würde
+    # dazu führen, dass die Entity-Resolution-CTE-Query vom asyncpg-Pool
+    # abgebrochen wird, bevor der Orchestrator sie cancelt →
+    # entity_resolution_fehlgeschlagen mit leerem Error-String.
+    db_query_timeout_s: float = 60.0
 
     # --- Competitive Konfiguration ---
     top_actors_limit: int = 50

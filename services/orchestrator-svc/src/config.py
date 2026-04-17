@@ -62,19 +62,19 @@ class Settings(BaseSettings):
     uc_publication_address: str = "publication-svc:50051"
 
     # --- gRPC: Per-UC Timeouts (Sekunden) ---
-    uc_landscape_timeout: float = 30.0
+    uc_landscape_timeout: float = 60.0     # bei parallelen Requests DB-Pool-Contention
     uc_maturity_timeout: float = 60.0      # COUNT(DISTINCT family_id) auf grossen Datasets langsam
     uc_competitive_timeout: float = 60.0   # Entity Resolution + Netzwerk-Berechnung
     uc_funding_timeout: float = 30.0
     uc_cpc_flow_timeout: float = 60.0       # CPC-Jaccard auf patent_cpc ist rechenintensiv
     uc_geographic_timeout: float = 30.0
     uc_research_impact_timeout: float = 30.0  # Externe API (OpenAlex)
-    uc_temporal_timeout: float = 30.0
+    uc_temporal_timeout: float = 60.0      # bei parallelen Requests DB-Pool-Contention
     uc_tech_cluster_timeout: float = 60.0   # Community-Detection ist rechenintensiv
     uc_actor_type_timeout: float = 30.0
     uc_patent_grant_timeout: float = 30.0
     uc_euroscivoc_timeout: float = 30.0
-    uc_publication_timeout: float = 30.0
+    uc_publication_timeout: float = 60.0   # bei parallelen Requests DB-Pool-Contention
 
     # --- gRPC: Globale Einstellungen ---
     grpc_max_message_size: int = Field(

@@ -192,18 +192,22 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         cumulative = list(itertools.accumulate(combined))
 
         # --- CAGR berechnen ---
-        non_zero_indices = [i for i, c in enumerate(combined) if c > 0]
-        growth_rate = 0.0
-        if len(non_zero_indices) >= 2:
-            first_idx = non_zero_indices[0]
-            last_idx = non_zero_indices[-1]
-            year_span = all_years[last_idx] - all_years[first_idx]
-            if year_span > 0:
-                growth_rate = cagr(
-                    float(combined[first_idx]),
-                    float(combined[last_idx]),
-                    year_span,
-                )
+        # Bug C-004: maturity.cagr muss methodisch identisch zu
+        # landscape.patent_cagr sein, sonst flippt z.B. bei mRNA das
+        # Vorzeichen (maturity -18.4 % vs landscape +3.1 %).
+        # Gleiches Vorgehen wie ``landscape-svc/_safe_cagr``:
+        #   1. Filter auf Jahre <= data_complete_year (kein Teiljahr).
+        #   2. Erster/letzter Jahrgang mit Zaehlwert >= 0 aus dem gefilterten
+        #      Bereich (Endpunkt-basiert, konsistent mit OECD-Praxis).
+        #   3. Gleicher ``shared.domain.metrics.cagr``-Aufruf.
+        # Dies liefert den "empirischen" CAGR, der spaeter als Alias fuer
+        # das deprecated ``cagr``-Feld (Proto-5) und als neues ``empirical_cagr``
+        # (Proto-18) ausgeliefert wird.
+        growth_rate = _compute_empirical_cagr(
+            all_years=all_years,
+            combined=combined,
+            data_complete_year=data_complete_year,
+        )
 
         # --- S-Curve-Fit (nur auf vollstaendige Jahre) ---
         min_patents = self._settings.min_patents_for_fit
@@ -355,17 +359,40 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
                 })
 
         # --- Decline-Erkennung (ergaenzt S-Kurve) ---
-        # S-Kurve ist monoton steigend und kann Decline nicht abbilden.
-        # Pruefe jaehrliche Raten auf konsekutive Rueckgaenge.
-        is_declining = False
-        if maturity_pct >= 90.0 and detect_decline(combined):
-            is_declining = True
+        # Bug A-002 / B-9: Vor dem Fix wurde is_declining nur gesetzt, wenn
+        # maturity_pct >= 90 UND detect_decline(combined) gleichzeitig zutrafen.
+        # Bei mRNA (cagr -18.4 %, maturity 39 %) und CRISPR (cagr -22 %, maturity
+        # 41 %) blieb is_declining=False, obwohl der Trend klar negativ ist.
+        # Neue Regel (siehe ``determine_is_declining``):
+        #   (a) empirical_cagr < 0                              -> Decline
+        #   (b) maturity_pct >= 90 UND detect_decline(combined) -> Plateau-Decline
+        # Zusaetzlich: Phase-Konsistenz — is_declining <=> phase == DECLINING.
+        is_declining = determine_is_declining(
+            empirical_cagr_percent=growth_rate,
+            maturity_pct=maturity_pct,
+            combined=combined,
+        )
+        if is_declining:
             phase_en = "Decline"
             logger.info(
                 "decline_phase_erkannt",
                 technology=technology,
                 maturity_pct=round(maturity_pct, 1),
+                empirical_cagr=round(growth_rate, 2),
             )
+        elif phase_en == "Decline":
+            # Gegenrichtung: Ist das Phase-Label bereits Decline (z.B. via
+            # classify_maturity_phase), muss is_declining=True folgen.
+            is_declining = True
+
+        # --- Fitted growth rate (Gompertz/Logistic/Richards) ---
+        # Dies ist die momentane Wachstumsrate aus dem gefitteten Modell am
+        # letzten Datenpunkt, NICHT der historische Durchschnitt. Vorher
+        # wurde dieser Wert teilweise als "cagr" verkauft, was zu C-004 fuehrte.
+        fitted_growth_rate = _compute_fitted_growth_rate(
+            s_curve_result=s_curve_result,
+            fit_years=fit_years,
+        )
 
         # --- Verarbeitungszeit ---
         processing_time_ms = int((time.monotonic() - t0) * 1000)
@@ -409,6 +436,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             delta_aicc=delta_aicc,
             fit_reliability_flag=fit_reliability_flag,
             overfit_warning=overfit_warning,
+            fitted_growth_rate=fitted_growth_rate,
         )
 
     # -----------------------------------------------------------------------
@@ -445,6 +473,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         delta_aicc: float = 0.0,
         fit_reliability_flag: bool = False,
         overfit_warning: bool = False,
+        fitted_growth_rate: float = 0.0,
     ) -> Any:
         """MaturityResponse aus berechneten Daten zusammenbauen.
 
@@ -483,6 +512,7 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
                 delta_aicc=delta_aicc,
                 fit_reliability_flag=fit_reliability_flag,
                 overfit_warning=overfit_warning,
+                fitted_growth_rate=fitted_growth_rate,
             )
 
         # --- Protobuf-Messages bauen ---
@@ -563,12 +593,16 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         # ``overfit_warning`` ist Proto-Feld 17 — erst ab regeneriertem Stub
         # verfuegbar. Defensive Konstruktion: Feld nur setzen, wenn der
         # Message-Type es unterstuetzt (vermeidet Crash bei veralteten Stubs).
+        # C-004: ``cagr`` bleibt aus Abwaertskompatibilitaet als Alias
+        # fuer den empirischen CAGR stehen. Neue Clients lesen stattdessen
+        # ``empirical_cagr`` (Feld 18) oder ``fitted_growth_rate`` (Feld 19).
+        empirical_cagr_fraction = growth_rate / 100.0
         response_kwargs: dict[str, Any] = dict(
             s_curve_data=s_curve_data,
             phase=phase_enum,
             maturity_percent=maturity_pct,
             r_squared=r_sq,
-            cagr=growth_rate / 100.0,  # Protobuf: Fraction, nicht Prozent
+            cagr=empirical_cagr_fraction,  # Protobuf: Fraction, nicht Prozent
             model_parameters=model_params,
             confidence=confidence,
             years_to_next_phase=years_to_next_phase,
@@ -581,8 +615,16 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             is_declining=is_declining,
             fit_reliability_flag=fit_reliability_flag,
         )
-        if "overfit_warning" in uc2_maturity_pb2.MaturityResponse.DESCRIPTOR.fields_by_name:
+        _fields = uc2_maturity_pb2.MaturityResponse.DESCRIPTOR.fields_by_name
+        if "overfit_warning" in _fields:
             response_kwargs["overfit_warning"] = overfit_warning
+        # Neue Felder aus Bundle H (C-004): nur setzen, wenn der generierte
+        # Stub bereits den erweiterten Proto-Stand kennt. Sonst defensiv
+        # weglassen, damit veraltete Stubs nicht crashen.
+        if "empirical_cagr" in _fields:
+            response_kwargs["empirical_cagr"] = empirical_cagr_fraction
+        if "fitted_growth_rate" in _fields:
+            response_kwargs["fitted_growth_rate"] = fitted_growth_rate
         return uc2_maturity_pb2.MaturityResponse(**response_kwargs)
 
     def _build_dict_response(
@@ -615,12 +657,15 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
         delta_aicc: float = 0.0,
         fit_reliability_flag: bool = False,
         overfit_warning: bool = False,
+        fitted_growth_rate: float = 0.0,
     ) -> dict[str, Any]:
         """Fallback-Response als dict (wenn gRPC-Stubs nicht generiert)."""
         # MAJ-7/MAJ-8: Default kommt aus dem shared-Helper, kein Hardcoding.
         if data_complete_year is None:
             data_complete_year = last_complete_year()
         fitted_map = {fv["year"]: fv["fitted"] for fv in s_curve_fitted}
+        # C-004: ``cagr`` bleibt als Alias fuer den empirischen CAGR erhalten.
+        empirical_cagr_fraction = growth_rate / 100.0
         return {
             "s_curve_data": [
                 {
@@ -634,7 +679,9 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
             "phase": phase_en,
             "maturity_percent": maturity_pct,
             "r_squared": r_sq,
-            "cagr": growth_rate / 100.0,
+            "cagr": empirical_cagr_fraction,
+            "empirical_cagr": empirical_cagr_fraction,
+            "fitted_growth_rate": fitted_growth_rate,
             "model_parameters": {
                 "carrying_capacity": sat_level,
                 "growth_rate": growth_rate_k,
@@ -693,6 +740,103 @@ class MaturityServicer(_get_base_class()):  # type: ignore[misc]
 # ---------------------------------------------------------------------------
 # Hilfsfunktionen
 # ---------------------------------------------------------------------------
+
+def _compute_empirical_cagr(
+    *,
+    all_years: list[int],
+    combined: list[int],
+    data_complete_year: int,
+) -> float:
+    """Naiver (Endpunkt-)CAGR ueber die jaehrlichen Raten.
+
+    Gleiche Methode wie ``landscape-svc._safe_cagr`` (Bug C-004 Fix):
+    - Filter auf Jahre ``<= data_complete_year`` (keine Teiljahre).
+    - Erster/letzter Jahrgang mit Zaehlwert > 0 aus dem gefilterten Fenster.
+    - ``shared.domain.metrics.cagr`` liefert Prozent (z.B. 12.5 fuer 12.5 %).
+
+    Gibt 0.0 zurueck, wenn keine zwei positiven Jahrgaenge gefunden werden
+    oder der Zeitraum null ist.
+    """
+    if not all_years or not combined:
+        return 0.0
+
+    # Indices nur fuer vollstaendige Jahre behalten und davon die mit Count > 0.
+    valid_indices = [
+        i
+        for i, y in enumerate(all_years)
+        if y <= data_complete_year and combined[i] > 0
+    ]
+    if len(valid_indices) < 2:
+        return 0.0
+
+    first_idx = valid_indices[0]
+    last_idx = valid_indices[-1]
+    year_span = all_years[last_idx] - all_years[first_idx]
+    if year_span <= 0:
+        return 0.0
+
+    return cagr(
+        float(combined[first_idx]),
+        float(combined[last_idx]),
+        year_span,
+    )
+
+
+def _compute_fitted_growth_rate(
+    *,
+    s_curve_result: dict[str, Any] | None,
+    fit_years: list[int],
+) -> float:
+    """Momentane Wachstumsrate aus dem gewaehlten Modell (Bug C-004).
+
+    Gibt die relative Steigung der Fit-Kurve am letzten Fit-Jahr zurueck
+    (``(y[n] / y[n-1]) - 1``). Fraction (0.123 = 12.3 %), kein Prozent.
+
+    Warum ueber die fitted_values und nicht die Parameter selbst:
+    Gompertz- und Logistic-Parameter sind unterschiedlich skaliert, was zu
+    C-004 gefuehrt hat. Die empirische Steigung der gefitteten Kurve ist
+    modell-unabhaengig vergleichbar.
+    """
+    if s_curve_result is None or not fit_years or len(fit_years) < 2:
+        return 0.0
+
+    fitted_points = s_curve_result.get("fitted_values") or []
+    if len(fitted_points) < 2:
+        return 0.0
+
+    # letzte zwei gefittete Werte im Fit-Fenster
+    year_to_fit = {fv["year"]: float(fv["fitted"]) for fv in fitted_points}
+    y_last = year_to_fit.get(fit_years[-1])
+    y_prev = year_to_fit.get(fit_years[-2])
+    if y_last is None or y_prev is None or y_prev <= 0:
+        return 0.0
+
+    return (y_last / y_prev) - 1.0
+
+
+def determine_is_declining(
+    *,
+    empirical_cagr_percent: float,
+    maturity_pct: float,
+    combined: list[int],
+) -> bool:
+    """Decline-Regel fuer Bundle H (Bug A-002 / B-9).
+
+    Zwei unabhaengige Kriterien — ODER-Verknuepfung:
+      (a) ``empirical_cagr_percent < 0`` — klarer historischer Rueckgang,
+          auch ohne 90 %-Plateau (mRNA cagr=-18.4 %, CRISPR cagr=-22 %).
+      (b) ``maturity_pct >= 90`` UND ``detect_decline(combined)`` — klassischer
+          Post-Peak-Decline auf dem Plateau.
+
+    Vorher war nur (b) aktiv, weshalb mRNA und CRISPR trotz stark negativem
+    CAGR mit is_declining=False ausgeliefert wurden.
+    """
+    if empirical_cagr_percent < 0.0:
+        return True
+    if maturity_pct >= 90.0 and detect_decline(combined):
+        return True
+    return False
+
 
 def _estimate_years_to_next_phase(
     maturity_pct: float,

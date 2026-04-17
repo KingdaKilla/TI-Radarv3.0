@@ -65,3 +65,31 @@ def compute_sme_share(
     if total_prc <= 0:
         return 0.0
     return round(sme_count / total_prc, 4)
+
+
+def compute_classification_coverage(
+    classified: int,
+    unclassified: int,
+) -> float:
+    """Anteil klassifizierter Akteure an allen bekannten Akteuren.
+
+    Formel: ``classified / (classified + unclassified)``.
+
+    Grenzfaelle:
+    - ``classified == 0 and unclassified == 0`` -> ``1.0``
+      (keine Daten -> konservativ als "vollstaendig klassifiziert"
+      behandeln, sonst waere ``coverage == 0`` trotz leerem Nenner
+      irrefuehrend — siehe Bug: coverage == 0 bei unclassified == 0).
+    - ``unclassified == 0 and classified > 0`` -> ``1.0`` (alle bekannt).
+    - Negative Werte werden auf ``0`` geklammert, um NaN/unsinnige
+      Ergebnisse zu vermeiden.
+
+    Der Rueckgabewert liegt stets in ``[0.0, 1.0]`` und wird auf
+    4 Nachkommastellen gerundet (konsistent mit ``compute_sme_share``).
+    """
+    classified = max(int(classified), 0)
+    unclassified = max(int(unclassified), 0)
+    denom = classified + unclassified
+    if denom <= 0:
+        return 1.0
+    return round(classified / denom, 4)

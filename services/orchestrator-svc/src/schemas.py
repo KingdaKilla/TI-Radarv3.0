@@ -45,10 +45,23 @@ class RadarRequest(BaseModel):
 
     technology: str = Field(
         ...,
-        min_length=1,
+        min_length=3,
         max_length=200,
         description="Technologie-Suchbegriff (z.B. 'solid-state batteries', 'CRISPR')",
     )
+
+    @field_validator("technology")
+    @classmethod
+    def validate_technology(cls, v: str) -> str:
+        # Strip whitespace und minimale Länge nach Trim prüfen
+        # (Bug M-033: 1-Zeichen-Inputs trigerten Volltextsuche mit Millionen Treffern)
+        stripped = v.strip()
+        if len(stripped) < 3:
+            raise ValueError(
+                "Technologie-Suchbegriff muss mindestens 3 Zeichen lang sein "
+                "(nach Trimmen von Whitespace)"
+            )
+        return stripped
     years: int = Field(
         default=10,
         ge=3,

@@ -77,11 +77,20 @@ export default function CompetitivePanel({
             </span>
           </div>
 
-          {/* Top Wettbewerber */}
-          <div className="h-[clamp(16rem,45vh,32rem)]" aria-label="Top Wettbewerber nach Patenten und Projekten">
+          {/* Top Wettbewerber. Bug v3.4.7/D12-1 (F10): Wenn Entity-Resolution
+              keine Patent-Counts liefert (alle 0), verschwinden die blauen Bars
+              visuell, aber die Legende zeigt weiterhin "Patente" — irreführend.
+              Jetzt werden beide Series nur gerendert wenn mindestens ein
+              Akteur den entsprechenden Count > 0 hat. */}
+          {(() => {
+            const top = data.top_assignees.slice(0, 8);
+            const hasPatents = top.some((a) => (a.patent_count ?? 0) > 0);
+            const hasProjects = top.some((a) => (a.project_count ?? 0) > 0);
+            return (
+              <div className="h-[clamp(16rem,45vh,32rem)]" aria-label="Top Wettbewerber nach Patenten und Projekten">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={data.top_assignees.slice(0, 8)}
+                    data={top}
                     layout="vertical"
                     margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
                     barCategoryGap="20%"
@@ -117,11 +126,17 @@ export default function CompetitivePanel({
                         value === "patent_count" ? "Patente" : "Projekte"
                       }
                     />
-                    <Bar dataKey="patent_count" stackId="total" fill={CHART_COLORS.blue} radius={[0, 0, 0, 0]} />
-                    <Bar dataKey="project_count" stackId="total" fill={CHART_COLORS.orange} radius={[0, 4, 4, 0]} />
+                    {hasPatents && (
+                      <Bar dataKey="patent_count" stackId="total" fill={CHART_COLORS.blue} radius={[0, 0, 0, 0]} />
+                    )}
+                    {hasProjects && (
+                      <Bar dataKey="project_count" stackId="total" fill={CHART_COLORS.orange} radius={[0, 4, 4, 0]} />
+                    )}
                   </BarChart>
                 </ResponsiveContainer>
-          </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </PanelCard>

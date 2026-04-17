@@ -75,15 +75,24 @@ def landscape_result_to_proto(
     )
 
     # --- Top CPC Codes ---
+    # Bug v3.4.7/C-002: "share" war fälschlicherweise count/total_patents — ergab Werte > 1.0
+    # weil Patente mehrere CPC-Codes tragen. Neuer Ansatz:
+    #   - share:        normalisiert über die zurückgegebene Top-Liste (Σ = 1.0)
+    #   - avg_per_patent: count / total_patents (Multiplizität, kann > 1 sein)
     cpc_entries = []
-    total_for_share = result.total_patents or 1
-    for cpc in result.top_cpc:
-        cpc_count = int(cpc.count if hasattr(cpc, "count") else cpc.get("count", 0))
+    cpc_counts_raw = [
+        int(cpc.count if hasattr(cpc, "count") else cpc.get("count", 0))
+        for cpc in result.top_cpc
+    ]
+    total_cpc_sum = sum(cpc_counts_raw) or 1  # Vermeidet Division durch 0
+    total_patents = result.total_patents or 1
+    for cpc, cpc_count in zip(result.top_cpc, cpc_counts_raw):
         cpc_entries.append(uc1_landscape_pb2.CpcCodeCount(
             code=str(cpc.code if hasattr(cpc, "code") else cpc.get("code", "")),
             description=str(cpc.description if hasattr(cpc, "description") else cpc.get("description", "")),
             count=cpc_count,
-            share=cpc_count / total_for_share,
+            share=cpc_count / total_cpc_sum,        # ∈ [0, 1], Σ = 1.0
+            avg_per_patent=cpc_count / total_patents,  # Multiplizität, kann > 1 sein
         ))
 
     # --- Metadata ---

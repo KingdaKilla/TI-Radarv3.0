@@ -30,7 +30,9 @@ class TestUc11ActorScopeLabel:
             servicer = service_mod.ActorTypeServicer(pool=MagicMock())
             defaults = dict(
                 type_breakdown=[], type_trend=[], top_actors=[],
-                total_classified=0, sme_share=0.0,
+                total_classified=0, unclassified_actors=0,
+                classification_coverage=1.0,
+                sme_share=0.0,
                 data_sources=[], warnings=[], request_id="test",
                 processing_time_ms=1,
             )

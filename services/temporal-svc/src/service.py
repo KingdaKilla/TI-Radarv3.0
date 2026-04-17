@@ -173,11 +173,24 @@ class TemporalServicer(_get_base_class()):  # type: ignore[misc]
             name="funding_instruments",
         ))
 
+        # Bug M-002 / C2.1: separate DISTINCT-Projekt-Zaehlung, damit
+        # record_count fuer die CORDIS-Datenquelle nicht aus
+        # len(cordis_actors_raw) (Row-Count einer GROUP BY year,name)
+        # berechnet wird.  Siehe repository.count_distinct_cordis_projects.
+        tasks.append(asyncio.create_task(
+            self._repo.count_distinct_cordis_projects(
+                technology, start_year=start_year, end_year=end_year,
+                european_only=european_only,
+            ),
+            name="cordis_project_count",
+        ))
+
         # --- Ergebnisse sammeln ---
         patent_actors_raw: list[dict[str, Any]] = []
         cordis_actors_raw: list[dict[str, Any]] = []
         cpc_codes_raw: list[dict[str, Any]] = []
         instrument_data: list[dict[str, Any]] = []
+        cordis_project_count: int = 0
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
         for task, result in zip(tasks, results, strict=False):
@@ -199,6 +212,8 @@ class TemporalServicer(_get_base_class()):  # type: ignore[misc]
                 cpc_codes_raw = cast(list[dict[str, Any]], result)
             elif name == "funding_instruments":
                 instrument_data = cast(list[dict[str, Any]], result)
+            elif name == "cordis_project_count":
+                cordis_project_count = int(cast(int, result))
 
         # --- Akteure zusammenfuehren ---
         actors_by_year: dict[int, dict[str, int]] = {}
@@ -239,10 +254,16 @@ class TemporalServicer(_get_base_class()):  # type: ignore[misc]
                 "record_count": len(patent_actors_raw),
             })
         if cordis_actors_raw:
+            # Bug M-002 / C2.1: record_count MUSS die DISTINCT-Projekt-
+            # Zahl sein (konsistent zu landscape.total_projects).  Bis
+            # 2026-04 wurde hier len(cordis_actors_raw) — also die
+            # GROUP BY (year, o.name)-Zeilen — eingetragen, was
+            # projekt-x-akteur-x-jahr-Duplikate lieferte (Blockchain:
+            # 3148 statt 322 = +877 %).
             data_sources.append({
                 "name": "CORDIS (PostgreSQL)",
                 "type": "PROJECT",
-                "record_count": len(cordis_actors_raw),
+                "record_count": cordis_project_count,
             })
 
         processing_time_ms = int((time.monotonic() - t0) * 1000)

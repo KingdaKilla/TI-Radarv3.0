@@ -80,6 +80,24 @@ export default function MaturityPanel({
 }: MaturityPanelProps) {
   const phaseInfo = data ? PHASE_CONFIG[data.phase] : null;
 
+  // Bug v3.4.7/M-030 (F12): Overfit-Warning in die zentrale ExplainabilityBar
+  // heben, damit sie im collapsed state des Warnings-Counts erscheint (vorher
+  // nur als lokaler InfoTooltip versteckt).
+  const panelWarnings: string[] = [];
+  if (data?.overfit_warning === true) {
+    panelWarnings.push(
+      `Reifegrad-Fit möglicherweise überangepasst (R² = ${data.r_squared.toFixed(3)} bei kleinem n)`,
+    );
+  }
+  if (data?.inflection_year && data.s_curve_data?.[0]?.year !== undefined) {
+    const firstYear = data.s_curve_data[0].year;
+    if (data.inflection_year < firstYear) {
+      panelWarnings.push(
+        `Wendepunkt (${Math.round(data.inflection_year)}) liegt vor dem Analysezeitraum — Fit extrapoliert`,
+      );
+    }
+  }
+
   return (
     <PanelCard
       title="Reifegrad-Analyse"
@@ -89,6 +107,7 @@ export default function MaturityPanel({
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
       queryTimeSeconds={queryTimeSeconds}
+      warnings={panelWarnings.length > 0 ? panelWarnings : undefined}
     >
       {data && phaseInfo && (
         <div className="flex flex-col gap-4">

@@ -204,6 +204,8 @@ class CpcFlowServicer(_get_base_class()):  # type: ignore[misc]
             top_pairs=result.get("top_pairs", []),
             year_data_entries=result.get("year_data_entries", []),
             chord_data=result.get("chord_data", []),
+            pair_co_counts=result.get("pair_co_counts", {}),
+            code_counts=result.get("code_counts", {}),
             similarity_threshold=self._settings.similarity_threshold,
             data_sources=data_sources,
             warnings=warnings,
@@ -247,14 +249,20 @@ class CpcFlowServicer(_get_base_class()):  # type: ignore[misc]
             "record_count": result["total_patents"],
         })
 
-        # Top-Paare extrahieren
-        top_pairs = _extract_top_pairs(labels, result["matrix"], top_n=10)
+        # CPC Code-Counts + Co-Occurrence aus Repo (Bug 2 Fix)
+        cc = result.get("code_counts", {})
+        pair_co_counts = result.get("pair_co_counts", {})
+
+        # Top-Paare extrahieren — mit echter co_occurrence_count
+        top_pairs = _extract_top_pairs(
+            labels, result["matrix"], top_n=10,
+            pair_co_counts=pair_co_counts, code_counts=cc,
+        )
 
         # Chord-Data aus Matrix ableiten
         chord_data = _build_chord_data(labels, result["matrix"])
 
         # CPC Codes Info — patent_count + Beschreibung durchreichen
-        cc = result.get("code_counts", {})
         cpc_codes_info = [
             {"code": label, "description": get_cpc_description(label), "patent_count": cc.get(label, 0), "section": label[0] if label else ""}
             for label in labels
@@ -265,6 +273,30 @@ class CpcFlowServicer(_get_base_class()):  # type: ignore[misc]
             labels, result["matrix"], cc, top_n=10,
         )
 
+        # Year-Data aus SQL-Aggregaten (Bug 1 Fix)
+        year_data_entries: list[dict[str, Any]] = []
+        try:
+            cpc_year_rows = await self._repo.cpc_year_counts(
+                technology, labels,
+                start_year=start_year, end_year=end_year, cpc_level=cpc_level,
+            )
+            pair_year_rows = await self._repo.cpc_pair_year_counts(
+                technology, labels,
+                start_year=start_year, end_year=end_year, cpc_level=cpc_level,
+            )
+            year_data_entries = _build_year_data_entries(
+                top_codes=labels,
+                cpc_year_counts=cpc_year_rows,
+                pair_year_counts=pair_year_rows,
+            )
+        except Exception as exc:
+            logger.warning("year_data_aggregation_fehlgeschlagen", fehler=str(exc))
+            warnings.append({
+                "message": f"Year-Data-Aggregation fehlgeschlagen: {exc}",
+                "severity": "LOW",
+                "code": "YEAR_DATA_FAILED",
+            })
+
         return {
             "labels": labels,
             "matrix": result["matrix"],
@@ -272,9 +304,11 @@ class CpcFlowServicer(_get_base_class()):  # type: ignore[misc]
             "total_patents": result["total_patents"],
             "cpc_codes_info": cpc_codes_info,
             "top_pairs": top_pairs,
-            "year_data_entries": [],
+            "year_data_entries": year_data_entries,
             "chord_data": chord_data,
             "whitespace_opportunities": whitespace,
+            "pair_co_counts": pair_co_counts,
+            "code_counts": cc,
         }
 
     # -----------------------------------------------------------------------
@@ -350,12 +384,62 @@ class CpcFlowServicer(_get_base_class()):  # type: ignore[misc]
             })
             return None
 
-        top_pairs = _extract_top_pairs(labels, matrix, top_n=10)
+        # CPC-Counts aus patent_data rekonstruieren (fuer union_count)
+        local_code_counts: dict[str, int] = {}
+        for codes, _year in patent_data:
+            for code in codes:
+                if code in labels:
+                    local_code_counts[code] = local_code_counts.get(code, 0) + 1
+
+        # Exakte Co-Occurrence fuer Top-Pairs
+        local_pair_counts: dict[tuple[str, str], int] = {}
+        for codes, _year in patent_data:
+            relevant = sorted(c for c in codes if c in labels)
+            for i in range(len(relevant)):
+                for j in range(i + 1, len(relevant)):
+                    key = (relevant[i], relevant[j])
+                    local_pair_counts[key] = local_pair_counts.get(key, 0) + 1
+
+        top_pairs = _extract_top_pairs(
+            labels, matrix, top_n=10,
+            pair_co_counts=local_pair_counts, code_counts=local_code_counts,
+        )
         chord_data = _build_chord_data(labels, matrix)
         cpc_codes_info = [
-            {"code": label, "description": "", "patent_count": 0, "section": label[0] if label else ""}
+            {"code": label, "description": "", "patent_count": local_code_counts.get(label, 0), "section": label[0] if label else ""}
             for label in labels
         ]
+
+        # Year-Data aus year_data-Dict ableiten (Bug 1 Fix)
+        year_data_entries: list[dict[str, Any]] = []
+        cpc_counts_by_year = year_data.get("cpc_counts", {})
+        pair_counts_by_year = year_data.get("pair_counts", {})
+        for year_str in sorted(cpc_counts_by_year.keys()):
+            year_code_counts = cpc_counts_by_year.get(year_str, {})
+            year_pair_counts = pair_counts_by_year.get(year_str, {})
+            active = len(year_code_counts)
+            total_patents_y = sum(year_code_counts.values())
+
+            sims: list[float] = []
+            for pair_key, co in year_pair_counts.items():
+                if "|" not in pair_key:
+                    continue
+                ca, cb = pair_key.split("|", 1)
+                count_a = year_code_counts.get(ca, 0)
+                count_b = year_code_counts.get(cb, 0)
+                union = count_a + count_b - co
+                if union > 0 and co > 0:
+                    sims.append(co / union)
+
+            avg_sim = sum(sims) / len(sims) if sims else 0.0
+            max_sim = max(sims) if sims else 0.0
+            year_data_entries.append({
+                "year": int(year_str),
+                "active_codes": active,
+                "avg_similarity": round(avg_sim, 4),
+                "max_similarity": round(max_sim, 4),
+                "patent_count": total_patents_y,
+            })
 
         return {
             "labels": labels,
@@ -364,8 +448,10 @@ class CpcFlowServicer(_get_base_class()):  # type: ignore[misc]
             "total_patents": len(patent_data),
             "cpc_codes_info": cpc_codes_info,
             "top_pairs": top_pairs,
-            "year_data_entries": [],
+            "year_data_entries": year_data_entries,
             "chord_data": chord_data,
+            "pair_co_counts": local_pair_counts,
+            "code_counts": local_code_counts,
         }
 
     # -----------------------------------------------------------------------
@@ -388,8 +474,13 @@ class CpcFlowServicer(_get_base_class()):  # type: ignore[misc]
         warnings: list[dict[str, str]],
         request_id: str,
         processing_time_ms: int,
+        pair_co_counts: dict[tuple[str, str], int] | None = None,
+        code_counts: dict[str, int] | None = None,
     ) -> Any:
         """CpcFlowResponse aus berechneten Daten zusammenbauen."""
+        pair_co_counts = pair_co_counts or {}
+        code_counts = code_counts or {}
+
         if uc5_cpc_flow_pb2 is None or common_pb2 is None:
             return self._build_dict_response(
                 labels=labels, matrix=matrix,
@@ -410,15 +501,28 @@ class CpcFlowServicer(_get_base_class()):  # type: ignore[misc]
             for j in range(i + 1, n):
                 sim = matrix[i][j] if i < len(matrix) and j < len(matrix[i]) else 0.0
                 if sim >= similarity_threshold:
+                    code_a = labels[i]
+                    code_b = labels[j]
+                    key = (code_a, code_b) if code_a < code_b else (code_b, code_a)
+                    co = pair_co_counts.get(key, 0)
+                    if co == 0 and sim > 0:
+                        # aus Jaccard zurueckrechnen als Fallback
+                        ca = code_counts.get(code_a, 0)
+                        cb = code_counts.get(code_b, 0)
+                        if ca + cb > 0:
+                            co = int(round(sim * (ca + cb) / (1.0 + sim)))
+                    union = max(0, code_counts.get(code_a, 0)
+                                   + code_counts.get(code_b, 0)
+                                   - co)
                     pb_jaccard.append(uc5_cpc_flow_pb2.JaccardMatrixEntry(
-                        code_a=labels[i],
-                        code_b=labels[j],
+                        code_a=code_a,
+                        code_b=code_b,
                         similarity=sim,
-                        co_occurrence_count=0,
-                        union_count=0,
+                        co_occurrence_count=co,
+                        union_count=union,
                     ))
 
-        # Top Pairs
+        # Top Pairs — co_occurrence_count aus dem bereits berechneten Feld (Bug 2 Fix)
         pb_top_pairs = [
             uc5_cpc_flow_pb2.TopCpcPair(
                 code_a=p["code_a"],
@@ -426,7 +530,7 @@ class CpcFlowServicer(_get_base_class()):  # type: ignore[misc]
                 code_b=p["code_b"],
                 description_b="",
                 similarity=p["similarity"],
-                co_occurrence_count=0,
+                co_occurrence_count=p.get("co_occurrence_count", 0),
             )
             for p in top_pairs
         ]
@@ -567,21 +671,108 @@ def _extract_top_pairs(
     matrix: list[list[float]],
     *,
     top_n: int = 10,
+    pair_co_counts: dict[tuple[str, str], int] | None = None,
+    code_counts: dict[str, int] | None = None,
 ) -> list[dict[str, Any]]:
-    """Top CPC-Paare nach Jaccard-Similarity extrahieren."""
+    """Top CPC-Paare nach Jaccard-Similarity extrahieren.
+
+    Args:
+        labels: CPC-Code-Labels.
+        matrix: Jaccard-Similarity-Matrix.
+        top_n: Anzahl zurueckgegebener Paare.
+        pair_co_counts: Optional Lookup {(code_a, code_b): co_count}
+            fuer exakte Intersection-Groessen (Bug 2 Fix).
+        code_counts: Optional Lookup {code: patent_count} fuer union_count.
+    """
+    pair_co_counts = pair_co_counts or {}
+    code_counts = code_counts or {}
+
     pairs: list[dict[str, Any]] = []
     n = len(labels)
     for i in range(n):
         for j in range(i + 1, n):
             sim = matrix[i][j] if i < len(matrix) and j < len(matrix[i]) else 0.0
             if sim > 0:
+                code_a = labels[i]
+                code_b = labels[j]
+                key = (code_a, code_b) if code_a < code_b else (code_b, code_a)
+                co_count = pair_co_counts.get(key, 0)
+
+                # Wenn co_count nicht bekannt, aus Jaccard zurueckrechnen:
+                # jaccard = co / (a + b - co)  -->  co = jaccard*(a+b) / (1+jaccard)
+                if co_count == 0 and code_counts:
+                    count_a = code_counts.get(code_a, 0)
+                    count_b = code_counts.get(code_b, 0)
+                    if sim > 0 and (count_a + count_b) > 0:
+                        co_count = int(round(sim * (count_a + count_b) / (1.0 + sim)))
+
+                count_a = code_counts.get(code_a, 0)
+                count_b = code_counts.get(code_b, 0)
+                union_count = max(0, count_a + count_b - co_count)
+
                 pairs.append({
-                    "code_a": labels[i],
-                    "code_b": labels[j],
+                    "code_a": code_a,
+                    "code_b": code_b,
                     "similarity": sim,
+                    "co_occurrence_count": co_count,
+                    "union_count": union_count,
                 })
     pairs.sort(key=lambda p: p["similarity"], reverse=True)
     return pairs[:top_n]
+
+
+def _build_year_data_entries(
+    *,
+    top_codes: list[str],
+    cpc_year_counts: list[dict[str, Any]],
+    pair_year_counts: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Year-Data aus Aggregaten bauen (Bug 1 Fix).
+
+    Aggregiert pro Jahr:
+    - active_codes: Anzahl distinkter CPC-Codes
+    - patent_count: Summe Patent-Counts
+    - avg_similarity / max_similarity: Jaccard ueber Paare des Jahres.
+    """
+    codes_by_year: dict[int, dict[str, int]] = {}
+    for row in cpc_year_counts:
+        year = int(row["year"])
+        code = row["code"]
+        count = int(row["patent_count"])
+        codes_by_year.setdefault(year, {})[code] = count
+
+    pairs_by_year: dict[int, list[tuple[str, str, int]]] = {}
+    for row in pair_year_counts:
+        year = int(row["year"])
+        pairs_by_year.setdefault(year, []).append(
+            (row["code_a"], row["code_b"], int(row["co_count"])),
+        )
+
+    entries: list[dict[str, Any]] = []
+    for year in sorted(codes_by_year.keys()):
+        code_counts = codes_by_year[year]
+        active = len(code_counts)
+        total_patents_y = sum(code_counts.values())
+
+        sims: list[float] = []
+        for code_a, code_b, co in pairs_by_year.get(year, []):
+            ca = code_counts.get(code_a, 0)
+            cb = code_counts.get(code_b, 0)
+            union = ca + cb - co
+            if union > 0 and co > 0:
+                sims.append(co / union)
+
+        avg_sim = sum(sims) / len(sims) if sims else 0.0
+        max_sim = max(sims) if sims else 0.0
+
+        entries.append({
+            "year": year,
+            "active_codes": active,
+            "avg_similarity": round(avg_sim, 4),
+            "max_similarity": round(max_sim, 4),
+            "patent_count": total_patents_y,
+        })
+    return entries
 
 
 def _build_chord_data(

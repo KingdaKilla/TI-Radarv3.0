@@ -40,6 +40,16 @@ function normalize(value: number, min: number, max: number): number {
 function buildRadarData(clusters: TechCluster[]) {
   if (clusters.length === 0) return [];
 
+  // Bug v3.4.7/C-008: Wenn alle clusters density=0 UND coherence=0 sind,
+  // kollabiert normalize() auf constant 50 und rendert Dreiecks-Artefakte.
+  // Diagnostik: Backend liefert dimension_scores=[] + alle density/coherence=0
+  // bei 5/5 Techs → Chart ist nicht aussagekräftig. Stattdessen signalisieren
+  // wir "keine Dimensions-Daten" und die Render-Funktion entscheidet für Empty-State.
+  const allDimensionsZero = clusters.every(
+    (c) => c.density === 0 && c.coherence === 0 && c.cagr === 0,
+  );
+  if (allDimensionsZero) return [];
+
   const vals = {
     patent: clusters.map((c) => c.patent_count),
     actor: clusters.map((c) => c.actor_count),
@@ -125,6 +135,44 @@ export default function TechClusterPanel({
               </span>
             )}
           </div>
+
+          {/* Empty-State falls buildRadarData() wegen fehlender Dimensions-Daten
+              leer zurückkommt (C-008). Zeigt wenigstens Cluster-Labels + Patentzahl-
+              Bar-Chart statt sinnloser Dreiecks-Artefakte. */}
+          {radarData.length === 0 && topClusters.length > 0 && (
+            <div className="flex flex-col items-center gap-3 px-4 py-6 text-center">
+              <p className="text-xs text-[var(--color-text-muted)]">
+                Dimensions-Daten (Dichte, Kohärenz, Wachstum) sind für diese
+                Technologie nicht verfügbar — Radar-Darstellung ausgeblendet.
+              </p>
+              <ul className="w-full max-w-md space-y-1">
+                {topClusters.map((c, idx) => (
+                  <li
+                    key={c.cluster_id}
+                    className="flex items-center justify-between gap-2 rounded border border-[var(--color-border)] bg-[var(--color-bg-secondary)]/40 px-3 py-1.5 text-xs"
+                  >
+                    <span
+                      className="inline-flex items-center gap-2 font-medium text-[var(--color-text-primary)]"
+                    >
+                      <span
+                        className="inline-block h-2 w-2 rounded-full"
+                        style={{
+                          backgroundColor:
+                            CLUSTER_COLORS[idx % CLUSTER_COLORS.length],
+                        }}
+                        aria-hidden="true"
+                      />
+                      {c.label}
+                    </span>
+                    <span className="text-[var(--color-text-muted)]">
+                      {c.patent_count.toLocaleString("de-DE")} Patente ·
+                      {" "}{c.actor_count.toLocaleString("de-DE")} Akteure
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Radar Chart */}
           {radarData.length > 0 && (

@@ -254,20 +254,43 @@ class GeographicRepository:
         params.append(limit)
         limit_idx = idx
 
+        # Bipartiter-Jaccard-Score setzt Gesamt-Projektzahlen pro Land voraus.
+        # Deshalb ergaenzt der CTE `country_totals` die rohen co-project counts
+        # um `projects_a`/`projects_b`, sodass der Service den Score direkt
+        # berechnen kann: (2 * co_projects) / (projects_a + projects_b).
         sql = f"""
-            SELECT o1.country AS country_a,
-                   o2.country AS country_b,
-                   COUNT(DISTINCT p.id) AS co_project_count
-            FROM cordis_schema.projects p
-            JOIN cordis_schema.organizations o1 ON o1.project_id = p.id
-            JOIN cordis_schema.organizations o2 ON o2.project_id = p.id
-            WHERE {where}
-              AND o1.country IS NOT NULL AND o1.country != ''
-              AND o2.country IS NOT NULL AND o2.country != ''
-              AND o1.country < o2.country
-              {eu_filter}
-            GROUP BY o1.country, o2.country
-            ORDER BY co_project_count DESC
+            WITH country_totals AS (
+                SELECT o.country AS country,
+                       COUNT(DISTINCT p.id) AS total_projects
+                FROM cordis_schema.projects p
+                JOIN cordis_schema.organizations o ON o.project_id = p.id
+                WHERE {where}
+                  AND o.country IS NOT NULL AND o.country != ''
+                GROUP BY o.country
+            ),
+            pair_counts AS (
+                SELECT o1.country AS country_a,
+                       o2.country AS country_b,
+                       COUNT(DISTINCT p.id) AS co_project_count
+                FROM cordis_schema.projects p
+                JOIN cordis_schema.organizations o1 ON o1.project_id = p.id
+                JOIN cordis_schema.organizations o2 ON o2.project_id = p.id
+                WHERE {where}
+                  AND o1.country IS NOT NULL AND o1.country != ''
+                  AND o2.country IS NOT NULL AND o2.country != ''
+                  AND o1.country < o2.country
+                  {eu_filter}
+                GROUP BY o1.country, o2.country
+            )
+            SELECT pc.country_a,
+                   pc.country_b,
+                   pc.co_project_count,
+                   COALESCE(ta.total_projects, 0) AS projects_a,
+                   COALESCE(tb.total_projects, 0) AS projects_b
+            FROM pair_counts pc
+            LEFT JOIN country_totals ta ON ta.country = pc.country_a
+            LEFT JOIN country_totals tb ON tb.country = pc.country_b
+            ORDER BY pc.co_project_count DESC
             LIMIT ${limit_idx}
         """
 
@@ -278,6 +301,8 @@ class GeographicRepository:
                     "country_a": row["country_a"],
                     "country_b": row["country_b"],
                     "co_project_count": row["co_project_count"],
+                    "projects_a": row["projects_a"],
+                    "projects_b": row["projects_b"],
                 }
                 for row in rows
             ]

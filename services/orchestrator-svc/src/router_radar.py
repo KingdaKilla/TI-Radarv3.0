@@ -360,11 +360,23 @@ def _aggregate_metadata(
                 code=warning.get("code", ""),
             ))
 
+    # Warnung-Dedup (M-028): Gleicher Warning-Code darf nur einmal vorkommen.
+    # Bei Duplikaten wird die erste Warning (längste Message) behalten — Services
+    # emittieren teilweise denselben Code mit unterschiedlichem Text.
+    deduped_warnings: list[WarningItem] = []
+    seen_codes: set[str] = set()
+    for w in all_warnings:
+        code_key = w.code or w.message  # Fallback falls code leer
+        if code_key in seen_codes:
+            continue
+        seen_codes.add(code_key)
+        deduped_warnings.append(w)
+
     return ExplainabilityInfo(
         data_sources=all_sources,
         methods=list(seen_methods) if seen_methods else all_methods,
         deterministic=True,
-        warnings=all_warnings,
+        warnings=deduped_warnings,
     )
 
 

@@ -55,10 +55,17 @@ export default function EuroSciVocPanel({
     >
       {data && (
         <div className="flex flex-col gap-4">
-          {/* Badges */}
+          {/* Badges — Bug v3.4.7/A-003 (F8): Terminologie war inkonsistent
+              (Panel: "2 Felder" vs. Detail: "50 Disziplinen"). Jetzt klar:
+              active_fields = aktive Wissenschaftsfelder (Level 1),
+              active_disciplines = Level 2 Disziplinen im Mapping. */}
           <div className="flex flex-wrap items-center justify-center gap-2">
             <span className="badge-info">
-              {data.interdisciplinarity.active_fields} {data.interdisciplinarity.active_fields === 1 ? "Feld" : "Felder"}
+              {data.interdisciplinarity.active_fields}{" "}
+              {data.interdisciplinarity.active_fields === 1 ? "Fachgebiet" : "Fachgebiete"}
+            </span>
+            <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+              {data.interdisciplinarity.active_disciplines} Disziplinen
             </span>
             <span className="badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
               {data.total_mapped_publications.toLocaleString("de-DE")} Projekte

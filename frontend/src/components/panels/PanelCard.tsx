@@ -27,6 +27,14 @@ interface PanelCardProps {
   ucKey?: UseCaseKey;
   queryTimeSeconds?: number;
   warnings?: string[];
+  /**
+   * Bug v3.4.7/C-013: Wenn gesetzt, zeigt die ExplainabilityBar diese
+   * Liste statt des hardcoded `DATA_SOURCES`-Mappings. Erwartet Namen
+   * der `panel.metadata.data_sources[]` aus der API-Response — damit
+   * EU-AI-Act-Transparenz gewährleistet ist und die UI wirklich zeigt
+   * welche Quellen tatsächlich genutzt wurden.
+   */
+  dataSourcesOverride?: string[];
 }
 
 export default function PanelCard({
@@ -41,6 +49,7 @@ export default function PanelCard({
   ucKey,
   queryTimeSeconds,
   warnings,
+  dataSourcesOverride,
 }: PanelCardProps) {
   return (
     <section
@@ -134,7 +143,11 @@ export default function PanelCard({
       {ucKey && !isLoading && !error && (
         <div className="mt-auto px-4 pb-4">
           <ExplainabilityBar
-            dataSources={DATA_SOURCES[ucKey].split(" · ")}
+            dataSources={
+              dataSourcesOverride && dataSourcesOverride.length > 0
+                ? dataSourcesOverride
+                : DATA_SOURCES[ucKey].split(" · ")
+            }
             queryTimeSeconds={queryTimeSeconds ?? 0}
             methodology={METHODOLOGY_TOOLTIPS[ucKey]}
             deterministic={true}

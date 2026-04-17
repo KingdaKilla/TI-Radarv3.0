@@ -13,6 +13,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 import PanelCard from "./PanelCard";
 import { CHART_COLORS } from "@/lib/chart-colors";
@@ -103,6 +104,15 @@ export default function GeographicPanel({
                         value.toLocaleString("de-DE"),
                         name === "patent_count" ? "Patente" : "Projekte",
                       ]}
+                    />
+                    {/* Bug v3.4.7/D9-4 (F11): Legende hinzufügen, damit Farben
+                        nicht nur über Hover erklärt werden. */}
+                    <Legend
+                      iconSize={8}
+                      wrapperStyle={{ fontSize: "11px" }}
+                      formatter={(value: string) =>
+                        value === "patent_count" ? "Patente" : "Projekte"
+                      }
                     />
                     <Bar
                       dataKey="patent_count"

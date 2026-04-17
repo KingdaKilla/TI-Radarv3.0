@@ -118,6 +118,15 @@ message CpcCodeCount {
   // Number of patent families carrying this code.
   int64 count = 3;
 
-  // Share of total patents as a fraction in [0, 1].
+  // DEPRECATED: Field naming was misleading. Now equals `count / Σ(all CPC counts in top list)`,
+  // i.e. a true share in [0, 1] normalized over the returned top-list.
+  // (Previously this field was `count / total_patents` which yields >1 when patents carry
+  // multiple CPC codes — "share" was mathematically impossible. See Bug v3.4.7/C-002.)
   double share = 4;
+
+  // Average occurrences per patent = count / total_patents. For a technology with
+  // 1709 patents and CPC `G06N20/00` appearing on 10045 occurrences, this is 5.88 —
+  // i.e. on average 5.88 of these CPC assignments per patent family (in the multi-
+  // classification sense). Useful for understanding CPC saturation. Added in v3.4.7.
+  double avg_per_patent = 5;
 }

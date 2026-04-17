@@ -129,7 +129,10 @@ export default function EuroSciVocDetail({ data }: EuroSciVocDetailProps) {
         <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
           <p>
             Für diese Technologie wurden <strong>{data.interdisciplinarity.active_disciplines}</strong> aktive
-            Wissenschaftsdisziplinen identifiziert (EuroSciVoc-Taxonomie). Der Shannon-Index
+            Wissenschaftsdisziplinen identifiziert (EuroSciVoc-Taxonomie), verteilt auf{" "}
+            <strong>{data.interdisciplinarity.active_fields}</strong>{" "}
+            {data.interdisciplinarity.active_fields === 1 ? "Fachgebiet" : "Fachgebiete"}
+            {" "}(Level 1). Der Shannon-Index
             von <strong>{data.interdisciplinarity.shannon_index.toFixed(2)}</strong>
             {data.interdisciplinarity.shannon_index >= 2.5
               ? " deutet auf eine hohe Interdisziplinarität hin — die Forschung verteilt sich gleichmäßig auf viele Felder."

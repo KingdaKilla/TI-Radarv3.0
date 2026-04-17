@@ -94,7 +94,14 @@ class TemporalRepository:
         end_year: int | None = None,
         european_only: bool = False,
     ) -> list[dict[str, Any]]:
-        """CORDIS-Organisationen pro Jahr fuer eine Technologie."""
+        """CORDIS-Organisationen pro Jahr fuer eine Technologie.
+
+        Bug M-002: Der JOIN projects -> organizations erzeugt
+        Row-Duplikation (1 Projekt x N Organisationen).  Ohne
+        ``COUNT(DISTINCT p.id)`` wuerden Projekte pro (Jahr, Akteur)
+        mehrfach gezaehlt werden, wenn derselbe Akteur in mehreren
+        Rollen am Projekt beteiligt ist.  DISTINCT ist hier zwingend.
+        """
         conditions = ["p.search_vector @@ plainto_tsquery('english', $1)"]
         params: list[Any] = [technology]
         idx = 2
@@ -116,6 +123,8 @@ class TemporalRepository:
 
         where = " AND ".join(conditions)
 
+        # DISTINCT p.id: Entdoppelt die (year, actor)-Aggregation bei
+        # Mehrfach-Rollen der Organisation im selben Projekt.
         sql = f"""
             SELECT EXTRACT(YEAR FROM p.start_date)::int AS year,
                    o.name,
@@ -135,6 +144,83 @@ class TemporalRepository:
                 {"year": row["year"], "name": row["name"], "count": row["count"]}
                 for row in rows
             ]
+
+    # -----------------------------------------------------------------------
+    # Distinct Project Count (Bug M-002 / C2.1)
+    # -----------------------------------------------------------------------
+
+    async def count_distinct_cordis_projects(
+        self,
+        technology: str,
+        *,
+        start_year: int | None = None,
+        end_year: int | None = None,
+        european_only: bool = False,
+    ) -> int:
+        """Anzahl DISTINCT CORDIS-Projekte fuer eine Technologie.
+
+        Bug M-002 / C2.1: Frueher wurde ``record_count`` fuer die
+        CORDIS-Datenquelle aus ``len(cordis_actors_raw)`` berechnet —
+        also aus den Zeilen einer ``GROUP BY (year, o.name)``-Aggregation.
+        Ein Projekt mit 5 Organisationen in 3 Laendern ueber 2 Jahre
+        taucht dort als *bis zu 10 Zeilen* auf.  Bei Blockchain ergab
+        das 3148 statt 322 (+877 %).
+
+        Diese Methode liefert die korrekte DISTINCT-Projekt-Anzahl
+        direkt aus der Datenbank.  ``european_only`` triggert den
+        Organisations-JOIN — deshalb ist ``DISTINCT p.id`` im
+        ``european_only=True``-Pfad zwingend (sonst gaebe es erneut
+        Row-Multiplikation pro Land/Organisation).
+
+        Args:
+            technology: Suchbegriff fuer Volltextsuche.
+            start_year: Erstes Jahr (inklusiv).
+            end_year: Letztes Jahr (inklusiv).
+            european_only: Nur Projekte mit mindestens einer EU/EEA-
+                Organisation beruecksichtigen.
+
+        Returns:
+            Anzahl unterschiedlicher Projekte (``COUNT(DISTINCT p.id)``).
+        """
+        conditions = ["p.search_vector @@ plainto_tsquery('english', $1)"]
+        params: list[Any] = [technology]
+        idx = 2
+
+        if start_year is not None:
+            conditions.append(f"EXTRACT(YEAR FROM p.start_date)::int >= ${idx}")
+            params.append(start_year)
+            idx += 1
+
+        if end_year is not None:
+            conditions.append(f"EXTRACT(YEAR FROM p.start_date)::int <= ${idx}")
+            params.append(end_year)
+            idx += 1
+
+        # european_only erfordert den Organisations-JOIN — ohne DISTINCT
+        # wird jedes Projekt pro Organisation mehrfach gezaehlt.
+        if european_only:
+            conditions.append(f"o.country = ANY(${idx}::text[])")
+            params.append(list(EU_EEA_COUNTRIES))
+            idx += 1
+            from_clause = (
+                "cordis_schema.projects p "
+                "JOIN cordis_schema.organizations o ON o.project_id = p.id"
+            )
+        else:
+            from_clause = "cordis_schema.projects p"
+
+        where = " AND ".join(conditions)
+
+        sql = f"""
+            SELECT COUNT(DISTINCT p.id) AS total
+            FROM {from_clause}
+            WHERE {where}
+              AND p.start_date IS NOT NULL
+        """
+
+        async with self._pool.acquire() as conn:
+            total = await conn.fetchval(sql, *params)
+            return int(total or 0)
 
     # -----------------------------------------------------------------------
     # CPC-Codes pro Jahr (fuer Technologie-Breite)

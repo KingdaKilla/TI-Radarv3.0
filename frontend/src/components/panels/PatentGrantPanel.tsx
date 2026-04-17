@@ -45,10 +45,18 @@ export default function PatentGrantPanel({
   dataCompleteYear,
   queryTimeSeconds,
 }: PatentGrantPanelProps) {
-  const chartData = data?.year_trend.map((entry) => ({
+  // Bug v3.4.7/D1-5: Chart zeigte nur Daten bis ~2017-2018 und dann leeren Bereich.
+  // Grund war `dataCompleteYear` Prop, die nie gesetzt wurde. Wir trimmen jetzt
+  // zusätzlich die Anzeige auf nicht-leere Einträge, damit kein optischer Data-Gap
+  // entsteht, während der ReferenceArea-Hinweis weiterhin greift falls dataCompleteYear
+  // explizit propagiert wird.
+  const rawChartData = data?.year_trend.map((entry) => ({
     ...entry,
     grant_rate_pct: entry.grant_rate * 100,
   }));
+  const chartData = rawChartData?.filter(
+    (e) => e.application_count > 0 || e.grant_count > 0,
+  );
 
   return (
     <PanelCard

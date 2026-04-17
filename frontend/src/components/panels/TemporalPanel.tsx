@@ -54,13 +54,34 @@ export default function TemporalPanel({
         <div className="flex flex-col items-center justify-center gap-4 h-full">
           {/* Badges */}
           {data.entrant_trend.length > 0 && (() => {
-            // Use multi-year net change for trend label (last 3 years or all available)
-            const recentYears = data.entrant_trend.slice(-3);
-            const netRecent = recentYears.reduce((s, p) => s + p.new_entrants - p.exited_actors, 0);
-            const last = data.entrant_trend[data.entrant_trend.length - 1];
-            const trend = netRecent > 0 ? "Wachsend" : netRecent < 0 ? "Schrumpfend" : "Stabil";
-            const trendClass = netRecent > 0 ? "badge-success" : netRecent < 0 ? "badge-error" : "badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
+            // Bug v3.4.7/C-001: Alter Code nutzte netRecent über die letzten 3 Jahre
+            // (inkl. unvollständigem Rumpfjahr 2026), was 4/5 Techs fälschlich als
+            // "Schrumpfend" klassifizierte trotz eindeutig steigender Gesamtkurve.
+            // Neue Formel: total_active-Delta zwischen Startjahr und letztem
+            // vollständigen Jahr (dataCompleteYear). Fallback auf letzten Eintrag,
+            // falls dataCompleteYear nicht gesetzt.
+            const sortedTrend = [...data.entrant_trend].sort((a, b) => a.year - b.year);
+            const firstEntry = sortedTrend[0];
+            const completeEntries = dataCompleteYear
+              ? sortedTrend.filter((p) => p.year <= dataCompleteYear)
+              : sortedTrend;
+            const lastCompleteEntry =
+              completeEntries[completeEntries.length - 1] ?? sortedTrend[sortedTrend.length - 1];
+            const netChange =
+              (lastCompleteEntry?.total_active ?? 0) - (firstEntry?.total_active ?? 0);
+            const last = sortedTrend[sortedTrend.length - 1];
+            const trend = netChange > 0 ? "Wachsend" : netChange < 0 ? "Schrumpfend" : "Stabil";
+            const trendClass =
+              netChange > 0
+                ? "badge-success"
+                : netChange < 0
+                ? "badge-error"
+                : "badge bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
             const scopeLabel = data.actor_scope_label ?? "aktive Akteure im Zeitfenster";
+            const rangeLabel =
+              lastCompleteEntry && firstEntry
+                ? `${firstEntry.year}–${lastCompleteEntry.year}`
+                : "";
             return (
               <div className="flex flex-wrap items-center justify-center gap-2">
                 <span className="badge-info inline-flex items-center gap-1">
@@ -75,8 +96,10 @@ export default function TemporalPanel({
                     }
                   />
                 </span>
-                <span className={trendClass}>
-                  {trend} ({netRecent > 0 ? "+" : ""}{netRecent.toLocaleString("de-DE")} netto)
+                <span className={trendClass} title={`Netto-Veränderung über ${rangeLabel}`}>
+                  {trend} ({netChange > 0 ? "+" : ""}
+                  {netChange.toLocaleString("de-DE")} netto
+                  {rangeLabel ? `, ${rangeLabel}` : ""})
                 </span>
               </div>
             );

@@ -39,6 +39,7 @@ except ImportError:
 
 # --- Shared Domain Metriken ---
 from shared.domain.metrics import cagr
+from shared.domain.year_completeness import last_complete_year
 
 from src.config import Settings
 from src.infrastructure.repository import FundingRepository
@@ -209,12 +210,23 @@ class FundingServicer(_get_base_class()):  # type: ignore[misc]
         except Exception as e:
             logger.warning("avg_duration_fehlgeschlagen", fehler=str(e))
 
-        # --- CAGR berechnen ---
+        # --- CAGR berechnen (Bug C-005) ---
+        # Kanonisch mit landscape-svc: das laufende (unvollstaendige) Kalender-
+        # jahr wird vor der CAGR-Berechnung abgeschnitten. Sonst verzerrt das
+        # Teiljahr das Endglied und kann das Vorzeichen kippen (z.B. mRNA:
+        # -11.7% in funding vs. +0.01% in landscape bei gleicher Rohgroesse).
+        data_complete_year = last_complete_year()
         funding_cagr = 0.0
-        non_zero = [
+        trimmed = [
             f for f in funding_years
+            if int(f.year) <= data_complete_year
+        ]
+        non_zero = [
+            f for f in trimmed
             if float(f.funding) > 0
         ]
+        cagr_first_year: int | None = None
+        cagr_last_year: int | None = None
         if len(non_zero) >= 2:
             first = float(non_zero[0].funding)
             last = float(non_zero[-1].funding)
@@ -223,6 +235,21 @@ class FundingServicer(_get_base_class()):  # type: ignore[misc]
             year_span = last_year - first_year
             if year_span > 0:
                 funding_cagr = cagr(first, last, year_span)
+                cagr_first_year = first_year
+                cagr_last_year = last_year
+
+        logger.info(
+            "funding_cagr_berechnet",
+            technology=technology,
+            data_complete_year=data_complete_year,
+            cagr_first_year=cagr_first_year,
+            cagr_last_year=cagr_last_year,
+            requested_end_year=end_year,
+            trimmed_last_year=(
+                int(trimmed[-1].year) if trimmed else None
+            ),
+            cagr_percent=round(funding_cagr, 4),
+        )
 
         # --- Verarbeitungszeit ---
         processing_time_ms = int((time.monotonic() - t0) * 1000)
@@ -251,6 +278,7 @@ class FundingServicer(_get_base_class()):  # type: ignore[misc]
             warnings=warnings,
             request_id=request_id,
             processing_time_ms=processing_time_ms,
+            cagr_period_end=data_complete_year,
         )
 
     # -----------------------------------------------------------------------
@@ -274,6 +302,7 @@ class FundingServicer(_get_base_class()):  # type: ignore[misc]
         warnings: list[dict[str, str]],
         request_id: str,
         processing_time_ms: int,
+        cagr_period_end: int | None = None,
     ) -> Any:
         """FundingResponse aus berechneten Daten zusammenbauen."""
         if uc4_funding_pb2 is None or common_pb2 is None:
@@ -285,6 +314,7 @@ class FundingServicer(_get_base_class()):  # type: ignore[misc]
                 avg_duration=avg_duration, avg_size=avg_size,
                 data_sources=data_sources, warnings=warnings,
                 request_id=request_id, processing_time_ms=processing_time_ms,
+                cagr_period_end=cagr_period_end,
             )
 
         # --- Protobuf-Messages bauen ---
@@ -420,12 +450,18 @@ class FundingServicer(_get_base_class()):  # type: ignore[misc]
         warnings: list[dict[str, str]],
         request_id: str,
         processing_time_ms: int,
+        cagr_period_end: int | None = None,
     ) -> dict[str, Any]:
         """Fallback-Response als dict (wenn gRPC-Stubs nicht generiert)."""
+        resolved_cagr_end = (
+            cagr_period_end if cagr_period_end is not None else last_complete_year()
+        )
         return {
             "total_funding_eur": round(total_funding, 2),
             "project_count": total_projects,
             "cagr": funding_cagr / 100.0,
+            "cagr_period_end": resolved_cagr_end,
+            "data_complete_year": resolved_cagr_end,
             "programme_breakdown": programme_data,
             "instrument_breakdown": instrument_data,
             "time_series": [
@@ -441,6 +477,7 @@ class FundingServicer(_get_base_class()):  # type: ignore[misc]
                 "data_sources": data_sources,
                 "warnings": warnings,
                 "request_id": request_id,
+                "cagr_period_end": resolved_cagr_end,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             },
         }

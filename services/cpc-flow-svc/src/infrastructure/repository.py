@@ -88,6 +88,8 @@ class CpcFlowRepository:
                 "matrix": [],
                 "total_connections": 0,
                 "total_patents": sum(r["count"] for r in top_codes_rows),
+                "code_counts": {r["code"]: r["count"] for r in top_codes_rows},
+                "pair_co_counts": {},
                 "year_data": {},
             }
 
@@ -103,6 +105,14 @@ class CpcFlowRepository:
 
         pair_counts = [(r["code_a"], r["code_b"], r["co_count"]) for r in pair_rows]
 
+        # Pair-Co-Counts als Lookup-Dict fuer Proto-Mapper (Bug 2 Fix).
+        # Schluessel ist das sortierte Tuple (code_a < code_b), damit die
+        # Reihenfolge egal ist beim Lookup.
+        pair_co_counts: dict[tuple[str, str], int] = {}
+        for code_a, code_b, co_count in pair_counts:
+            key = (code_a, code_b) if code_a < code_b else (code_b, code_a)
+            pair_co_counts[key] = co_count
+
         # Schritt 3: Jaccard-Matrix berechnen
         matrix, total_connections = build_jaccard_from_sql(
             top_codes, code_counts, pair_counts,
@@ -114,6 +124,7 @@ class CpcFlowRepository:
             "total_connections": total_connections,
             "total_patents": total_patents,
             "code_counts": code_counts,
+            "pair_co_counts": pair_co_counts,
             "year_data": {},
         }
 
@@ -164,6 +175,145 @@ class CpcFlowRepository:
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(sql, *params)
             return [{"code": row["code"], "count": row["count"]} for row in rows]
+
+    # -----------------------------------------------------------------------
+    # Year-level Aggregation (Bug 1 Fix)
+    # -----------------------------------------------------------------------
+
+    async def cpc_year_counts(
+        self,
+        technology: str,
+        top_codes: list[str],
+        *,
+        start_year: int | None = None,
+        end_year: int | None = None,
+        cpc_level: int = 4,
+    ) -> list[dict[str, Any]]:
+        """Pro Jahr x CPC-Code Patent-Counts aggregieren.
+
+        Nur fuer Top-N CPC-Codes. Benoetigt fuer year_data_entries.
+
+        Returns:
+            Liste von {"year", "code", "patent_count"}.
+        """
+        if not top_codes:
+            return []
+
+        conditions = ["p.search_vector @@ plainto_tsquery('english', $1)"]
+        params: list[Any] = [technology]
+        idx = 2
+
+        if start_year is not None:
+            conditions.append(f"p.publication_year >= ${idx}")
+            params.append(start_year)
+            idx += 1
+
+        if end_year is not None:
+            conditions.append(f"p.publication_year <= ${idx}")
+            params.append(end_year)
+            idx += 1
+
+        params.append(top_codes)
+        codes_idx = idx
+        idx += 1
+        params.append(cpc_level)
+        level_idx = idx
+
+        where = " AND ".join(conditions)
+
+        sql = f"""
+            SELECT p.publication_year AS year,
+                   LEFT(cpc.cpc_code, ${level_idx}) AS code,
+                   COUNT(DISTINCT p.id) AS patent_count
+            FROM patent_schema.patents p,
+                 LATERAL unnest(p.cpc_codes) AS cpc(cpc_code)
+            WHERE {where}
+              AND p.cpc_codes IS NOT NULL
+              AND array_length(p.cpc_codes, 1) > 0
+              AND p.publication_year IS NOT NULL
+              AND LEFT(cpc.cpc_code, ${level_idx}) = ANY(${codes_idx}::text[])
+            GROUP BY p.publication_year, LEFT(cpc.cpc_code, ${level_idx})
+            ORDER BY p.publication_year ASC, patent_count DESC
+        """
+
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(sql, *params)
+            return [
+                {
+                    "year": row["year"],
+                    "code": row["code"],
+                    "patent_count": row["patent_count"],
+                }
+                for row in rows
+            ]
+
+    async def cpc_pair_year_counts(
+        self,
+        technology: str,
+        top_codes: list[str],
+        *,
+        start_year: int | None = None,
+        end_year: int | None = None,
+        cpc_level: int = 4,
+    ) -> list[dict[str, Any]]:
+        """Pro Jahr x CPC-Paar Co-Occurrence zaehlen (fuer year-level Jaccard)."""
+        if not top_codes:
+            return []
+
+        conditions = ["p.search_vector @@ plainto_tsquery('english', $1)"]
+        params: list[Any] = [technology]
+        idx = 2
+
+        if start_year is not None:
+            conditions.append(f"p.publication_year >= ${idx}")
+            params.append(start_year)
+            idx += 1
+
+        if end_year is not None:
+            conditions.append(f"p.publication_year <= ${idx}")
+            params.append(end_year)
+            idx += 1
+
+        params.append(top_codes)
+        codes_idx = idx
+        idx += 1
+        params.append(cpc_level)
+        level_idx = idx
+
+        where = " AND ".join(conditions)
+
+        sql = f"""
+            SELECT p.publication_year AS year,
+                   LEFT(c1.cpc_code, ${level_idx}) AS code_a,
+                   LEFT(c2.cpc_code, ${level_idx}) AS code_b,
+                   COUNT(DISTINCT p.id) AS co_count
+            FROM patent_schema.patents p,
+                 LATERAL unnest(p.cpc_codes) AS c1(cpc_code),
+                 LATERAL unnest(p.cpc_codes) AS c2(cpc_code)
+            WHERE {where}
+              AND p.cpc_codes IS NOT NULL
+              AND array_length(p.cpc_codes, 1) > 1
+              AND p.publication_year IS NOT NULL
+              AND LEFT(c1.cpc_code, ${level_idx}) = ANY(${codes_idx}::text[])
+              AND LEFT(c2.cpc_code, ${level_idx}) = ANY(${codes_idx}::text[])
+              AND LEFT(c1.cpc_code, ${level_idx}) < LEFT(c2.cpc_code, ${level_idx})
+            GROUP BY p.publication_year,
+                     LEFT(c1.cpc_code, ${level_idx}),
+                     LEFT(c2.cpc_code, ${level_idx})
+            HAVING COUNT(DISTINCT p.id) >= 1
+        """
+
+        async with self._pool.acquire() as conn:
+            rows = await conn.fetch(sql, *params)
+            return [
+                {
+                    "year": row["year"],
+                    "code_a": row["code_a"],
+                    "code_b": row["code_b"],
+                    "co_count": row["co_count"],
+                }
+                for row in rows
+            ]
 
     async def _cpc_pair_counts(
         self,

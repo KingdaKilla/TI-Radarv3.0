@@ -96,12 +96,19 @@ export default function LandscapePanel({
             )}
           </div>
 
+          {/* Chart-Hinweis: Bug v3.4.7/C-014 — Chart zeigt YoY-Wachstumsraten (%),
+              die Kacheln oben aber Absolut-Werte (1.7K Patente etc.). Wir ergänzen
+              ein explizites Y-Achsen-Label, damit Nutzer nicht verwechseln. */}
+          <p className="text-center text-[10px] text-[var(--color-text-muted)]">
+            Chart: Wachstumsrate (%) Jahr-zu-Jahr — Absolut-Werte im Detail-Overlay
+          </p>
+
           {/* Zeitreihe */}
-          <div className="h-[clamp(13rem,40vh,28rem)]" aria-label="Zeitreihe: Patente und Projekte">
+          <div className="h-[clamp(13rem,40vh,28rem)]" aria-label="Zeitreihe: Patente und Projekte (Wachstumsrate %)">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart
                     data={growthData}
-                    margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+                    margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
                   >
                     <defs>
                       <linearGradient id="panel-gradPatents" x1="0" y1="0" x2="0" y2="1">
@@ -120,7 +127,13 @@ export default function LandscapePanel({
                     />
                     <YAxis
                       tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
-                      width={45}
+                      width={52}
+                      label={{
+                        value: "Wachstum %",
+                        angle: -90,
+                        position: "insideLeft",
+                        style: { fontSize: 10, fill: "var(--color-text-muted)" },
+                      }}
                       tickFormatter={(v: number) => `${v.toFixed(0)}%`}
                     />
                     <Tooltip

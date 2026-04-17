@@ -51,6 +51,43 @@ logger = structlog.get_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
+# Helper: Bipartiter-Jaccard-Score fuer Kooperationspaare
+# ---------------------------------------------------------------------------
+def _bipartite_jaccard(
+    *,
+    co_projects: int,
+    projects_a: int,
+    projects_b: int,
+) -> float:
+    """Bipartiter-Jaccard-Score fuer Laenderkooperation.
+
+    Formel: (2 * co_projects) / (projects_a + projects_b)
+
+    Normalisiert die absolute Kooperationshaeufigkeit auf die Aktivitaet der
+    beteiligten Laender. Das verhindert, dass grosse Laender (DE/FR/ES) allein
+    durch Masse hohe Scores bekommen. Rueckgabe in [0, 1].
+
+    Fallback auf 0.0, wenn entweder co_projects == 0 oder die Summe der
+    Einzel-Totals 0 ist (defensive Division-by-Zero-Vermeidung).
+    """
+    if co_projects <= 0:
+        return 0.0
+    denominator = projects_a + projects_b
+    if denominator <= 0:
+        # Sollte nicht passieren, wenn co_projects > 0, aber defensiv
+        logger.warning(
+            "jaccard_denominator_null",
+            co_projects=co_projects,
+            projects_a=projects_a,
+            projects_b=projects_b,
+        )
+        return 0.0
+    score = (2.0 * co_projects) / float(denominator)
+    # Clamping: durch Rundungsfehler knapp > 1 theoretisch moeglich
+    return min(1.0, max(0.0, score))
+
+
+# ---------------------------------------------------------------------------
 # Helper: Basis-Klasse ermitteln (gRPC Servicer oder object)
 # ---------------------------------------------------------------------------
 def _get_base_class() -> type:
@@ -309,6 +346,11 @@ class GeographicServicer(_get_base_class()):  # type: ignore[misc]
                 country_a=str(p["country_a"]),
                 country_b=str(p["country_b"]),
                 co_project_count=int(p.get("co_project_count", 0)),
+                cooperation_score=_bipartite_jaccard(
+                    co_projects=int(p.get("co_project_count", 0)),
+                    projects_a=int(p.get("projects_a", 0)),
+                    projects_b=int(p.get("projects_b", 0)),
+                ),
             )
             for p in collab_pairs
         ]
@@ -370,10 +412,23 @@ class GeographicServicer(_get_base_class()):  # type: ignore[misc]
         processing_time_ms: int,
     ) -> dict[str, Any]:
         """Fallback-Response als dict (wenn gRPC-Stubs nicht generiert)."""
+        # cooperation_score fuer Dict-Pfad ebenfalls befuellen, damit das
+        # Verhalten mit und ohne generierte Protobuf-Stubs identisch ist.
+        enriched_pairs = [
+            {
+                **p,
+                "cooperation_score": _bipartite_jaccard(
+                    co_projects=int(p.get("co_project_count", 0)),
+                    projects_a=int(p.get("projects_a", 0)),
+                    projects_b=int(p.get("projects_b", 0)),
+                ),
+            }
+            for p in collab_pairs
+        ]
         return {
             "country_distribution": country_dist,
             "city_distribution": city_data,
-            "cooperation_pairs": collab_pairs,
+            "cooperation_pairs": enriched_pairs,
             "cross_border_share": cross_border_share,
             "total_countries": total_countries,
             "total_cities": total_cities,

@@ -105,7 +105,14 @@ message MaturityResponse {
   // Values close to 1.0 indicate a good fit.
   double r_squared = 4;
 
-  // Compound annual growth rate of the underlying counts.
+  // DEPRECATED (Bug C-004): Historisch mehrdeutig — bekam mal den naiven
+  // CAGR, mal die Gompertz-Fit-basierte momentane Wachstumsrate, wodurch
+  // maturity.cagr und landscape.patent_cagr divergierten (AI 29.6 % vs
+  // 71.3 %, mRNA -18.4 % vs +3.1 %). Fuer neue Clients stattdessen:
+  //   - empirical_cagr   (Feld 18) — gleiche Methode wie landscape-svc
+  //   - fitted_growth_rate (Feld 19) — Gompertz/Logistic-Fit-Rate
+  // Dieses Feld wird weiterhin gesetzt und spiegelt ``empirical_cagr``
+  // (Alias), damit Bestands-Clients keinen Breaking Change sehen.
   double cagr = 5;
 
   // Fitted logistic model parameters.
@@ -158,4 +165,20 @@ message MaturityResponse {
   // bei n = 9 vollstaendigen Jahren — klassisches 3-Parameter Sigmoid-Overfit.
   // Frontend zeigt bei True einen zusaetzlichen InfoTooltip neben der Phase.
   bool overfit_warning = 17;
+
+  // Empirical (naive) CAGR über die jaehrlichen Raten — identische Methode
+  // wie landscape-svc (`patent_cagr`): (end/start)^(1/n)-1 auf nicht-kumulativen
+  // Jahreswerten, letzte unvollstaendige Jahre via ``data_complete_year``
+  // ausgeschlossen. Fraction (0.123 = 12.3%), nicht Prozent.
+  // Wird fuer die Konsistenz zwischen maturity.* und landscape.patent_cagr
+  // benoetigt (Bug C-004: Gompertz-Fit-CAGR wich bis 71 Punkte vom naiven
+  // CAGR ab und flippte bei mRNA sogar das Vorzeichen).
+  double empirical_cagr = 18;
+
+  // Fitted growth rate aus dem gewaehlten S-Curve-Modell (Gompertz/Logistic/
+  // Richards). Semantik: momentane Wachstumsrate am letzten Datenpunkt der
+  // gefitteten Kurve, nicht der historische Durchschnitt.
+  // Entspricht dem alten ``cagr``-Feld (Feld 5) — wird parallel gepflegt,
+  // bis die Konsumenten migriert sind. Fraction (0.123 = 12.3%).
+  double fitted_growth_rate = 19;
 }

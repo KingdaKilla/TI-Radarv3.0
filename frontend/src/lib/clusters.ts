@@ -149,12 +149,27 @@ export function buildClusterData(data: RadarResponse): ClusterData {
     data.maturity?.phase_label && data.maturity.phase_label.trim().length > 0
       ? `Phase: ${data.maturity.phase_label}`
       : undefined;
-  const trendBadge =
-    cagr !== undefined ? `Trend: ${trendFromCagr(cagr)}` : undefined;
+  const trendLabel = cagr !== undefined ? trendFromCagr(cagr) : undefined;
+  const trendBadge = trendLabel !== undefined ? `Trend: ${trendLabel}` : undefined;
+
+  // Bug v3.4.7/A-002: Phase-vs-Trend-Widerspruch detektieren.
+  // Beispiel (mRNA): phase="Wachstum" + trend="Rückgang" nebeneinander → verwirrend.
+  // Wenn beide Labels sich widersprechen, wird ein drittes Badge "⚠ Datenlücke 2026"
+  // ergänzt, damit Nutzer weiß: das Rumpfjahr verzerrt eine der beiden Metriken.
+  const phaseLabel = data.maturity?.phase_label ?? "";
+  const phaseSuggestsGrowth = /wachstum|emerging|entstehung/i.test(phaseLabel);
+  const phaseSuggestsDecline = /rückgang|decline|abschwung/i.test(phaseLabel);
+  const phaseTrendConflict =
+    (phaseSuggestsGrowth && trendLabel === "Rückgang") ||
+    (phaseSuggestsDecline && trendLabel === "Wachstum");
+  const conflictBadge = phaseTrendConflict
+    ? "⚠ Trend-Diskrepanz"
+    : undefined;
 
   const badges: string[] = [];
   if (phaseBadge) badges.push(phaseBadge);
   if (trendBadge) badges.push(trendBadge);
+  if (conflictBadge) badges.push(conflictBadge);
   if (hhiLabel) badges.push(hhiLabel);
   if (funding) badges.push(`\u20AC${(funding / 1_000_000).toFixed(0)}M F\u00F6rderung`);
   if (hLabel) badges.push(hLabel);
@@ -192,8 +207,11 @@ export function buildClusterData(data: RadarResponse): ClusterData {
       },
       {
         id: "market",
+        // Bug v3.4.7/M-035 (D10-2): Subtitle zeigte den rohen Enum-Wert ("niedrig"
+        // kleingeschrieben) statt das formatierte Badge-Label. Jetzt gleiche Quelle
+        // wie der Pill-Text ("Niedrige Konzentration" etc.).
         title: "Marktakteure",
-        subtitle: `${data.competitive?.concentration ?? ""}, ${data.actor_type?.total_classified_actors ?? "?"} Akteure`,
+        subtitle: `${hhiLabel ?? "Konzentration unbekannt"}, ${data.actor_type?.total_classified_actors ?? "?"} Akteure`,
         description: "Wettbewerber, Marktkonzentration und Akteurs-Dynamik",
         image: "/images/clusters/market.png",
         metrics: [

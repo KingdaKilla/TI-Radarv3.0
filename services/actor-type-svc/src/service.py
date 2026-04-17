@@ -30,7 +30,11 @@ except ImportError:
 
 from shared.domain.actor_definitions import ActorScope, canonical_actor_label
 from src.config import Settings
-from src.domain.metrics import compute_sme_share, compute_type_breakdown
+from src.domain.metrics import (
+    compute_classification_coverage,
+    compute_sme_share,
+    compute_type_breakdown,
+)
 from src.infrastructure.gleif_adapter import GLEIFAdapter
 from src.infrastructure.repository import ActorTypeRepository
 
@@ -153,6 +157,18 @@ class ActorTypeServicer(_get_base_class()):  # type: ignore[misc]
 
         total_classified = sum(int(b.get("actor_count", 0)) for b in type_breakdown)
 
+        # Classification Coverage: Anteil der klassifizierbaren Organisationen.
+        # Hier: alle CORDIS-Organisationen mit Typ-Klassifikation werden gezählt.
+        # Aktuell gibt es keine unclassified actors in der aktuellen Datenbasis,
+        # da CORDIS immer einen activity_type liefert — das Feld ist im Proto
+        # aber reserviert (uc11_actor_type.proto:190) und wird in der Response
+        # konsistent mitgefuehrt. Bug-Fix: verhindert, dass das Frontend den
+        # inkonsistenten Zustand `coverage=0 bei unclassified=0` sieht.
+        unclassified_actors = 0
+        classification_coverage = compute_classification_coverage(
+            total_classified, unclassified_actors,
+        )
+
         if breakdown_raw:
             data_sources.append({"name": "CORDIS (PostgreSQL)", "type": "PROJECT", "record_count": total_classified})
 
@@ -162,6 +178,8 @@ class ActorTypeServicer(_get_base_class()):  # type: ignore[misc]
         return self._build_response(
             type_breakdown=type_breakdown, type_trend=year_entries,
             top_actors=top_actors, total_classified=total_classified,
+            unclassified_actors=unclassified_actors,
+            classification_coverage=classification_coverage,
             sme_share=sme_share, data_sources=data_sources, warnings=warnings,
             request_id=request_id, processing_time_ms=processing_time_ms,
         )
@@ -176,6 +194,8 @@ class ActorTypeServicer(_get_base_class()):  # type: ignore[misc]
                 "type_trend": kwargs["type_trend"],
                 "top_actors_by_type": kwargs["top_actors"],
                 "total_classified_actors": kwargs["total_classified"],
+                "unclassified_actors": kwargs["unclassified_actors"],
+                "classification_coverage": kwargs["classification_coverage"],
                 "sme_share": kwargs["sme_share"],
                 "actor_scope": _UC11_ACTOR_SCOPE.value,
                 "actor_scope_label": canonical_actor_label(_UC11_ACTOR_SCOPE),
@@ -233,6 +253,8 @@ class ActorTypeServicer(_get_base_class()):  # type: ignore[misc]
             type_breakdown=pb_breakdown, type_trend=pb_trend,
             top_actors_by_type=pb_actors,
             total_classified_actors=kwargs["total_classified"],
+            unclassified_actors=kwargs["unclassified_actors"],
+            classification_coverage=kwargs["classification_coverage"],
             sme_share=kwargs["sme_share"], metadata=metadata,
         )
 
@@ -240,6 +262,8 @@ class ActorTypeServicer(_get_base_class()):  # type: ignore[misc]
         processing_time_ms = int((time.monotonic() - t0) * 1000)
         return self._build_response(
             type_breakdown=[], type_trend=[], top_actors=[],
-            total_classified=0, sme_share=0.0, data_sources=[], warnings=[],
+            total_classified=0, unclassified_actors=0,
+            classification_coverage=1.0,
+            sme_share=0.0, data_sources=[], warnings=[],
             request_id=request_id, processing_time_ms=processing_time_ms,
         )

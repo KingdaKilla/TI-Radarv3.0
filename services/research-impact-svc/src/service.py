@@ -222,7 +222,16 @@ class ResearchImpactServicer(_get_base_class()):  # type: ignore[misc]
         else:
             median_citations = 0.0
 
-        citation_trend = _compute_citation_trend(papers)
+        # Bug C5.2: Jahr-Padding -- citation_trend deckt je Tech unterschiedliche
+        # Jahre ab. Durch ``start_year``/``end_year`` werden fehlende Jahre mit
+        # 0-Werten aufgefuellt, damit das Frontend konsistent rendern kann.
+        try:
+            citation_trend = _compute_citation_trend(
+                papers, start_year=start_year, end_year=end_year,
+            )
+        except TypeError:
+            # Alter shared-Stand ohne Padding-Support -- defensiv fallback
+            citation_trend = _compute_citation_trend(papers)
         top_papers = _compute_top_papers(papers, top_n)
         top_venues = _compute_venue_distribution(papers, 8)
         publication_types = _compute_publication_types(papers)
@@ -332,11 +341,14 @@ class ResearchImpactServicer(_get_base_class()):  # type: ignore[misc]
             for p in top_papers
         ]
 
+        # Bug M-010: h_index pro Venue in Proto-Mapper uebernehmen
+        # (Proto-Feld existiert: uc7_research_impact.proto:94).
         pb_venues = [
             uc7_research_impact_pb2.TopVenue(
                 name=str(v.get("name", v.get("venue", ""))),
                 publication_count=int(v.get("publication_count", v.get("count", 0))),
                 avg_citations=float(v.get("avg_citations", 0.0)),
+                h_index=int(v.get("h_index", 0)),
                 share=float(v.get("share", 0.0)),
             )
             for v in top_venues
@@ -386,6 +398,11 @@ class ResearchImpactServicer(_get_base_class()):  # type: ignore[misc]
             timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
+        # TODO v3.4.8 Author Index (Bug M-012):
+        # Proto-Feld ``top_authors`` (uc7_research_impact.proto:181) existiert,
+        # ist aber noch nicht befuellt. Sobald ein Author-Index vorliegt
+        # (Aggregation von ``papers[*].authors`` mit per-Autor h_index und
+        # total_citations), hier als ``top_authors=pb_authors`` hinzufuegen.
         return uc7_research_impact_pb2.ResearchImpactResponse(
             h_index=h_index,
             avg_citations=avg_citations,

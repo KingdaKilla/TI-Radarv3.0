@@ -65,23 +65,40 @@ class EuroSciVocRepository:
         params.append(limit)
         limit_idx = idx
 
+        # Share-Berechnung (Bundle E, Multi-Label-aware):
+        #   share = project_count / Σ(project_count aller Disziplinen DESSELBEN Levels)
+        # Statt "count / total_projects" (vorher), was bei Multi-Disziplin-Zuordnung
+        # Σshare > 1 ergab (z. B. AI: 1.38, Blockchain: 2.27). Der neue Nenner
+        # summiert pro Level (FIELD/SUBFIELD/TOPIC), damit jede Hierarchie-Ebene
+        # unabhaengig auf Σ=1.0 normalisiert. Ein Projekt mit Tags in 3 FIELDs
+        # zaehlt dadurch wie erwartet als "ein Drittel pro Feld".
         sql = f"""
-            SELECT esv.id AS id,
-                   esv.label_en AS label,
-                   esv.level AS level,
-                   esv.parent_code,
-                   COUNT(DISTINCT pe.project_id) AS project_count,
-                   COUNT(DISTINCT pe.project_id)::float /
-                       NULLIF((SELECT COUNT(DISTINCT p2.id)
-                               FROM cordis_schema.projects p2
-                               WHERE p2.search_vector @@ plainto_tsquery('english', $1)
-                                 AND ts_rank_cd(p2.search_vector, plainto_tsquery('english', $1)) >= {TS_RANK_MIN_SCORE}), 0) AS share
-            FROM cordis_schema.projects p
-            JOIN cordis_schema.project_euroscivoc pe ON pe.project_id = p.id
-            JOIN cordis_schema.euroscivoc esv ON esv.id = pe.euroscivoc_id
-            WHERE {where}
-            GROUP BY esv.id, esv.label_en, esv.level, esv.parent_code
-            ORDER BY project_count DESC
+            WITH counts AS (
+                SELECT esv.id AS id,
+                       esv.label_en AS label,
+                       esv.level AS level,
+                       esv.parent_code AS parent_code,
+                       COUNT(DISTINCT pe.project_id) AS project_count
+                FROM cordis_schema.projects p
+                JOIN cordis_schema.project_euroscivoc pe ON pe.project_id = p.id
+                JOIN cordis_schema.euroscivoc esv ON esv.id = pe.euroscivoc_id
+                WHERE {where}
+                GROUP BY esv.id, esv.label_en, esv.level, esv.parent_code
+            ),
+            level_totals AS (
+                SELECT level, SUM(project_count)::float AS total_count
+                FROM counts
+                GROUP BY level
+            )
+            SELECT c.id,
+                   c.label,
+                   c.level,
+                   c.parent_code,
+                   c.project_count,
+                   c.project_count::float / NULLIF(lt.total_count, 0) AS share
+            FROM counts c
+            LEFT JOIN level_totals lt ON lt.level = c.level
+            ORDER BY c.project_count DESC
             LIMIT ${limit_idx}
         """
 

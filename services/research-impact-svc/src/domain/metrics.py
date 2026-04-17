@@ -2,6 +2,10 @@
 
 Lokaler Fallback fuer shared.domain.research_metrics,
 falls das shared-Package nicht im PYTHONPATH liegt.
+
+v3.4.8 (Bundle A): Parity mit shared.domain.research_metrics --
+``avg_citations``/``share``/``h_index`` werden jetzt konsistent gesetzt
+und ``compute_citation_trend`` unterstuetzt Jahr-Padding.
 """
 
 from __future__ import annotations
@@ -26,24 +30,46 @@ def compute_i10_index(citations: list[int]) -> int:
     return sum(1 for c in citations if c >= 10)
 
 
-def compute_citation_trend(papers: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Zitationen und Paper-Anzahl pro Jahr."""
+def compute_citation_trend(
+    papers: list[dict[str, Any]],
+    *,
+    start_year: int | None = None,
+    end_year: int | None = None,
+) -> list[dict[str, Any]]:
+    """Zitationen und Paper-Anzahl pro Jahr mit optionalem Jahr-Padding.
+
+    Fuellt fehlende Jahre zwischen ``start_year`` und ``end_year`` mit
+    Null-Eintraegen auf (Bug C5.2), damit das Frontend konsistente
+    Zeitreihen rendern kann.
+    """
     by_year: dict[int, dict[str, int]] = {}
     for p in papers:
         year = p.get("year")
         if not year:
             continue
-        if year not in by_year:
-            by_year[year] = {"citations": 0, "paper_count": 0}
-        by_year[year]["citations"] += p.get("citationCount", 0) or 0
-        by_year[year]["paper_count"] += 1
+        try:
+            year_int = int(year)
+        except (TypeError, ValueError):
+            continue
+        bucket = by_year.setdefault(year_int, {"citations": 0, "paper_count": 0})
+        bucket["citations"] += int(p.get("citationCount", 0) or 0)
+        bucket["paper_count"] += 1
+
+    if start_year is not None and end_year is not None and start_year <= end_year:
+        for y in range(start_year, end_year + 1):
+            by_year.setdefault(y, {"citations": 0, "paper_count": 0})
 
     return [
         {
             "year": y,
             "total_citations": d["citations"],
             "publication_count": d["paper_count"],
-            "avg_citations": round(d["citations"] / d["paper_count"], 2) if d["paper_count"] > 0 else 0.0,
+            "avg_citations": (
+                round(d["citations"] / d["paper_count"], 2)
+                if d["paper_count"] > 0 else 0.0
+            ),
+            "citations": d["citations"],
+            "paper_count": d["paper_count"],
         }
         for y, d in sorted(by_year.items())
     ]
@@ -75,33 +101,46 @@ def compute_top_papers(
 def compute_venue_distribution(
     papers: list[dict[str, Any]], top_n: int = 8,
 ) -> list[dict[str, Any]]:
-    """Top-Venues nach Anzahl der Paper."""
-    counts: dict[str, dict[str, int | float]] = {}
+    """Top-Venues inklusive ``avg_citations``, ``h_index`` und ``share``.
+
+    * M-009: ``avg_citations`` = total_citations / publication_count
+    * M-010: ``h_index`` -- h-Index beschraenkt auf Paper der Venue
+    """
+    buckets: dict[str, dict[str, Any]] = {}
     for p in papers:
         venue = p.get("venue") or ""
         if not venue:
             continue
-        if venue not in counts:
-            counts[venue] = {"count": 0, "total_citations": 0}
-        counts[venue]["count"] = int(counts[venue]["count"]) + 1
-        counts[venue]["total_citations"] = int(counts[venue]["total_citations"]) + (p.get("citationCount", 0) or 0)
+        bucket = buckets.setdefault(
+            venue, {"count": 0, "total_citations": 0, "citations_list": []},
+        )
+        citation_count = int(p.get("citationCount", 0) or 0)
+        bucket["count"] = int(bucket["count"]) + 1
+        bucket["total_citations"] = int(bucket["total_citations"]) + citation_count
+        bucket["citations_list"].append(citation_count)
 
-    total = sum(int(v["count"]) for v in counts.values())
-    sorted_venues = sorted(counts.items(), key=lambda x: int(x[1]["count"]), reverse=True)
+    total = sum(int(b["count"]) for b in buckets.values())
+    sorted_venues = sorted(buckets.items(), key=lambda x: int(x[1]["count"]), reverse=True)
 
-    return [
-        {
-            "name": v,
-            "publication_count": int(d["count"]),
-            "avg_citations": round(int(d["total_citations"]) / int(d["count"]), 2) if int(d["count"]) > 0 else 0.0,
-            "share": round(int(d["count"]) / total, 4) if total > 0 else 0.0,
-        }
-        for v, d in sorted_venues[:top_n]
-    ]
+    result: list[dict[str, Any]] = []
+    for venue, bucket in sorted_venues[:top_n]:
+        count = int(bucket["count"])
+        total_cit = int(bucket["total_citations"])
+        citations_list: list[int] = bucket["citations_list"]
+        result.append({
+            "name": venue,
+            "venue": venue,
+            "publication_count": count,
+            "count": count,
+            "avg_citations": round(total_cit / count, 2) if count > 0 else 0.0,
+            "h_index": compute_h_index(citations_list),
+            "share": round(count / total, 4) if total > 0 else 0.0,
+        })
+    return result
 
 
 def compute_publication_types(papers: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Publikationstypen zaehlen."""
+    """Publikationstypen zaehlen und Anteil pro Typ berechnen (Bug C-012)."""
     counts: dict[str, int] = {}
     for p in papers:
         pub_type = p.get("publicationTypes") or p.get("type") or ""

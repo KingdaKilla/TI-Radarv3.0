@@ -38,10 +38,22 @@ export default function EuroSciVocPanel({
   onDetailClick,
   queryTimeSeconds,
 }: EuroSciVocPanelProps) {
-  const chartData = data?.fields_of_science.map((f) => ({
+  // Bug v3.4.10/α-C: Chart nutzt jetzt `disciplines` (Level 2, bis 50 Einträge)
+  // statt `fields_of_science` (Level 1, oft nur 1-2 Einträge bei engen Technologien).
+  // Fallback auf fields_of_science, falls disciplines leer ist.
+  const disciplinesChart = (data?.disciplines ?? [])
+    .filter((d) => d.share > 0)
+    .slice(0, 10)
+    .map((d) => ({
+      ...d,
+      label: d.label,
+      share_pct: d.share * 100,
+    }));
+  const fieldsChart = (data?.fields_of_science ?? []).map((f) => ({
     ...f,
     share_pct: f.share * 100,
   }));
+  const chartData = disciplinesChart.length > 0 ? disciplinesChart : fieldsChart;
 
   // Bug v3.4.9/N4: Konfidenz = Mapping-Coverage (Anteil Projekte mit
   // Taxonomie-Zuordnung). Bei Quantum Computing aktuell sehr niedrig,

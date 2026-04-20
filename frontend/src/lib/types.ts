@@ -302,8 +302,29 @@ export interface EuroSciVocField {
   cagr: number;
 }
 
+/**
+ * Bug v3.4.10/α-C: Feinere Granularität als fields_of_science.
+ * Backend liefert bis zu 50 Einträge (Level 2 im EuroSciVoc-Baum).
+ * Die v3.4.10-Chart-Umstellung nutzt `disciplines` als Primär-Quelle,
+ * weil `fields_of_science` bei engen Technologien (z.B. Quantum Computing)
+ * oft nur 1 Eintrag hat.
+ */
+export interface EuroSciVocDiscipline {
+  id: string;
+  label: string;
+  parent_id: string;
+  project_count: number;
+  share: number;
+  level?: string;
+  label_de?: string;
+  publication_count?: number;
+  child_count?: number;
+}
+
 export interface EuroSciVocPanel {
   fields_of_science: EuroSciVocField[];
+  /** Bug v3.4.10/α-C: Feingranulare Disziplin-Verteilung (Level 2). */
+  disciplines: EuroSciVocDiscipline[];
   interdisciplinarity: {
     shannon_index: number;
     simpson_index: number;

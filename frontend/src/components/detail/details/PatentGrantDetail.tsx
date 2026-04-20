@@ -71,7 +71,7 @@ export default function PatentGrantDetail({ data }: PatentGrantDetailProps) {
 
       {/* ── Anmeldungen / Erteilungen / Quote (vergroessert) ── */}
       {chartData.length > 0 && (
-        <DetailChartSection ariaLabel="Anmeldungen, Erteilungen und Quote ueber Zeit">
+        <DetailChartSection ariaLabel="Anmeldungen, Erteilungen und Quote über Zeit">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={chartData}

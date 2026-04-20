@@ -4,7 +4,7 @@
  * TI-Radar v3 -- ExplainabilityBar
  * Collapsible transparency bar for EU AI Act
  * compliance. Shows data sources, methodology,
- * confidence and processing time.
+ * and processing time.
  * ────────────────────────────────────────────── */
 
 import { useState, useCallback } from "react";
@@ -16,7 +16,6 @@ import {
   FlaskConical,
   ShieldCheck,
   AlertTriangle,
-  Info,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -24,30 +23,21 @@ export interface ExplainabilityBarProps {
   dataSources: string[];
   queryTimeSeconds: number;
   methodology: string;
+  /**
+   * @deprecated Seit v3.4.10: Konfidenz-Sektion wurde entfernt (nicht
+   * einheitlich ableitbar pro UC). Prop bleibt als No-Op erhalten für
+   * Abwärtskompat, wird aber nicht mehr dargestellt.
+   */
   confidence?: number;
   warnings?: string[];
   deterministic?: boolean;
-}
-
-/** Confidence level label and color mapping. */
-function getConfidenceDisplay(confidence: number): {
-  label: string;
-  colorClass: string;
-} {
-  if (confidence >= 0.8) {
-    return { label: "Hoch", colorClass: "text-[var(--color-success)]" };
-  }
-  if (confidence >= 0.5) {
-    return { label: "Mittel", colorClass: "text-[var(--color-warning)]" };
-  }
-  return { label: "Niedrig", colorClass: "text-[var(--color-error)]" };
 }
 
 export default function ExplainabilityBar({
   dataSources,
   queryTimeSeconds,
   methodology,
-  confidence,
+  // confidence-Prop absichtlich nicht destructured — siehe @deprecated oben
   warnings = [],
   deterministic = true,
 }: ExplainabilityBarProps) {
@@ -101,19 +91,6 @@ export default function ExplainabilityBar({
               <Clock className="h-3 w-3" aria-hidden="true" />
               {queryTimeSeconds.toFixed(1)}s
             </span>
-            {confidence !== undefined && (
-              <>
-                <span aria-hidden="true">|</span>
-                <span
-                  className={clsx(
-                    "inline-flex items-center gap-1",
-                    getConfidenceDisplay(confidence).colorClass
-                  )}
-                >
-                  {getConfidenceDisplay(confidence).label}
-                </span>
-              </>
-            )}
             {hasWarnings && (
               <>
                 <span aria-hidden="true">|</span>
@@ -139,7 +116,13 @@ export default function ExplainabilityBar({
           id="explainability-details"
           className="border-t border-[var(--color-border)] px-4 py-4"
         >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Bug v3.4.10/α-D: Konfidenz-Sektion wurde entfernt, weil eine
+              belastbare Konfidenz-Metrik pro UC nicht einheitlich ableitbar
+              war — die Anzeige "Nicht verfügbar" stand häufig da und hat
+              das Vertrauen in die Transparenz-Bar eher geschwächt. Die
+              bestehenden drei Sektionen (Datenquellen / Methodik /
+              Verarbeitungszeit) reichen für EU-AI-Act-Transparenz aus. */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {/* Datenquellen */}
             <div>
               <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
@@ -171,50 +154,6 @@ export default function ExplainabilityBar({
                 <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-[var(--color-success)]/10 px-2 py-0.5 text-xs font-medium text-[var(--color-success)]">
                   <ShieldCheck className="h-3 w-3" aria-hidden="true" />
                   Deterministisch
-                </span>
-              )}
-            </div>
-
-            {/* Konfidenz */}
-            <div>
-              <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                <Info className="h-3.5 w-3.5" aria-hidden="true" />
-                Konfidenz
-              </div>
-              {confidence !== undefined ? (
-                <div>
-                  {/* Progress bar */}
-                  <div className="mb-1.5 h-2 w-full overflow-hidden rounded-full bg-[var(--color-bg-secondary)]">
-                    <div
-                      className={clsx(
-                        "h-full rounded-full transition-all duration-500",
-                        confidence >= 0.8
-                          ? "bg-[var(--color-success)]"
-                          : confidence >= 0.5
-                            ? "bg-[var(--color-warning)]"
-                            : "bg-[var(--color-error)]"
-                      )}
-                      style={{ width: `${Math.round(confidence * 100)}%` }}
-                      role="progressbar"
-                      aria-valuenow={Math.round(confidence * 100)}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-label="Konfidenz"
-                    />
-                  </div>
-                  <span
-                    className={clsx(
-                      "text-sm font-medium",
-                      getConfidenceDisplay(confidence).colorClass
-                    )}
-                  >
-                    {Math.round(confidence * 100)}% &mdash;{" "}
-                    {getConfidenceDisplay(confidence).label}
-                  </span>
-                </div>
-              ) : (
-                <span className="text-sm text-[var(--color-text-muted)]">
-                  Nicht verfügbar
                 </span>
               )}
             </div>

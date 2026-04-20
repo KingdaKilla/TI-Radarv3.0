@@ -68,7 +68,7 @@ export default function PublicationDetail({ data }: PublicationDetailProps) {
 
       {/* ── Publikationstrend (BarChart) ── */}
       {trendData.length > 0 && (
-        <DetailChartSection ariaLabel="Publikationstrend ueber Zeit">
+        <DetailChartSection ariaLabel="Publikationstrend über Zeit">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={trendData}

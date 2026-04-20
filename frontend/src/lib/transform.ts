@@ -843,12 +843,15 @@ function transformPatentGrant(raw: any): PatentGrantPanel | null {
 function transformEuroSciVoc(raw: any): EuroSciVocPanel | null {
   if (!raw) return null;
 
-  // Prefer fields_of_science; fall back to disciplines (backend gRPC field name)
+  // Fields of Science (Level-1 der EuroSciVoc-Taxonomie)
   const fieldSource = Array.isArray(raw.fields_of_science) && raw.fields_of_science.length > 0
     ? raw.fields_of_science
-    : Array.isArray(raw.disciplines)
-      ? raw.disciplines
-      : [];
+    : [];
+
+  // Bug v3.4.10/α-C: Disciplines separat übernehmen (Level 2, bis 50 Einträge).
+  // Backend-Feld heißt genauso. Wird im Frontend-Chart als Primär-Quelle genutzt,
+  // weil fields_of_science bei engen Technologien oft nur 1 Eintrag hat.
+  const disciplinesSource = Array.isArray(raw.disciplines) ? raw.disciplines : [];
 
   return {
     fields_of_science: fieldSource.map((f: any) => ({
@@ -859,6 +862,17 @@ function transformEuroSciVoc(raw: any): EuroSciVocPanel | null {
       share: num(f.share),
       active_sub_fields: num(f.active_sub_fields ?? f.child_count),
       cagr: num(f.cagr),
+    })),
+    disciplines: disciplinesSource.map((d: any) => ({
+      id: d.id ?? "",
+      label: d.label ?? "",
+      parent_id: d.parent_id ?? "",
+      project_count: num(d.project_count),
+      share: num(d.share),
+      level: d.level ?? undefined,
+      label_de: d.label_de ?? undefined,
+      publication_count: num(d.publication_count),
+      child_count: num(d.child_count),
     })),
     interdisciplinarity: {
       shannon_index: num(raw.interdisciplinarity?.shannon_index),

@@ -27,17 +27,31 @@ interface EuroSciVocDetailProps {
 }
 
 export default function EuroSciVocDetail({ data }: EuroSciVocDetailProps) {
-  const chartData = data.fields_of_science.map((f) => ({
+  // Bug v3.4.10/α-C: Primär disciplines (Level 2, bis 50 Einträge) —
+  // fields_of_science ist bei engen Technologien oft zu spärlich befüllt.
+  const disciplinesChart = (data.disciplines ?? [])
+    .filter((d) => d.share > 0)
+    .slice(0, 25)
+    .map((d) => ({
+      id: d.id,
+      label: d.label,
+      total_publications: d.publication_count ?? 0,
+      total_projects: d.project_count,
+      share: d.share,
+      share_pct: d.share * 100,
+    }));
+  const fieldsChart = data.fields_of_science.map((f) => ({
     ...f,
     share_pct: f.share * 100,
   }));
+  const chartData = disciplinesChart.length > 0 ? disciplinesChart : fieldsChart;
 
-  /* Dynamische Hoehe: min 500px, 40px pro Feld */
+  /* Dynamische Höhe: min 500px, 40px pro Feld */
   const chartHeight = Math.max(500, chartData.length * 40);
 
   /* Dynamische Spalten: nur anzeigen, wenn mindestens ein Wert > 0 */
-  const hasPublications = data.fields_of_science.some((f) => f.total_publications > 0);
-  const hasProjects = data.fields_of_science.some((f) => f.total_projects > 0);
+  const hasPublications = chartData.some((f) => (f.total_publications ?? 0) > 0);
+  const hasProjects = chartData.some((f) => (f.total_projects ?? 0) > 0);
 
   return (
     <div className="flex flex-col gap-6">

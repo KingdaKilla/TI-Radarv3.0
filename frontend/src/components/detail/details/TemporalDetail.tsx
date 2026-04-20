@@ -56,47 +56,31 @@ export default function TemporalDetail({ data }: TemporalDetailProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* ── Kennzahlen ── */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {/* ── Kennzahlen ──
+          Bug v3.4.10/α-F: "Aufkommende Themen" + "Abnehmende Themen" +
+          "Themen-Cluster" wurden entfernt, weil das Backend sie nicht
+          konsistent befüllt (Topic-Modeling-Job existiert nur als Plan).
+          Aktuelle Metriken beschränken sich auf die Akteurs-Dynamik, die
+          belastbare Datenbasis hat. */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <MetricCard
-          label="Aktive Akteure"
+          label="Aktive Akteure (letztes Jahr)"
           value={latestYear ? latestYear.total_active.toLocaleString("de-DE") : "–"}
         />
-        {/* Bug v3.4.9/Q: Das Backend liefert `emerging_topics` / `declining_topics`
-            aktuell nicht konsistent für alle Technologien (z.B. Quantum Computing:
-            beide null). Statt "0" anzuzeigen (was wie "keine Trends gefunden"
-            wirkt) zeigen wir einen Dash mit Hinweis im Tooltip, wenn die Daten
-            komplett fehlen. */}
-        <MetricCard
-          label="Aufkommende Themen"
-          value={
-            Array.isArray(data.emerging_topics) && data.emerging_topics.length > 0
-              ? data.emerging_topics.length
-              : "–"
-          }
-          trend={
-            Array.isArray(data.emerging_topics) && data.emerging_topics.length > 0
-              ? "up"
-              : "neutral"
-          }
-        />
-        <MetricCard
-          label="Abnehmende Themen"
-          value={
-            Array.isArray(data.declining_topics) && data.declining_topics.length > 0
-              ? data.declining_topics.length
-              : "–"
-          }
-          trend={
-            Array.isArray(data.declining_topics) && data.declining_topics.length > 0
-              ? "down"
-              : "neutral"
-          }
-        />
-        <MetricCard
-          label="Themen-Cluster"
-          value={data.clusters.length}
-        />
+        {startYear !== null && endYear !== null && (
+          <MetricCard
+            label={`Neu eingestiegen ${startYear}–${endYear}`}
+            value={totalNew.toLocaleString("de-DE")}
+            trend="up"
+          />
+        )}
+        {startYear !== null && endYear !== null && (
+          <MetricCard
+            label={`Ausgeschieden ${startYear}–${endYear}`}
+            value={totalExited.toLocaleString("de-DE")}
+            trend="down"
+          />
+        )}
       </div>
 
       {/* ── Akteur-Dynamik (vergroessert) ── */}
@@ -232,25 +216,8 @@ export default function TemporalDetail({ data }: TemporalDetailProps) {
             </p>
           )}
 
-          {Array.isArray(data.emerging_topics) &&
-          Array.isArray(data.declining_topics) &&
-          (data.emerging_topics.length > 0 || data.declining_topics.length > 0) ? (
-            <p>
-              {data.emerging_topics.length > 0 && (
-                <>Es wurden <strong>{data.emerging_topics.length}</strong> aufkommende Themen identifiziert. </>
-              )}
-              {data.declining_topics.length > 0 && (
-                <><strong>{data.declining_topics.length}</strong> Themen zeigen rückläufige Aktivität.</>
-              )}
-            </p>
-          ) : (
-            <p className="text-xs text-[var(--color-text-muted)] italic">
-              Topic-Analyse (aufkommende / abnehmende Themen) ist für diese
-              Technologie aktuell nicht verfügbar — dafür wird ein separater
-              Topic-Modeling-Job benötigt, der noch nicht für alle Keywords
-              durchläuft.
-            </p>
-          )}
+          {/* Bug v3.4.10/α-F: Topic-Narrativ (aufkommende/abnehmende Themen)
+              entfernt — Backend-Feature ist nicht produktionsreif. */}
         </div>
       </DetailAnalysisSection>
 

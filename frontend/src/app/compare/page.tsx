@@ -25,11 +25,19 @@ import type { RadarRequest } from "@/lib/types";
 import { USE_CASES } from "@/lib/types";
 
 /** Baut ein RadarRequest aus einem Technologienamen */
-function buildRequest(technology: string, useMock: boolean): RadarRequest {
+function buildRequest(
+  technology: string,
+  useMock: boolean,
+  europeanOnly: boolean,
+): RadarRequest {
   return {
     technology: technology.trim(),
     years: 10,
-    european_only: false,
+    // Bug v3.4.10/α-B: Default entspricht jetzt dem Dashboard (SearchBar),
+    // wo europeanOnly standardmäßig auf true steht. Vorher war Compare
+    // inkonsistent false → viel größere Zahlen als auf der Main-Seite
+    // für dieselbe Technologie, was User verwirrte.
+    european_only: europeanOnly,
     use_cases: [...USE_CASES],
     top_n: 10,
     use_mock: useMock,
@@ -46,6 +54,9 @@ export default function ComparePage() {
     }
     return false;
   });
+  // Bug v3.4.10/α-B: europeanOnly als lokaler State mit Default=true,
+  // konsistent zum SearchBar-Verhalten auf der Main-Seite.
+  const [europeanOnly, setEuropeanOnly] = useState<boolean>(true);
 
   // Abfrage-Parameter (null = noch nicht gesucht)
   const [paramsA, setParamsA] = useState<RadarRequest | null>(null);
@@ -58,10 +69,10 @@ export default function ComparePage() {
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      if (inputA.trim()) setParamsA(buildRequest(inputA, useMock));
-      if (inputB.trim()) setParamsB(buildRequest(inputB, useMock));
+      if (inputA.trim()) setParamsA(buildRequest(inputA, useMock, europeanOnly));
+      if (inputB.trim()) setParamsB(buildRequest(inputB, useMock, europeanOnly));
     },
-    [inputA, inputB, useMock]
+    [inputA, inputB, useMock, europeanOnly]
   );
 
   const isAnyLoading =
@@ -157,6 +168,33 @@ export default function ComparePage() {
               </div>
             </div>
 
+            {/* Bug v3.4.10/α-B: EU-Only-Toggle analog zum SearchBar-Verhalten */}
+            <div className="shrink-0">
+              <span className="mb-1.5 block text-sm font-medium text-[var(--color-text-secondary)]">
+                Nur Europa
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={europeanOnly}
+                aria-label="Nur europäische Daten anzeigen"
+                onClick={() => setEuropeanOnly((prev) => !prev)}
+                className={clsx(
+                  "flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition-colors",
+                  europeanOnly
+                    ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
+                    : "border-[var(--color-border)] text-[var(--color-text-secondary)]"
+                )}
+              >
+                {europeanOnly ? (
+                  <ToggleRight className="h-5 w-5" aria-hidden="true" />
+                ) : (
+                  <ToggleLeft className="h-5 w-5" aria-hidden="true" />
+                )}
+                <span className="hidden sm:inline">{europeanOnly ? "EU" : "Global"}</span>
+              </button>
+            </div>
+
             {/* Mock-Toggle */}
             <div className="shrink-0">
               <span className="mb-1.5 block text-sm font-medium text-[var(--color-text-secondary)]">
@@ -232,7 +270,7 @@ export default function ComparePage() {
             </h2>
             <p className="max-w-md text-sm text-[var(--color-text-muted)]">
               Geben Sie zwei Technologien ein, um deren Kennzahlen in einer
-              Vergleichstabelle und einem Radar-Diagramm gegenueberzustellen.
+              Vergleichstabelle und einem Radar-Diagramm gegenüberzustellen.
             </p>
           </div>
         )}

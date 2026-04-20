@@ -43,6 +43,14 @@ export default function EuroSciVocPanel({
     share_pct: f.share * 100,
   }));
 
+  // Bug v3.4.9/N4: Konfidenz = Mapping-Coverage (Anteil Projekte mit
+  // Taxonomie-Zuordnung). Bei Quantum Computing aktuell sehr niedrig,
+  // weil tsvector-Query nur "law"-Projekte trifft (→ Bundle T Backend-Fix).
+  const euroscivocConfidence =
+    data?.mapping_coverage !== undefined
+      ? data.mapping_coverage
+      : undefined;
+
   return (
     <PanelCard
       title="Wissenschaftsdisziplinen"
@@ -52,6 +60,7 @@ export default function EuroSciVocPanel({
       error={error}
       onDetailClick={data ? onDetailClick : undefined}
       queryTimeSeconds={queryTimeSeconds}
+      confidence={euroscivocConfidence}
     >
       {data && (
         <div className="flex flex-col gap-4">
@@ -71,6 +80,22 @@ export default function EuroSciVocPanel({
               {data.total_mapped_publications.toLocaleString("de-DE")} Projekte
             </span>
           </div>
+
+          {/* Bug v3.4.9/T: Wenn sehr wenige Fachgebiete / Disziplinen gefunden
+              wurden (z.B. 0-2), ist die Taxonomie-Abdeckung für diese Technologie
+              lückenhaft. Der Nutzer soll das sehen und die Darstellung nicht
+              als ganze Wahrheit nehmen. */}
+          {(data.interdisciplinarity.active_fields < 2 ||
+            (chartData && chartData.length < 3)) && (
+            <div
+              className="rounded-md border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/5 px-3 py-2 text-xs text-[var(--color-warning)]"
+              role="note"
+            >
+              Taxonomie-Mapping unvollständig: Für diesen Suchbegriff wurden
+              nur wenige EuroSciVoc-Zuordnungen gefunden. Die gezeigte
+              Disziplin-Verteilung ist möglicherweise nicht repräsentativ.
+            </div>
+          )}
 
           {/* Fields of Science Bar Chart */}
           <div className="h-[clamp(13rem,40vh,28rem)]" aria-label="Wissenschaftsfelder nach Anteil">

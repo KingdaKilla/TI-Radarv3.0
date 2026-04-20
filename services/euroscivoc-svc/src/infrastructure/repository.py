@@ -24,6 +24,14 @@ logger = structlog.get_logger(__name__)
 # Disziplin-Zuordnungen wie "law" -> "Solid State Battery" (AP4 / CRIT-2).
 TS_RANK_MIN_SCORE = 0.05
 
+# Bug v3.4.9/T: Wenn der strenge Threshold zu wenige Projekte matcht, wird
+# die Query mit einem gelockerten Threshold wiederholt. Bisher kam bei
+# "Quantum Computing" nur 1 Disziplin-Balken ("law") zurueck, weil der
+# 0.05-Threshold nur 12 Nebentreffer lieferte. Der Fallback wird nur
+# aktiv wenn die strikte Query < MIN_PROJECTS_STRICT liefert.
+MIN_PROJECTS_STRICT = 20
+TS_RANK_MIN_SCORE_RELAXED = 0.005
+
 
 class EuroSciVocRepository:
     """Async PostgreSQL-Zugriff fuer UC10 EuroSciVoc-Analysen."""
@@ -44,10 +52,47 @@ class EuroSciVocRepository:
         Verwendet ts_rank_cd-Threshold (>= TS_RANK_MIN_SCORE), um fachlich
         irrelevante Token-Split-Matches (z. B. "battery law" bei Suche nach
         "solid state battery") auszufiltern.
+
+        Bug v3.4.9/T: Zwei-Stufen-Retry. Wenn strenger Threshold < MIN_PROJECTS_STRICT
+        matches liefert, wird gelockert — damit z.B. "Quantum Computing" nicht
+        bei nur einer Disziplin endet.
         """
+        result = await self._run_discipline_query(
+            technology,
+            start_year=start_year,
+            end_year=end_year,
+            limit=limit,
+            threshold=TS_RANK_MIN_SCORE,
+        )
+        total_project_count = sum(int(r["project_count"]) for r in result)
+        if total_project_count < MIN_PROJECTS_STRICT:
+            logger.info(
+                "euroscivoc_retry_mit_gelockertem_threshold",
+                technology=technology,
+                strict_matches=total_project_count,
+                relaxed_threshold=TS_RANK_MIN_SCORE_RELAXED,
+            )
+            result = await self._run_discipline_query(
+                technology,
+                start_year=start_year,
+                end_year=end_year,
+                limit=limit,
+                threshold=TS_RANK_MIN_SCORE_RELAXED,
+            )
+        return result
+
+    async def _run_discipline_query(
+        self,
+        technology: str,
+        *,
+        start_year: int | None,
+        end_year: int | None,
+        limit: int,
+        threshold: float,
+    ) -> list[dict[str, Any]]:
         conditions = [
             "p.search_vector @@ plainto_tsquery('english', $1)",
-            f"ts_rank_cd(p.search_vector, plainto_tsquery('english', $1)) >= {TS_RANK_MIN_SCORE}",
+            f"ts_rank_cd(p.search_vector, plainto_tsquery('english', $1)) >= {threshold}",
         ]
         params: list[Any] = [technology]
         idx = 2

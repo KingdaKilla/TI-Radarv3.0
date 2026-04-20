@@ -80,12 +80,12 @@ export default function ActorTypePanel({
               {data.total_classified_actors.toLocaleString("de-DE")} klassifizierte Akteure (CORDIS)
               <InfoTooltip
                 text={
-                  `UC11 zaehlt alle CORDIS-Organisationen, fuer die ein activity_type ` +
+                  `UC11 zählt alle CORDIS-Organisationen, für die ein activity_type ` +
                   `(HES, PRC, REC, OTH, PUB) gesetzt ist ` +
                   `(Scope: ${data.actor_scope_label ?? "klassifizierte Organisationen"}). ` +
-                  `Diese Zahl ist typischerweise groesser als UC8 (aktive Akteure im ` +
+                  `Diese Zahl ist typischerweise größer als UC8 (aktive Akteure im ` +
                   `Zeitfenster) und UC9 (Cluster-Mitglieder) — unterschiedliche Scopes ` +
-                  `zaehlen unterschiedliche Populationen.`
+                  `zählen unterschiedliche Populationen.`
                 }
               />
             </span>

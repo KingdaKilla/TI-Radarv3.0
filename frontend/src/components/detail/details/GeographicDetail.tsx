@@ -74,11 +74,17 @@ export default function GeographicDetail({ data }: GeographicDetailProps) {
           value={countries.length}
         />
         <MetricCard
-          label="Patente gesamt"
+          // Bug v3.4.9/S: Der Wert ist die Summe der Patent-Counts über die
+          // zurückgegebenen Länder (Top-20). Im Executive-Summary steht dagegen
+          // `landscape.total_patents` (EU-27 insgesamt). Die beiden Zahlen
+          // können differieren, weil der Country-Breakdown auf Top-20 limitiert
+          // ist und Patente ohne klares Herkunftsland nicht zählbar sind. Das
+          // Label wird daher präzisiert.
+          label="Patente (Top-20 Länder)"
           value={totalPatents.toLocaleString("de-DE")}
         />
         <MetricCard
-          label="Projekte gesamt"
+          label="Projekte (Top-20 Länder)"
           value={totalProjects.toLocaleString("de-DE")}
         />
         <MetricCard

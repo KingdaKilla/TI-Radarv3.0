@@ -98,6 +98,17 @@ export default function MaturityPanel({
     }
   }
 
+  // Bug v3.4.9/N4: Konfidenz aus R² ableiten — der ehrlichste Indikator
+  // für die Qualität des S-Curve-Fits. Wenn fit_reliability_flag=false ist,
+  // clampen wir konservativ auf max 0.4, damit der Nutzer nicht fälschlich
+  // "Hoch" liest trotz unzuverlässigem Fit.
+  const maturityConfidence =
+    data?.r_squared !== undefined
+      ? data.fit_reliability_flag === false
+        ? Math.min(data.r_squared, 0.4)
+        : data.r_squared
+      : undefined;
+
   return (
     <PanelCard
       title="Reifegrad-Analyse"
@@ -108,6 +119,7 @@ export default function MaturityPanel({
       onDetailClick={data ? onDetailClick : undefined}
       queryTimeSeconds={queryTimeSeconds}
       warnings={panelWarnings.length > 0 ? panelWarnings : undefined}
+      confidence={maturityConfidence}
     >
       {data && phaseInfo && (
         <div className="flex flex-col gap-4">
@@ -139,7 +151,7 @@ export default function MaturityPanel({
                       Datenpunkten gemeldet hat. */}
                   {data.overfit_warning === true && (
                     <InfoTooltip
-                      text="Fit moeglicherweise ueberangepasst: R² > 0,98 bei < 30 Datenpunkten"
+                      text="Fit möglicherweise überangepasst: R² > 0,98 bei < 30 Datenpunkten"
                     />
                   )}
                 </span>

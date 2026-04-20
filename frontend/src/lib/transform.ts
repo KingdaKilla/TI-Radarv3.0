@@ -65,7 +65,12 @@ function transformLandscape(raw: any): LandscapePanel | null {
   const topCpcCodes = Array.isArray(raw.top_cpc_codes)
     ? raw.top_cpc_codes.map((c: any) => ({
         code: c.code ?? "",
-        label: c.label ?? "",
+        // Bug v3.4.9/N1: Backend liefert das Description-Feld (z.B.
+        // "Quantum error correction; Fault-tolerant quantum computing"),
+        // aber der alte Transform las nur `c.label` und zeigte deshalb
+        // leere Bezeichnungen an. Jetzt: description hat Vorrang, label
+        // als Abwärtskompat.-Fallback.
+        label: c.description ?? c.label ?? "",
         count: num(c.count),
       }))
     : [];
@@ -762,14 +767,32 @@ function transformActorType(raw: any): ActorTypePanel | null {
   const totalClassified = num(raw.total_classified_actors);
   const unclassified = num(raw.unclassified_actors);
   const totalAll = totalClassified + unclassified;
+  // Bug v3.4.9/N2-classification: Backend liefert jetzt `classification_coverage`
+  // direkt (v3.4.7/Bundle B). Vorzugsweise Backend-Wert nehmen, nur als
+  // Fallback selbst rechnen.
+  const backendCoverage = raw.classification_coverage;
   const classificationCoverage =
-    totalAll > 0 ? totalClassified / totalAll : 0;
+    typeof backendCoverage === "number"
+      ? backendCoverage
+      : totalAll > 0
+        ? totalClassified / totalAll
+        : 1.0;
 
-  // Derive SME share: look for PRC (private commercial) in type_breakdown
-  const prcEntry = typeBreakdown.find(
-    (e: any) => e.label === "PRC" || e.label?.toLowerCase().includes("private")
-  );
-  const smeShare = prcEntry ? num(prcEntry.actor_share) : 0;
+  // Bug v3.4.9/N2: Backend liefert `sme_share` direkt (z.B. 0.5401 bei
+  // Quantum). Die alte PRC-Label-Suche traf den deutschen Label
+  // "KMU / Unternehmen" nicht und fiel fälschlich auf 0 zurück — UI zeigte
+  // deshalb "KMU-Anteil 0%" obwohl im Diagramm 46,6% zu sehen waren.
+  // Jetzt: Backend-Wert hat Vorrang; PRC-Suche nur als Fallback.
+  const rawSmeShare = raw.sme_share;
+  let smeShare: number;
+  if (typeof rawSmeShare === "number") {
+    smeShare = rawSmeShare;
+  } else {
+    const prcEntry = typeBreakdown.find(
+      (e: any) => e.label === "PRC" || e.label?.toLowerCase().includes("private")
+    );
+    smeShare = prcEntry ? num(prcEntry.actor_share) : 0;
+  }
 
   return {
     type_breakdown: typeBreakdown,

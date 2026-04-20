@@ -272,7 +272,7 @@ export default function ClusterCarousel({
                         )}
                         {canFlip && (
                           <p className="mt-2 text-[10px] text-[var(--color-accent-gold)]/80 font-medium">
-                            Klicken fuer Details
+                            Klicken für Details
                           </p>
                         )}
                       </div>
@@ -315,7 +315,7 @@ export default function ClusterCarousel({
                           ))}
                         </div>
                         <p className="mt-3 text-[10px] text-[var(--color-accent-gold)]/60 font-medium text-center">
-                          Klicken zum Zurueck
+                          Klicken zum Zurück
                         </p>
                       </div>
                     </div>

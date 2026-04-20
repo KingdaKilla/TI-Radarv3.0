@@ -117,12 +117,12 @@ export default function TechClusterPanel({
               {data.total_actors.toLocaleString("de-DE")} Cluster-Mitglieder
               <InfoTooltip
                 text={
-                  `UC9 zaehlt Akteure, die mindestens einen CPC-Code innerhalb eines ` +
+                  `UC9 zählt Akteure, die mindestens einen CPC-Code innerhalb eines ` +
                   `identifizierten Tech-Clusters halten ` +
                   `(Scope: ${data.actor_scope_label ?? "Cluster-Mitglieder"}). ` +
                   `Diese Zahl ist typischerweise kleiner als UC8 (aktive Akteure im ` +
                   `Zeitfenster) und UC11 (klassifizierte Organisationen) — ` +
-                  `unterschiedliche Scopes zaehlen unterschiedliche Populationen.`
+                  `unterschiedliche Scopes zählen unterschiedliche Populationen.`
                 }
               />
             </span>

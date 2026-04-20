@@ -38,7 +38,7 @@ export const METRIC_TOOLTIPS: Record<string, string> = {
     "Anteil der Akteure, die auch im Folgejahr aktiv bleiben.",
   patents: "Patentanmeldungen aus der EPO DOCDB-Datenbank.",
   patent_scope:
-    "Der Header zählt ALLE Patente (EPO DOCDB, ungefiltert). UC12 trennt Anmeldungen (Kind-Codes A*) und Erteilungen (B*). Gesamtzahl ≥ Anmeldungen + Erteilungen, da u. a. Utility Models (U) und Korrekturen zusätzlich zählen.",
+    "A = Patent-Anmeldungen (noch nicht geprüft), B = erteilte Patente. Diese Summe kann größer sein als die Patentzahl oben, weil dasselbe Patent normalerweise zuerst als Anmeldung (A) und später — nach Prüfung — nochmal als Erteilung (B) in der Datenbank auftaucht. Zusätzlich zählen kleinere Patent-Sonderformen (z. B. Gebrauchsmuster) mit, die im Header nicht berücksichtigt sind.",
   patent_applications:
     "Patent-Anmeldungen (EPO Kind-Codes A, A1, A2, A3, A4, A8, A9). Offenlegungsschrift vor Erteilung.",
   patent_grants:

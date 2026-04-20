@@ -41,20 +41,22 @@ export default function MetricCard({
   return (
     <div
       className={clsx(
-        "flex flex-col gap-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-3",
+        // Bug v3.4.9/R: `min-w-0` + `overflow-hidden` verhindern dass lange
+        // Zahlen/Strings die Grid-Spalte sprengen.
+        "flex flex-col gap-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-4 py-3 min-w-0 overflow-hidden",
         className
       )}
       aria-label={`${label}: ${value}${unit ? ` ${unit}` : ""}`}
     >
-      <span className="text-xs font-medium text-[var(--color-text-muted)]">
+      <span className="text-xs font-medium text-[var(--color-text-muted)] truncate">
         {label}
       </span>
-      <div className="flex items-baseline gap-2">
-        <span className="text-xl font-bold text-[var(--color-text-primary)]">
+      <div className="flex items-baseline gap-2 min-w-0">
+        <span className="text-xl font-bold text-[var(--color-text-primary)] truncate">
           {typeof value === "number" ? value.toLocaleString("de-DE") : value}
         </span>
         {unit && (
-          <span className="text-xs text-[var(--color-text-muted)]">{unit}</span>
+          <span className="text-xs text-[var(--color-text-muted)] shrink-0">{unit}</span>
         )}
         {TrendIcon && trend && (
           <TrendIcon

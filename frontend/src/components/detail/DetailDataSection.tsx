@@ -18,7 +18,10 @@ export default function DetailDataSection({
 }: DetailDataSectionProps) {
   return (
     <section
-      className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] p-6"
+      // Bug v3.4.9/R: `overflow-x-auto` + `min-w-0` — lange Tabellen-Zeilen
+      // (z.B. "CENTRE NATIONAL DE LA RECHERCHE SCIENTIFIQUE CNRS") sprengen
+      // sonst die Box-Breite in Grid-Layouts.
+      className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] p-6 min-w-0 overflow-x-auto"
       aria-label={title}
     >
       <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">

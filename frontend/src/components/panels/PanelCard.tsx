@@ -35,7 +35,35 @@ interface PanelCardProps {
    * welche Quellen tatsächlich genutzt wurden.
    */
   dataSourcesOverride?: string[];
+  /**
+   * Bug v3.4.9/N4: Explizite Konfidenz (z.B. r_squared bei Maturity oder
+   * Coverage bei EuroSciVoc). Wenn nicht gesetzt, greift die ucKey-basierte
+   * Default-Konfidenz (DEFAULT_UC_CONFIDENCE).
+   */
+  confidence?: number;
 }
+
+/**
+ * Bug v3.4.9/N4: Default-Konfidenz pro UC. Deterministische DB-Queries
+ * haben volle Konfidenz (1.0); modell-basierte oder stichproben-limitierte
+ * UCs lassen den Wert auf undefined (→ "Nicht verfügbar") und werden
+ * stattdessen vom jeweiligen Panel explizit via `confidence`-Prop gesetzt.
+ */
+const DEFAULT_UC_CONFIDENCE: Partial<Record<UseCaseKey, number>> = {
+  landscape: 1.0,       // deterministische DB-Query
+  competitive: 1.0,     // HHI/CR4 aus vollständiger Aggregation
+  funding: 1.0,         // CORDIS-Daten direkt
+  cpc_flow: 1.0,        // deterministisches Jaccard
+  geographic: 1.0,      // Country-Aggregation
+  temporal: 1.0,        // Actor-Dynamics
+  actor_type: 1.0,      // Classification-Mapping
+  patent_grant: 1.0,    // Kind-Code-Zählung
+  publication: 1.0,     // CORDIS-Pubs
+  // maturity: wird vom Panel mit r_squared gesetzt
+  // research_impact: Stichprobe (100-200 Papers) — Panel setzt via open_access_share / venue-Coverage
+  // tech_cluster: Cluster-Qualität via silhouette / dimension_scores
+  // euroscivoc: Mapping-Coverage vom Panel
+};
 
 export default function PanelCard({
   title,
@@ -50,7 +78,15 @@ export default function PanelCard({
   queryTimeSeconds,
   warnings,
   dataSourcesOverride,
+  confidence,
 }: PanelCardProps) {
+  // Effektive Konfidenz: explizite Prop hat Vorrang vor ucKey-Default.
+  const effectiveConfidence =
+    confidence !== undefined
+      ? confidence
+      : ucKey
+        ? DEFAULT_UC_CONFIDENCE[ucKey]
+        : undefined;
   return (
     <section
       className={`panel-card hover:glow-border flex flex-col ${className}`}
@@ -152,6 +188,7 @@ export default function PanelCard({
             methodology={METHODOLOGY_TOOLTIPS[ucKey]}
             deterministic={true}
             warnings={warnings}
+            confidence={effectiveConfidence}
           />
         </div>
       )}

@@ -29,18 +29,29 @@ interface TemporalDetailProps {
 }
 
 export default function TemporalDetail({ data }: TemporalDetailProps) {
-  const dataCompleteYear = 2024; // CORDIS-Daten 2025 noch ~90% vollstaendig
+  const dataCompleteYear = 2024; // CORDIS-Daten 2025 noch ~90% vollständig
+
+  const sortedTrend = [...data.entrant_trend].sort((a, b) => a.year - b.year);
 
   const latestYear =
-    data.entrant_trend.length > 0
-      ? data.entrant_trend[data.entrant_trend.length - 1]
+    sortedTrend.length > 0
+      ? sortedTrend[sortedTrend.length - 1]
       : null;
 
-  // Dynamische Zusammenfassung aus entrant_trend berechnen
-  const startYear = data.entrant_trend.length > 0 ? data.entrant_trend[0].year : null;
-  const endYear = latestYear ? latestYear.year : null;
-  const totalNew = data.entrant_trend.reduce((s, p) => s + p.new_entrants, 0);
-  const totalExited = data.entrant_trend.reduce((s, p) => s + p.exited_actors, 0);
+  // Bug v3.4.9/N3: Die Detail-Net-Berechnung summierte new/exited über ALLE
+  // Jahre inklusive des laufenden Rumpfjahres (2026). Dort ist exited_actors
+  // typischerweise sehr groß (alle Akteure die nicht mehr auftauchen in den
+  // unvollständigen Daten), wodurch Net fälschlich negativ wurde → Text
+  // "schrumpfende Akteurslandschaft" trotz offensichtlich wachsendem
+  // Gesamtverlauf. Analog zum Panel-Fix in v3.4.7: nur vollständige Jahre
+  // (year <= dataCompleteYear) für die Net-Aussage nutzen; das Chart selbst
+  // zeigt weiterhin alle Jahre inkl. Rumpfjahr.
+  const completeYears = sortedTrend.filter((p) => p.year <= dataCompleteYear);
+  const summaryBasis = completeYears.length > 0 ? completeYears : sortedTrend;
+  const startYear = summaryBasis.length > 0 ? summaryBasis[0].year : null;
+  const endYear = summaryBasis.length > 0 ? summaryBasis[summaryBasis.length - 1].year : null;
+  const totalNew = summaryBasis.reduce((s, p) => s + p.new_entrants, 0);
+  const totalExited = summaryBasis.reduce((s, p) => s + p.exited_actors, 0);
   const net = totalNew - totalExited;
 
   return (
@@ -51,15 +62,36 @@ export default function TemporalDetail({ data }: TemporalDetailProps) {
           label="Aktive Akteure"
           value={latestYear ? latestYear.total_active.toLocaleString("de-DE") : "–"}
         />
+        {/* Bug v3.4.9/Q: Das Backend liefert `emerging_topics` / `declining_topics`
+            aktuell nicht konsistent für alle Technologien (z.B. Quantum Computing:
+            beide null). Statt "0" anzuzeigen (was wie "keine Trends gefunden"
+            wirkt) zeigen wir einen Dash mit Hinweis im Tooltip, wenn die Daten
+            komplett fehlen. */}
         <MetricCard
           label="Aufkommende Themen"
-          value={data.emerging_topics.length}
-          trend={data.emerging_topics.length > 0 ? "up" : "neutral"}
+          value={
+            Array.isArray(data.emerging_topics) && data.emerging_topics.length > 0
+              ? data.emerging_topics.length
+              : "–"
+          }
+          trend={
+            Array.isArray(data.emerging_topics) && data.emerging_topics.length > 0
+              ? "up"
+              : "neutral"
+          }
         />
         <MetricCard
           label="Abnehmende Themen"
-          value={data.declining_topics.length}
-          trend={data.declining_topics.length > 0 ? "down" : "neutral"}
+          value={
+            Array.isArray(data.declining_topics) && data.declining_topics.length > 0
+              ? data.declining_topics.length
+              : "–"
+          }
+          trend={
+            Array.isArray(data.declining_topics) && data.declining_topics.length > 0
+              ? "down"
+              : "neutral"
+          }
         />
         <MetricCard
           label="Themen-Cluster"
@@ -200,7 +232,9 @@ export default function TemporalDetail({ data }: TemporalDetailProps) {
             </p>
           )}
 
-          {(data.emerging_topics.length > 0 || data.declining_topics.length > 0) && (
+          {Array.isArray(data.emerging_topics) &&
+          Array.isArray(data.declining_topics) &&
+          (data.emerging_topics.length > 0 || data.declining_topics.length > 0) ? (
             <p>
               {data.emerging_topics.length > 0 && (
                 <>Es wurden <strong>{data.emerging_topics.length}</strong> aufkommende Themen identifiziert. </>
@@ -208,6 +242,13 @@ export default function TemporalDetail({ data }: TemporalDetailProps) {
               {data.declining_topics.length > 0 && (
                 <><strong>{data.declining_topics.length}</strong> Themen zeigen rückläufige Aktivität.</>
               )}
+            </p>
+          ) : (
+            <p className="text-xs text-[var(--color-text-muted)] italic">
+              Topic-Analyse (aufkommende / abnehmende Themen) ist für diese
+              Technologie aktuell nicht verfügbar — dafür wird ein separater
+              Topic-Modeling-Job benötigt, der noch nicht für alle Keywords
+              durchläuft.
             </p>
           )}
         </div>

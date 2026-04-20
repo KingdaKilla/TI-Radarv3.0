@@ -88,11 +88,11 @@ export default function TemporalPanel({
                   {last.total_active.toLocaleString("de-DE")} aktive Akteure (im Zeitfenster)
                   <InfoTooltip
                     text={
-                      `UC8 zaehlt distinct Patent-Anmelder und CORDIS-Teilnehmer, ` +
-                      `die im ausgewaehlten Zeitfenster mindestens einmal aktiv waren ` +
+                      `UC8 zählt distinct Patent-Anmelder und CORDIS-Teilnehmer, ` +
+                      `die im ausgewählten Zeitfenster mindestens einmal aktiv waren ` +
                       `(Scope: ${scopeLabel}). Diese Zahl unterscheidet sich bewusst von ` +
                       `UC9 (Cluster-Mitglieder) und UC11 (klassifizierte Organisationen) — ` +
-                      `unterschiedliche Scopes zaehlen unterschiedliche Populationen.`
+                      `unterschiedliche Scopes zählen unterschiedliche Populationen.`
                     }
                   />
                 </span>

@@ -79,6 +79,7 @@ services:
       UC_PATENT_GRANT_ADDRESS: patent-grant-svc:50051
       UC_EUROSCIVOC_ADDRESS: euroscivoc-svc:50051
       UC_PUBLICATION_ADDRESS: publication-svc:50051
+      LLM_ADDRESS: llm-svc:50070
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     restart: unless-stopped
     deploy:
@@ -283,6 +284,34 @@ services:
         limits:
           memory: 16G
           cpus: "12.0"
+    networks:
+      - backend
+
+  # ==================== LLM-Service (v3.5.0) ====================
+  # Stateless gRPC-Microservice fuer textuelle KI-Analyse von UC-Panel-Daten.
+  # Default-Provider: Gemini 2.0 Flash (API-Key ueber GEMINI_API_KEY in .env).
+  # Kein DB-Zugriff.
+  llm-svc:
+    build:
+      context: ..
+      dockerfile: services/llm-svc/Dockerfile
+    container_name: ti-radar-llm
+    environment:
+      LLM_LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
+      LLM_GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      LLM_ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LLM_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_MODEL_NAME: ${LLM_MODEL_NAME:-gemini-2.0-flash}
+      LLM_MAX_TOKENS: "4096"
+      LLM_TEMPERATURE: "0.3"
+      LLM_FAITHFULNESS_ENABLED: "false"
+      LLM_SERVICE_PORT: "50070"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
     networks:
       - backend
 

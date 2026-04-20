@@ -61,6 +61,13 @@ class Settings(BaseSettings):
     uc_euroscivoc_address: str = "euroscivoc-svc:50051"
     uc_publication_address: str = "publication-svc:50051"
 
+    # --- LLM-Service (v3.5.0) ---
+    # gRPC-Adresse des llm-svc. Der analyze-panel Endpoint forwardet Requests
+    # per gRPC dorthin. Bei leerem Default bzw. gesetzter ENV `LLM_ADDRESS`
+    # wird der Service aktiv; sonst liefert der Endpoint leeres Ergebnis.
+    llm_address: str = "llm-svc:50070"
+    llm_timeout_s: float = 30.0
+
     # --- gRPC: Per-UC Timeouts (Sekunden) ---
     uc_landscape_timeout: float = 60.0     # bei parallelen Requests DB-Pool-Contention
     uc_maturity_timeout: float = 60.0      # COUNT(DISTINCT family_id) auf grossen Datasets langsam

@@ -8,6 +8,7 @@
 
 import type { RadarResponse, UseCaseKey } from "@/lib/types";
 import DetailOverlay from "./DetailOverlay";
+import DetailLlmAnalysis from "./DetailLlmAnalysis";
 import {
   LandscapeDetail,
   MaturityDetail,
@@ -54,9 +55,22 @@ export default function DetailViewRouter({
   const content = detailComponents[activeDetail];
   if (!content) return null;
 
+  // v3.5.0: LLM-gestützte Analyse als zusätzliche Sektion unter dem
+  // regulären Detail-Content. Panel-Daten kommen direkt aus RadarResponse,
+  // technology aus den Metadaten.
+  const technology = data.metadata?.technology ?? "";
+  const panelData = (data as unknown as Record<string, unknown>)[activeDetail];
+
   return (
     <DetailOverlay ucKey={activeDetail} onClose={onClose}>
       {content}
+      {technology && panelData ? (
+        <DetailLlmAnalysis
+          technology={technology}
+          useCaseKey={activeDetail}
+          panelData={panelData as Record<string, unknown>}
+        />
+      ) : null}
     </DetailOverlay>
   );
 }

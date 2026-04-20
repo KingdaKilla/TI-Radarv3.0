@@ -23,6 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.config import Settings
 from src.grpc_clients import GrpcChannelManager
 from src.middleware import RateLimitMiddleware, RequestIdMiddleware
+from src.router_analyze import router as analyze_router
 from src.router_health import router as health_router
 from src.router_radar import router as radar_router
 from src.router_suggestions import router as suggestions_router
@@ -97,6 +98,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         cors_origins=settings.cors_origin_list,
         debug=settings.debug,
     )
+
+    # v3.5.0: settings am app.state verfügbar machen, damit Router-Handler
+    # (z.B. router_analyze) auf llm_address / llm_timeout_s zugreifen können.
+    app.state.settings = settings
 
     # gRPC Channel-Manager initialisieren
     channel_manager = GrpcChannelManager(settings)
@@ -216,6 +221,8 @@ def create_app() -> FastAPI:
     app.include_router(radar_router)
     app.include_router(health_router)
     app.include_router(suggestions_router)
+    # v3.5.0: LLM-gestützte Panel-Analyse (POST /api/v1/analyze-panel)
+    app.include_router(analyze_router)
 
     return app
 

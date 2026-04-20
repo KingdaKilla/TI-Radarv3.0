@@ -1,0 +1,183 @@
+// =============================================================================
+// llm.proto — LLM Analysis Service fuer die Technology Intelligence Platform
+// =============================================================================
+// Stellt textuelle KI-Analysen fuer einzelne UC-Panels bereit.
+// Der Orchestrator sendet Panel-Daten + UC-Key und erhaelt eine
+// Markdown-formatierte Analyse zurueck.
+//
+// v4.0: Erweitert um RAG-gestuetzte Analyse (AnalyzePanelWithContext)
+//       und interaktiven Chat (Chat) mit Retrieval-Kontext.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.llm;
+
+import "retrieval.proto";
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.llm";
+option go_package = "tip/proto/llm";
+
+// ---------------------------------------------------------------------------
+// LLM Analysis Service — textuelle Analyse von UC-Panel-Daten.
+// ---------------------------------------------------------------------------
+service LlmAnalysisService {
+  // Analysiert die Daten eines einzelnen UC-Panels und liefert
+  // eine Markdown-formatierte textuelle Interpretation zurueck.
+  rpc AnalyzePanel(AnalyzePanelRequest) returns (AnalyzePanelResponse);
+
+  // RAG-gestuetzte Analyse: Panel-Daten + semantisch abgerufene
+  // Kontext-Dokumente fuer eine fundierte, quellenbasierte Analyse.
+  rpc AnalyzePanelWithContext(AnalyzePanelWithContextRequest) returns (AnalyzePanelResponse);
+
+  // Interaktiver Chat: Benutzer stellt Fragen zur Technologie,
+  // angereichert mit Retrieval-Kontext und Chat-Historie.
+  rpc Chat(ChatRequest) returns (ChatResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Request: Panel-Daten zur Analyse an das LLM senden.
+// ---------------------------------------------------------------------------
+message AnalyzePanelRequest {
+  // Technologie-Suchbegriff, z.B. "solid-state batteries", "CRISPR".
+  string technology = 1;
+
+  // UC-Schluessel, z.B. "landscape", "maturity", "competitive".
+  string use_case_key = 2;
+
+  // Serialisierte Panel-Daten als JSON-String.
+  string panel_data_json = 3;
+
+  // Sprache der Analyse: "de" (Standard) oder "en".
+  string language = 4;
+
+  // Opaque Request-ID fuer verteiltes Tracing / Korrelation.
+  string request_id = 5;
+
+  // Optional: LLM-Provider-Override fuer diesen Request.
+  // Moegliche Werte: "anthropic", "openai", "gemini", "ollama".
+  // Leer = Default-Provider verwenden.
+  string provider_override = 6;
+}
+
+// ---------------------------------------------------------------------------
+// Response: Textuelle Analyse-Ergebnisse.
+// ---------------------------------------------------------------------------
+message AnalyzePanelResponse {
+  // Markdown-formatierter Analysetext.
+  string analysis_text = 1;
+
+  // Name des verwendeten LLM-Modells, z.B. "claude-sonnet-4-20250514".
+  string model_used = 2;
+
+  // Verarbeitungszeit in Millisekunden.
+  int64 processing_time_ms = 3;
+
+  // Kernaussagen als Stichpunkte (Bullet Points).
+  repeated string key_findings = 4;
+
+  // Konfidenz-Score im Bereich [0, 1].
+  double confidence = 5;
+
+  // --- EU AI Act Transparenz (Art. 50(2)) ---
+  string provider_type = 7;    // "cloud" oder "local"
+  bool ai_generated = 8;       // Kennzeichnung als KI-generiert
+}
+
+// ---------------------------------------------------------------------------
+// Request: RAG-gestuetzte Panel-Analyse mit Kontext-Dokumenten.
+// ---------------------------------------------------------------------------
+message AnalyzePanelWithContextRequest {
+  // Technologie-Suchbegriff, z.B. "solid-state batteries", "CRISPR".
+  string technology = 1;
+
+  // UC-Schluessel, z.B. "landscape", "maturity", "competitive".
+  string use_case_key = 2;
+
+  // Serialisierte Panel-Daten als JSON-String.
+  string panel_data_json = 3;
+
+  // Vom Retrieval-Service abgerufene Kontext-Dokumente.
+  // Diese werden dem LLM als zusaetzlicher Kontext mitgegeben.
+  repeated tip.retrieval.RetrievedDocument context_documents = 4;
+
+  // Sprache der Analyse: "de" (Standard) oder "en".
+  string language = 5;
+
+  // Opaque Request-ID fuer verteiltes Tracing / Korrelation.
+  string request_id = 6;
+
+  // Optional: LLM-Provider-Override fuer diesen Request.
+  // Moegliche Werte: "anthropic", "openai", "gemini", "ollama".
+  // Leer = Default-Provider verwenden.
+  string provider_override = 7;
+}
+
+// ---------------------------------------------------------------------------
+// Eine einzelne Chat-Nachricht (Benutzer oder Assistent).
+// ---------------------------------------------------------------------------
+message ChatMessage {
+  // Rolle: "user" oder "assistant".
+  string role = 1;
+
+  // Nachrichteninhalt als Markdown-Text.
+  string content = 2;
+}
+
+// ---------------------------------------------------------------------------
+// Request: Interaktive Chat-Anfrage mit Retrieval-Kontext.
+// ---------------------------------------------------------------------------
+message ChatRequest {
+  // Technologie-Suchbegriff fuer den Kontext.
+  string technology = 1;
+
+  // Aktuelle Benutzernachricht.
+  string user_message = 2;
+
+  // Vom Retrieval-Service abgerufene Kontext-Dokumente.
+  repeated tip.retrieval.RetrievedDocument context_documents = 3;
+
+  // Bisherige Chat-Historie (aelteste zuerst).
+  repeated ChatMessage history = 4;
+
+  // Sprache der Antwort: "de" (Standard) oder "en".
+  string language = 5;
+
+  // Opaque Request-ID fuer verteiltes Tracing / Korrelation.
+  string request_id = 6;
+
+  // Serialisierte Panel-Daten (JSON) der aktuell angezeigten Analyse.
+  // Ermoeglicht dem LLM, Fragen zu den Analyse-Ergebnissen zu beantworten.
+  // Leer wenn keine Analyse geladen ist (Graceful Degradation).
+  string panel_context_json = 7;
+
+  // Optional: LLM-Provider-Override fuer diesen Request.
+  // Moegliche Werte: "anthropic", "openai", "gemini", "ollama".
+  // Leer = Default-Provider verwenden.
+  string provider_override = 8;
+}
+
+// ---------------------------------------------------------------------------
+// Response: Chat-Antwort mit Quellenangaben.
+// ---------------------------------------------------------------------------
+message ChatResponse {
+  // Markdown-formatierte Antwort des Assistenten.
+  string answer = 1;
+
+  // Quellenverweise (source_id der verwendeten Kontext-Dokumente).
+  repeated string sources = 2;
+
+  // Kernaussagen als Stichpunkte (Bullet Points).
+  repeated string key_findings = 3;
+
+  // Name des verwendeten LLM-Modells.
+  string model_used = 4;
+
+  // Verarbeitungszeit in Millisekunden.
+  int64 processing_time_ms = 5;
+
+  // --- EU AI Act Transparenz (Art. 50(2)) ---
+  string provider_type = 7;    // "cloud" oder "local"
+  bool ai_generated = 8;       // Kennzeichnung als KI-generiert
+}

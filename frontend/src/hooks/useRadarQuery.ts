@@ -4,7 +4,7 @@
  * ────────────────────────────────────────────── */
 
 import { useQuery } from "@tanstack/react-query";
-import { analyzeRadar, getSuggestions } from "@/lib/api";
+import { analyzeRadar, getSuggestions, getSuggestionPool } from "@/lib/api";
 import type { RadarRequest, RadarResponse } from "@/lib/types";
 import { USE_CASES } from "@/lib/types";
 
@@ -13,6 +13,7 @@ const radarKeys = {
   all: ["radar"] as const,
   analyze: (params: RadarRequest) => [...radarKeys.all, "analyze", params] as const,
   suggestions: (query: string) => [...radarKeys.all, "suggestions", query] as const,
+  pool: [...["radar"], "suggestion-pool"] as const,
 };
 
 /**
@@ -53,5 +54,20 @@ export function useSuggestions(query: string) {
     enabled: query.trim().length >= 2,
     staleTime: 2 * 60 * 1000, // 2 Minuten
     placeholderData: (previousData) => previousData,
+  });
+}
+
+/**
+ * useSuggestionPool -- komplette kuratierte Technologie-Whitelist.
+ * Wird einmalig pro Session geladen und dient zur Eingabe-Validierung
+ * in der SearchBar (nur Technologien aus dem Pool erlaubt).
+ */
+export function useSuggestionPool() {
+  return useQuery<string[], Error>({
+    queryKey: radarKeys.pool,
+    queryFn: getSuggestionPool,
+    staleTime: 60 * 60 * 1000, // 1 Stunde - Pool aendert sich selten
+    gcTime: 24 * 60 * 60 * 1000,
+    retry: 1,
   });
 }

@@ -59,6 +59,11 @@ export async function getSuggestions(
   );
 }
 
+/** GET /api/suggestions/pool -- Komplette kuratierte Technologie-Whitelist */
+export async function getSuggestionPool(): Promise<string[]> {
+  return apiFetch<string[]>(`/api/suggestions/pool`);
+}
+
 /** GET /health -- Backend health check */
 export async function checkHealth(): Promise<HealthResponse> {
   return apiFetch<HealthResponse>("/health");

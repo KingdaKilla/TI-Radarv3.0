@@ -21,34 +21,114 @@ router = APIRouter(prefix="/api/v1", tags=["Suggestions"])
 
 
 # ---------------------------------------------------------------------------
-# Kuratierte Default-Vorschlaege (alphabetisch sortiert)
-# Aus den haeufigsten Patentklassen und EU-Projekten.
+# Kuratierte Technologie-Liste (alphabetisch sortiert)
+# Dient gleichzeitig als Default-Vorschlag und als Whitelist fuer die
+# Frontend-Validierung (Pool-Endpoint /api/v1/suggestions/pool).
 # ---------------------------------------------------------------------------
 _DEFAULT_SUGGESTIONS: list[str] = [
+    # AI & Computing
+    "3D Printing",
+    "5G",
+    "6G",
+    "Additive Manufacturing",
     "Artificial Intelligence",
+    "Augmented Reality",
+    "Autonomous Drones",
     "Autonomous Vehicles",
+    # Batteries & Storage
     "Battery Technology",
+    "Bioinformatics",
+    "Biomaterials",
+    "Bioprinting",
     "Blockchain",
+    "Brain-Computer Interface",
+    # Energy & Climate
     "Carbon Capture",
+    "Chip Design",
+    "Circular Economy",
+    "Collaborative Robotics",
+    "Composite Materials",
+    "Computer Vision",
     "CRISPR",
     "Cybersecurity",
+    "Data Center",
+    "Deep Learning",
+    "Digital Health",
+    "Digital Twins",
+    "Direct Air Capture",
+    # Transportation
+    "Edge Computing",
     "Electric Vehicles",
+    "Extended Reality",
+    "Federated Learning",
     "Fuel Cells",
+    # Biotech & Medical
     "Gene Therapy",
+    "Generative AI",
+    "Geothermal Energy",
     "Graphene",
+    "Green Hydrogen",
+    "Grid Energy Storage",
+    "Humanoid Robots",
     "Hydrogen Energy",
+    "Hydrogen Vehicles",
+    "Hyperloop",
+    # Manufacturing & Industrial
+    "Industrial IoT",
     "Internet of Things",
+    "Large Language Models",
     "Laser Technology",
+    "Lithium-Ion Batteries",
+    # Materials
     "Machine Learning",
+    "Metamaterials",
+    "mRNA Technology",
+    "Nanomaterials",
     "Nanotechnology",
+    "Natural Language Processing",
+    "Neuromorphic Computing",
+    "Neuroprosthetics",
+    "Nuclear Fusion",
+    "Offshore Wind",
     "Perovskite Solar",
+    "Photonic Computing",
     "Photovoltaic",
+    "Post-Quantum Cryptography",
+    "Precision Agriculture",
+    "Precision Medicine",
+    "Privacy Enhancing Technologies",
+    # Quantum & Computing Infrastructure
+    "Quantum Communication",
     "Quantum Computing",
+    "Quantum Sensing",
+    "Redox Flow Batteries",
+    "Regenerative Medicine",
+    "Reinforcement Learning",
+    "Reusable Rockets",
+    # Robotics & Automation
     "Robotics",
+    "Satellite Internet",
+    "Satellite Technology",
     "Semiconductor",
+    "Small Modular Reactors",
+    "Smart Factories",
+    "Smart Grid",
+    "Smart Materials",
+    "Sodium-Ion Batteries",
+    "Solar Energy",
     "Solid-State Batteries",
+    # Space & Infrastructure
+    "Space Technology",
     "Superconductor",
+    "Sustainable Aviation Fuel",
+    "Synthetic Biology",
+    "Tidal Energy",
+    "Urban Air Mobility",
+    "Vertical Farming",
+    "Virtual Reality",
+    "Wearable Health",
     "Wind Energy",
+    "Zero Trust Security",
 ]
 
 
@@ -147,6 +227,17 @@ def _normalize_case(term: str) -> str:
 # ---------------------------------------------------------------------------
 # Endpoint: GET /api/v1/suggestions
 # ---------------------------------------------------------------------------
+
+
+@router.get("/suggestions/pool")
+async def suggestion_pool() -> list[str]:
+    """Liefert die komplette kuratierte Technologie-Whitelist.
+
+    Frontend nutzt diesen Pool, um Nutzer-Eingaben vor Submit zu validieren
+    (nur Technologien aus dem Pool zulaessig, verhindert unsinnige Eingaben
+    die Backend-Fehler provozieren wuerden).
+    """
+    return _DEFAULT_SUGGESTIONS
 
 
 @router.get("/suggestions")

@@ -1,0 +1,88 @@
+// =============================================================================
+// embedding.proto — Embedding Service fuer die Technology Intelligence Platform
+// =============================================================================
+// Verwaltet das Batch-Embedding von Dokumenten (Patente, Projekte, Paper)
+// in pgvector. Der Import-Service oder ein Admin-Endpunkt triggert das
+// Embedding; der Status kann jederzeit abgefragt werden.
+// =============================================================================
+
+syntax = "proto3";
+
+package tip.embedding;
+
+option java_multiple_files = true;
+option java_package = "de.tip.proto.embedding";
+option go_package = "tip/proto/embedding";
+
+// ---------------------------------------------------------------------------
+// Embedding Service — Batch-Embedding von Dokumenten in pgvector.
+// ---------------------------------------------------------------------------
+service EmbeddingService {
+  // Startet oder setzt das Batch-Embedding fuer eine Dokumentquelle fort.
+  rpc EmbedDocuments(EmbedRequest) returns (EmbedResponse);
+
+  // Gibt den aktuellen Embedding-Status fuer eine Quelle zurueck.
+  rpc GetEmbeddingStatus(StatusRequest) returns (StatusResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Request: Batch-Embedding fuer eine Dokumentquelle starten.
+// ---------------------------------------------------------------------------
+message EmbedRequest {
+  // Dokumentquelle: "patents" | "projects" | "papers".
+  string source = 1;
+
+  // Batch-Groesse pro Iteration (Standard: 1000).
+  int32 batch_size = 2;
+
+  // Optional: nur Dokumente ab diesem Jahr einbetten (z.B. fuer Patents).
+  int32 year_from = 3;
+
+  // Opaque Request-ID fuer verteiltes Tracing / Korrelation.
+  string request_id = 4;
+}
+
+// ---------------------------------------------------------------------------
+// Response: Fortschritt des Batch-Embeddings.
+// ---------------------------------------------------------------------------
+message EmbedResponse {
+  // Anzahl der in diesem Durchlauf eingebetteten Dokumente.
+  int64 embedded_count = 1;
+
+  // Anzahl der noch ausstehenden Dokumente.
+  int64 remaining_count = 2;
+
+  // Gesamtanzahl der Dokumente in der Quelle.
+  int64 total_count = 3;
+
+  // Verstrichene Zeit in Sekunden fuer diesen Durchlauf.
+  float elapsed_seconds = 4;
+
+  // Aktueller Status: "running" | "completed" | "error".
+  string status = 5;
+}
+
+// ---------------------------------------------------------------------------
+// Request: Embedding-Status fuer eine Quelle abfragen.
+// ---------------------------------------------------------------------------
+message StatusRequest {
+  // Dokumentquelle: "patents" | "projects" | "papers".
+  string source = 1;
+}
+
+// ---------------------------------------------------------------------------
+// Response: Aktueller Embedding-Fortschritt.
+// ---------------------------------------------------------------------------
+message StatusResponse {
+  // Gesamtanzahl der Dokumente in der Quelle.
+  int64 total_documents = 1;
+
+  // Anzahl der bereits eingebetteten Dokumente.
+  int64 embedded_documents = 2;
+
+  // Fortschritt in Prozent [0, 100].
+  float progress_percent = 3;
+
+  // Aktueller Status: "idle" | "running" | "completed" | "error".
+  string status = 4;
+}

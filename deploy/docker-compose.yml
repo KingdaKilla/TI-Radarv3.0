@@ -80,6 +80,7 @@ services:
       UC_EUROSCIVOC_ADDRESS: euroscivoc-svc:50051
       UC_PUBLICATION_ADDRESS: publication-svc:50051
       LLM_ADDRESS: llm-svc:50070
+      RETRIEVAL_ADDRESS: retrieval-svc:50051
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     restart: unless-stopped
     deploy:
@@ -287,6 +288,63 @@ services:
     networks:
       - backend
 
+  # ==================== Embedding-Service (v3.6.0) ====================
+  # Erzeugt vector(384)-Embeddings für Texte (Patent-Titel, Projekt-Objectives,
+  # Paper-Abstracts). Model: `intfloat/multilingual-e5-small` (384-dim) —
+  # passt zum vorprovisionierten v3.x DB-Schema (002_schema.sql vector(384)).
+  # Erster Start lädt Model (~230 MB) aus HuggingFace-Cache.
+  embedding-svc:
+    build:
+      context: ..
+      dockerfile: services/embedding-svc/Dockerfile
+    container_name: ti-radar-embedding
+    environment:
+      EMBEDDING_EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-local}
+      EMBEDDING_EMBEDDING_MODEL: "intfloat/multilingual-e5-small"
+      EMBEDDING_EMBEDDING_DIMENSIONS: "384"
+      EMBEDDING_DEVICE: ${EMBEDDING_DEVICE:-cpu}
+      EMBEDDING_DATABASE_URL: postgresql://${POSTGRES_USER:-tip_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ti_radar}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "1.0"
+    networks:
+      - backend
+
+  # ==================== Retrieval-Service (v3.6.0) ====================
+  # Semantische Suche über pgvector — nutzt embedding-svc für Query-Embeddings
+  # und joined auf patents/projects/papers mit vorher befüllten vector-Spalten.
+  # Bei leeren Embedding-Spalten (bevor Embedding-Job gelaufen ist) liefert
+  # der Service leere Ergebnisse; keine Fehler.
+  retrieval-svc:
+    build:
+      context: ..
+      dockerfile: services/retrieval-svc/Dockerfile
+    container_name: ti-radar-retrieval
+    environment:
+      RETRIEVAL_TOP_K: "10"
+      RETRIEVAL_SIMILARITY_THRESHOLD: "0.3"
+      RETRIEVAL_EMBEDDING_MODEL: "intfloat/multilingual-e5-small"
+      RETRIEVAL_EMBEDDING_DIMENSIONS: "384"
+      RETRIEVAL_DATABASE_URL: postgresql://${POSTGRES_USER:-tip_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ti_radar}
+      RETRIEVAL_EMBEDDING_ADDRESS: embedding-svc:50051
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "0.5"
+    networks:
+      - backend
+
   # ==================== LLM-Service (v3.5.0) ====================
   # Stateless gRPC-Microservice fuer textuelle KI-Analyse von UC-Panel-Daten.
   # Default-Provider: Gemini 2.0 Flash (API-Key ueber GEMINI_API_KEY in .env).
@@ -304,7 +362,11 @@ services:
       LLM_MODEL_NAME: ${LLM_MODEL_NAME:-gemini-2.0-flash}
       LLM_MAX_TOKENS: "4096"
       LLM_TEMPERATURE: "0.3"
-      LLM_FAITHFULNESS_ENABLED: "false"
+      # v3.6.0: Faithfulness-Guard opt-in. Default false; wenn true,
+      # wird der benötigte API-Key automatisch geprüft (Fail-open).
+      LLM_FAITHFULNESS_ENABLED: ${FAITHFULNESS_ENABLED:-false}
+      LLM_FAITHFULNESS_MODEL: ${FAITHFULNESS_MODEL:-gemini-2.0-flash}
+      LLM_SUFFICIENCY_THRESHOLD: ${FAITHFULNESS_THRESHOLD:-PARTIAL}
       LLM_SERVICE_PORT: "50070"
     restart: unless-stopped
     deploy:

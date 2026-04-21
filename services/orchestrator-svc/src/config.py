@@ -68,6 +68,15 @@ class Settings(BaseSettings):
     llm_address: str = "llm-svc:50070"
     llm_timeout_s: float = 30.0
 
+    # --- Retrieval-Service (v3.6.0) ---
+    # gRPC-Adresse des retrieval-svc. Chat-Endpoint ruft vor dem LLM-Call
+    # Retrieval auf um Top-K relevante Patents/Projects/Papers zu holen.
+    # Wenn der Service nicht erreichbar ist oder DB-Embeddings leer sind,
+    # liefert Retrieval leere Dokument-Liste — Chat funktioniert trotzdem.
+    retrieval_address: str = "retrieval-svc:50051"
+    retrieval_timeout_s: float = 10.0
+    retrieval_top_k: int = 10
+
     # --- gRPC: Per-UC Timeouts (Sekunden) ---
     uc_landscape_timeout: float = 60.0     # bei parallelen Requests DB-Pool-Contention
     uc_maturity_timeout: float = 60.0      # COUNT(DISTINCT family_id) auf grossen Datasets langsam

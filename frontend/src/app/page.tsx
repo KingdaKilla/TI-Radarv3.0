@@ -10,6 +10,7 @@ import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { Radar, Activity, Clock, GitCompareArrows, Home } from "lucide-react";
 import SearchBar from "@/components/SearchBar";
+import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { useRadarQuery } from "@/hooks/useRadarQuery";
 import { useDetailView } from "@/hooks/useDetailView";
 import DetailViewRouter from "@/components/detail/DetailViewRouter";
@@ -25,6 +26,9 @@ import type { RadarRequest, UseCaseKey } from "@/lib/types";
 export default function DashboardPage() {
   const [params, setParams] = useState<RadarRequest | null>(null);
   const [activeClusterIndex, setActiveClusterIndex] = useState(0);
+  // v3.6.0: Chat-Sidebar-State. Öffnet sich per "Fragen"-Button, sobald
+  // eine Radar-Analyse vorhanden ist.
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const { data, isLoading, error, isFetching } = useRadarQuery(params);
   const { activeDetail, openDetail, closeDetail } = useDetailView();
@@ -281,6 +285,38 @@ export default function DashboardPage() {
           onClose={closeDetail}
         />
       )}
+
+      {/* v3.6.0: Chat-FAB — unten rechts, erscheint nur mit Daten */}
+      {data && !isChatOpen && (
+        <button
+          type="button"
+          onClick={() => setIsChatOpen(true)}
+          aria-label="Chat mit der Technologie-Analyse öffnen"
+          className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 rounded-full bg-[var(--color-accent)] px-5 py-3 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2"
+        >
+          💬 Chat
+        </button>
+      )}
+
+      <ChatSidebar
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        technology={params?.technology ?? null}
+        panelContext={
+          data
+            ? ({
+                technology: data.metadata?.technology ?? params?.technology ?? "",
+                landscape_summary: data.landscape
+                  ? {
+                      total_patents: data.landscape.total_patents ?? 0,
+                      total_projects: data.landscape.total_projects ?? 0,
+                      total_publications: data.landscape.total_publications ?? 0,
+                    }
+                  : undefined,
+              } as any)
+            : null
+        }
+      />
     </div>
   );
 }

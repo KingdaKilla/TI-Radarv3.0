@@ -24,6 +24,7 @@ from src.config import Settings
 from src.grpc_clients import GrpcChannelManager
 from src.middleware import RateLimitMiddleware, RequestIdMiddleware
 from src.router_analyze import router as analyze_router
+from src.router_chat import router as chat_router
 from src.router_health import router as health_router
 from src.router_radar import router as radar_router
 from src.router_suggestions import router as suggestions_router
@@ -223,6 +224,8 @@ def create_app() -> FastAPI:
     app.include_router(suggestions_router)
     # v3.5.0: LLM-gestützte Panel-Analyse (POST /api/v1/analyze-panel)
     app.include_router(analyze_router)
+    # v3.6.0: RAG-Chat (POST /api/v1/chat)
+    app.include_router(chat_router)
 
     return app
 

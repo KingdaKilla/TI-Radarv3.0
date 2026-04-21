@@ -13,6 +13,10 @@
  * ────────────────────────────────────────────── */
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  readAnalysisCache,
+  writeAnalysisCache,
+} from "@/lib/analysis-cache";
 
 interface AnalysisResult {
   analysisText: string;
@@ -83,7 +87,7 @@ export function useAnalysis(
 
     const cacheKey = `${technology}::${useCaseKey}`;
 
-    // Check cache first
+    // Check in-memory cache first
     const cached = cacheRef.current.get(cacheKey);
     if (cached) {
       setState({
@@ -91,6 +95,27 @@ export function useAnalysis(
         isLoading: false,
         error: null,
         modelUsed: cached.modelUsed,
+      });
+      return;
+    }
+
+    // v3.6.0/Ξ-2: Session-persistenter Cache — localStorage-Check.
+    // Überlebt Page-Reload und Navigation zurück/vor.
+    const persisted = readAnalysisCache(technology, useCaseKey);
+    if (persisted) {
+      // In-Memory-Cache mit persistentem Eintrag warmhalten
+      cacheRef.current.set(cacheKey, {
+        analysisText: persisted.analysisText,
+        modelUsed: persisted.modelUsed,
+        keyFindings: persisted.keyFindings,
+        confidence: persisted.confidence,
+        processingTimeMs: persisted.processingTimeMs,
+      });
+      setState({
+        analysisText: persisted.analysisText,
+        isLoading: false,
+        error: null,
+        modelUsed: persisted.modelUsed,
       });
       return;
     }
@@ -133,6 +158,10 @@ export function useAnalysis(
         processingTimeMs: (raw.processing_time_ms ?? raw.processingTimeMs ?? 0) as number,
       };
       cacheRef.current.set(cacheKey, result);
+      // v3.6.0/Ξ-2: zusätzlich in localStorage persistieren
+      if (result.analysisText) {
+        writeAnalysisCache(technology, useCaseKey, result);
+      }
 
       setState({
         analysisText: result.analysisText,

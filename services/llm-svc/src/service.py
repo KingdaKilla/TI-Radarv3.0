@@ -330,13 +330,39 @@ class LlmAnalysisServicer(_get_base_class()):  # type: ignore[misc]
         )
 
         # --- Faithfulness-Guard (optional) ---
+        # v3.6.0/Ξ-3: Opt-in mit API-Key-Fallback. Das konfigurierte
+        # `faithfulness_model` (default: claude-haiku) braucht einen
+        # Anthropic-API-Key. Ist der nicht gesetzt, deaktivieren wir den
+        # Guard automatisch mit Warning — statt beim ersten Chat-Call mit
+        # 500er zu fliegen.
         faithfulness: FaithfulnessPort | None = None
         if self._settings.faithfulness_enabled:
-            faithfulness = LLMFaithfulnessChecker(self._provider)
-            logger.info(
-                "faithfulness_guard_aktiviert",
-                threshold=self._settings.sufficiency_threshold,
+            model = self._settings.faithfulness_model.lower()
+            key_missing = (
+                "claude" in model and not self._settings.anthropic_api_key
+            ) or (
+                model.startswith("gpt") and not self._settings.openai_api_key
+            ) or (
+                model.startswith("gemini") and not self._settings.gemini_api_key
             )
+            if key_missing:
+                logger.warning(
+                    "faithfulness_guard_deaktiviert_kein_api_key",
+                    faithfulness_model=self._settings.faithfulness_model,
+                    hint=(
+                        "LLM_FAITHFULNESS_ENABLED=true gesetzt, aber der benötigte "
+                        "API-Key fehlt. Guard bleibt aus (Fail-open). Setze z.B. "
+                        "LLM_ANTHROPIC_API_KEY oder wechsle auf "
+                        "LLM_FAITHFULNESS_MODEL=gemini-2.0-flash (nutzt Gemini-Key)."
+                    ),
+                )
+            else:
+                faithfulness = LLMFaithfulnessChecker(self._provider)
+                logger.info(
+                    "faithfulness_guard_aktiviert",
+                    threshold=self._settings.sufficiency_threshold,
+                    faithfulness_model=self._settings.faithfulness_model,
+                )
 
         # --- Use Cases initialisieren ---
         self._analyze_panel = AnalyzePanel(

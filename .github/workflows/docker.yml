@@ -20,7 +20,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install grpcio-tools
-        run: pip install grpcio-tools protobuf
+        # protobuf<6 pinnen: google-generativeai (llm-svc) klemmt transitiv
+        # protobuf<6.0.0.dev0. gencode 5.x ist aufwaertskompatibel mit
+        # Runtime-protobuf 6.x, also funktionieren die Stubs in allen Services.
+        run: pip install grpcio-tools "protobuf<6"
 
       - name: Generate gRPC Proto Stubs
         run: bash scripts/generate_protos.sh

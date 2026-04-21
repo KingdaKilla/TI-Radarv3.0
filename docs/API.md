@@ -9,7 +9,8 @@ Der Orchestrator stellt eine REST/JSON-API auf Port 8000 bereit. Alle Analyse-En
 | `POST` | `/api/v1/radar` | Komplette Radar-Analyse (alle 13 UC-Services parallel) |
 | `POST` | `/api/v1/analyze-panel` | **v3.5.0:** LLM-Analyse eines einzelnen Panels |
 | `POST` | `/api/v1/chat` | **v3.6.0:** RAG-Chat (semantische Suche + LLM-Antwort) |
-| `GET` | `/api/v1/suggestions` | Autocomplete-Vorschlaege fuer das Suchfeld |
+| `GET` | `/api/v1/suggestions` | Autocomplete-Vorschlaege (Pool + DB-ngrams) |
+| `GET` | `/api/v1/suggestions/pool` | **v3.6.7:** Komplette kuratierte Technologie-Whitelist (93 Eintraege) |
 | `GET` | `/health` | Health Check (shallow oder deep) |
 | `GET` | `/metrics` | Prometheus-Metriken (OpenMetrics-Format) |
 | `POST` | `/api/v1/import/epo` | EPO-Patent-Bulk-Import |
@@ -182,15 +183,20 @@ Nicht angeforderte Panels werden in der Response als leere Objekte `{}` zurückg
 
 ## GET /api/v1/suggestions
 
-Liefert Autocomplete-Vorschläge basierend auf Patent- und Projekt-Titeln aus der Datenbank.
+Liefert Autocomplete-Vorschläge. Verhalten abhängig vom `q`-Parameter:
+
+- **Leer oder < 2 Zeichen** → Prefix-Top-N aus der kuratierten 93-Eintraege-Whitelist (`_DEFAULT_SUGGESTIONS`).
+- **≥ 2 Zeichen** → Ngram-Extraktion aus Patent- und Projekttiteln (`ILIKE '%q%'` + Stopword-Filter). Fallback auf Whitelist-Filter bei DB-Fehler.
+
+**Hinweis:** Die SearchBar im Frontend nutzt seit v3.6.7 ausschliesslich den Pool-Endpoint (`/suggestions/pool`) und nicht mehr diesen hier — DB-ngram-Vorschlaege waren zu unsauber und haben unsinnige Freitext-Eingaben begünstigt. Dieser Endpoint bleibt für Drittintegrationen verfügbar.
 
 ### Request
 
 ```bash
-# Kuratierte Default-Vorschläge (leerer Query)
+# Default-Vorschlaege (leerer Query)
 curl "http://localhost:8000/api/v1/suggestions"
 
-# Suche nach Prefix
+# Suche nach Substring
 curl "http://localhost:8000/api/v1/suggestions?q=quantum&limit=5"
 ```
 
@@ -204,10 +210,41 @@ curl "http://localhost:8000/api/v1/suggestions?q=quantum&limit=5"
 ### Response (200)
 
 ```json
-["Quantum Computing", "Quantum Dots", "Quantum Sensing", "Quantum Cryptography"]
+["Quantum Communication", "Quantum Computing", "Quantum Sensing"]
 ```
 
-Bei leerem oder kurzem Suchbegriff werden kuratierte Default-Vorschläge zurückgegeben (z.B. "Artificial Intelligence", "Battery Technology", "CRISPR", etc.).
+---
+
+## GET /api/v1/suggestions/pool
+
+**v3.6.7** — Liefert die komplette kuratierte Technologie-Whitelist (93 Einträge, alphabetisch sortiert). Das Frontend nutzt diesen Endpoint, um Nutzer-Eingaben in der SearchBar vor Submit gegen den Pool zu validieren.
+
+### Request
+
+```bash
+curl http://localhost:8000/api/v1/suggestions/pool
+```
+
+### Response (200)
+
+```json
+[
+  "3D Printing",
+  "5G",
+  "6G",
+  "Additive Manufacturing",
+  "Artificial Intelligence",
+  "Augmented Reality",
+  "Autonomous Drones",
+  "Autonomous Vehicles",
+  "Battery Technology",
+  "...",
+  "Wind Energy",
+  "Zero Trust Security"
+]
+```
+
+Die Liste ist in `services/orchestrator-svc/src/router_suggestions.py` (`_DEFAULT_SUGGESTIONS`) gepflegt und deckt AI/Computing, Energie/Klima, Batterien, Biotech, Materialien, Verkehr, Fertigung, Space, Quantum, Security, Robotik und XR ab. Erweiterungen: Eintrag ergänzen, alphabetisch einsortieren, Unit-Test (`test_suggestions_pool`) aktualisieren.
 
 ---
 
@@ -626,9 +663,11 @@ X-API-Key: <optional>
 | Feld | Typ | Pflicht | Beschreibung |
 |---|---|---|---|
 | `technology` | string | ja | 1–200 Zeichen |
-| `use_case_key` | string | ja | z. B. `landscape`, `maturity`, `competitive` |
+| `use_case_key` | string | ja | Einer von: `landscape`, `maturity`, `competitive`, `funding`, `cpc_flow`, `geographic`, `research_impact`, `temporal`, `tech_cluster`, `euroscivoc`, `actor_type`, `patent_grant`, `publication` (seit v3.6.9 wird auch `publication` unterstützt). Unbekannter Key → leerer `analysis_text`. |
 | `panel_data` | object | ja | Panel-Response aus `/radar` |
 | `language` | string | nein | `de` (Default) oder `en` |
+
+**Timeouts (seit v3.6.8):** Der Orchestrator wartet `LLM_TIMEOUT_S=60 s` auf den gRPC-Call; `llm-svc` seinerseits wartet `LLM_LLM_TIMEOUT_S=60 s` auf die Provider-Response. Überschreitung → HTTP 200 mit leerem `analysis_text` (Graceful Degradation).
 
 ### Response (200)
 

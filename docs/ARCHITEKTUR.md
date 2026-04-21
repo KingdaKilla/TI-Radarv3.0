@@ -2,7 +2,7 @@
 
 ## Systemübersicht
 
-TI-Radar ist als Microservice-Architektur mit **19 Python-Services** + 1 Next.js-Frontend aufgebaut. Das Next.js-Frontend kommuniziert über REST/JSON mit einem FastAPI-Orchestrator, der Anfragen parallel via gRPC an 13 spezialisierte Use-Case-Services (UC1-UC12 + UC-C Publication) verteilt. Seit v3.5.0 steht eine LLM-gestützte Panel-Analyse bereit; seit v3.6.0 zusätzlich ein RAG-Chat mit semantischer Suche über die Patent-/Projekt-/Paper-Korpora. Alle Services greifen auf eine gemeinsame PostgreSQL-17-Datenbank mit `pgvector`-Extension zu.
+TI-Radar ist als Microservice-Architektur mit **19 Python-Services** + 1 Next.js-Frontend aufgebaut. Das Next.js-Frontend kommuniziert über REST/JSON mit einem FastAPI-Orchestrator, der Anfragen parallel via gRPC an 13 spezialisierte Use-Case-Services (UC1-UC12 + UC-C Publication) verteilt. Seit v3.5.0 steht eine LLM-gestützte Panel-Analyse bereit (13 UC-Prompts inkl. `publication` seit v3.6.9); seit v3.6.0 zusätzlich ein RAG-Chat mit semantischer Suche über die Patent-/Projekt-/Paper-Korpora. Alle Services greifen auf eine gemeinsame PostgreSQL-17-Datenbank mit `pgvector`-Extension zu.
 
 **Hinweis:** Details zur LLM-Integration siehe [`docs/LLM.md`](./LLM.md).
 
@@ -278,7 +278,16 @@ Alle Adapter implementieren: exponentielles Backoff, Graceful Degradation (leere
 
 ## CI/CD-Pipeline
 
-Docker-Images werden über GitHub Actions automatisch gebaut und in die GitHub Container Registry (`ghcr.io/kingdakilla/ti-radar-*`) publiziert. Der Workflow wird durch Versionstags (`v*`) ausgelöst und baut 18 Images parallel (17 Service-Images + 1 Datenbank-Image `ti-radar-db` mit eingebrannten Init-Skripten). Secrets (API-Keys, Datenbank-Passwörter) werden über GitHub Actions Secrets injiziert.
+Docker-Images werden über GitHub Actions automatisch gebaut und in die GitHub Container Registry (`ghcr.io/kingdakilla/ti-radar-*`) publiziert. Der Workflow wird durch Versionstags (`v*`) ausgelöst und baut **21 Images** parallel:
+
+- **13 UC-Services** (landscape, maturity, competitive, funding, cpc-flow, geographic, research-impact, temporal, tech-cluster, actor-type, patent-grant, euroscivoc, publication)
+- **4 Kern-Services** (db, orchestrator-svc, import-svc, export-svc)
+- **3 LLM-Stack-Services** (v3.6.1+): llm-svc, embedding-svc, retrieval-svc
+- **1 Frontend** (Next.js)
+
+Die `generate-protos`-Stage erzeugt gRPC-Stubs mit `protobuf<6` (gencode 5.x); alle Services pinnen konsistent `protobuf>=5.29,<6` (v3.6.4 projektweite Vereinheitlichung). Hintergrund: `google-generativeai` in `llm-svc` klemmt transitiv `protobuf<6`, und Protobuf verlangt gleiche Major-Version für gencode und Runtime.
+
+Secrets (API-Keys, Datenbank-Passwörter) werden über GitHub Actions Secrets injiziert.
 
 ## API-Caching-Schicht
 

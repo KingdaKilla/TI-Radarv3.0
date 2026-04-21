@@ -34,10 +34,12 @@ Beides läuft vollständig abschaltbar — ohne LLM-Key funktioniert das Tool wi
 
 | Service | Rolle | Port | RAM | State |
 |---|---|---|---|---|
-| `llm-svc` | Multi-Provider-LLM-Gateway (Gemini/Claude/OpenAI/Ollama); 12 UC-Prompts + Chat-Prompt | 50070 | 512 MB | stateless |
-| `embedding-svc` | sentence-transformers `multilingual-e5-small` (384-dim); embedded Texte für Retrieval | 50051 | 2 GB | Modell im RAM |
-| `retrieval-svc` | Hybrid-Search: tsvector-Candidate + pgvector-Re-Ranking + Cross-Encoder; **Incremental-Embedding** schreibt fehlende Embeddings on-the-fly in die DB | 50051 | 1 GB | Modelle im RAM |
+| `llm-svc` | Multi-Provider-LLM-Gateway (Gemini/Claude/OpenAI/Ollama); 13 UC-Prompts + Chat-Prompt | 50070 | 512 MB | stateless |
+| `embedding-svc` | sentence-transformers `multilingual-e5-small` (384-dim); embedded Texte für Retrieval | 50051 (überschrieben)¹ | 2 GB | Modell im RAM |
+| `retrieval-svc` | Hybrid-Search: tsvector-Candidate + pgvector-Re-Ranking + Cross-Encoder; **Incremental-Embedding** schreibt fehlende Embeddings on-the-fly in die DB | 50051 (überschrieben)¹ | 2 GB | Modelle im RAM |
 | `orchestrator-svc` | Erweitert um REST-Endpoints `/api/v1/analyze-panel` und `/api/v1/chat`; forwardet per gRPC | 8000 | 512 MB | stateless |
+
+¹ Dockerfile-Default ist 50080 (embedding) bzw. 50081 (retrieval). `docker-compose.server.yml` setzt `EMBEDDING_SERVICE_PORT=50051` und `RETRIEVAL_SERVICE_PORT=50051` als ENV-Override, damit der Orchestrator-Adress-Default (`*:50051`) greift. Ohne diesen Override können die Services nicht erreicht werden.
 
 ### 2.2 Service-Graph
 
@@ -87,7 +89,7 @@ graph LR
    - `localStorage`-persistent (TTL 24 h, Ξ-2)
 4. Cache-Miss → `POST /api/analyze-panel` (Next.js-Proxy) → Orchestrator (`router_analyze.py`).
 5. Orchestrator serialisiert `panel_data` als JSON und ruft `llm-svc.AnalyzePanel` per gRPC.
-6. `llm-svc` wählt einen der 12 UC-spezifischen Prompts (`services/llm-svc/src/prompts.py`), füllt Platzhalter mit Panel-Daten, ruft den konfigurierten Provider auf, parst die Antwort in `analysis_text` + `key_findings` + `confidence` + `model_used`.
+6. `llm-svc` wählt einen der 13 UC-spezifischen Prompts (`services/llm-svc/src/prompts.py` — UC1-UC12 + `publication`), füllt Platzhalter mit Panel-Daten, ruft den konfigurierten Provider auf, parst die Antwort in `analysis_text` + `key_findings` + `confidence` + `model_used`. Der UC-Key muss exakt einem Eintrag in `UC_PROMPTS` entsprechen — unbekannte Keys liefern `INVALID_ARGUMENT` über gRPC, der Orchestrator fängt das ab und gibt leeren `analysis_text` zurück.
 7. Frontend rendert Markdown in `DetailAnalysisSection` und persistiert das Ergebnis in `localStorage`.
 
 Erster Aufruf pro Technologie + UC: **1-3 s** (Gemini 2.0 Flash). Folge-Aufrufe: **<100 ms** aus Cache.
@@ -126,11 +128,27 @@ OPENAI_API_KEY=sk-...                # optional
 EMBEDDING_PROVIDER=local             # local | remote
 EMBEDDING_DEVICE=cpu                 # cpu | cuda | mps
 
+# Timeouts (v3.6.8)
+LLM_MAX_TOKENS=8192                  # max Output-Tokens pro Provider-Call (v3.6.9)
+LLM_TIMEOUT_S=60                     # Orchestrator -> llm-svc gRPC-Timeout
+LLM_LLM_TIMEOUT_S=60                 # llm-svc -> Upstream-API-Timeout (Prefix LLM_)
+
 # Faithfulness-Guard (v3.6.0, optional)
 FAITHFULNESS_ENABLED=false           # true um Sufficiency + Faithfulness-Check zu aktivieren
 FAITHFULNESS_MODEL=gemini-2.0-flash  # Modell für die Guard-Calls
 FAITHFULNESS_THRESHOLD=PARTIAL       # SUFFICIENT | PARTIAL | INSUFFICIENT
 ```
+
+### 4.1.1 Default-Werte im Überblick (Stand v3.6.9)
+
+| Setting | Default | Quelle | ENV-Override |
+|---|---|---|---|
+| `max_tokens` | 8192 | `services/llm-svc/src/config.py:21` | `LLM_MAX_TOKENS` |
+| Upstream-Timeout | 60 s | `services/llm-svc/src/config.py:37` | `LLM_LLM_TIMEOUT_S` |
+| gRPC-Timeout (Orchestrator) | 60 s | `services/orchestrator-svc/src/config.py:69` | `LLM_TIMEOUT_S` |
+| `temperature` | 0.3 | `services/llm-svc/src/config.py` | `LLM_TEMPERATURE` |
+
+**Wichtig:** Orchestrator-Timeout sollte ≥ llm-svc-Timeout sein, sonst kann der gRPC-Call vor der LLM-Antwort abgebrochen werden. Beide auf 60 s ist der aktuelle Kompromiss; für mehr Sicherheit Orchestrator auf 70 s heben.
 
 ### 4.2 Provider-Matrix
 
@@ -224,6 +242,25 @@ Anschließend entweder Incremental laufen lassen oder Bulk-Job.
 </DetailOverlay>
 ```
 
+Seit **v3.6.6** ist die KI-Analyse der **einzige** Analyse-Block im Detail-Overlay — zuvor wurden inline-deterministische JSX-Narrative in jeder Detail-Komponente zusätzlich gerendert. Die heutige Section (`DetailAnalysisSection.tsx`) trägt:
+
+- Header „KI-Analyse" + Badge „KI-generiert" (Sparkle-Icon, Accent-Farbe) für visuelle Transparenz
+- Halluzinations-Disclaimer als Footer: „Automatisch von einem Sprachmodell erzeugt …"
+- Modell-Name im Footer (z. B. `gemini-2.0-flash`)
+
+Nutzer können so eindeutig erkennen, dass der Text maschinell generiert ist.
+
+### 6.1.1 Technologie-Eingabe (Pool-Whitelist, v3.6.7)
+
+Die `SearchBar.tsx` akzeptiert seit v3.6.7 nur Technologien aus einer kuratierten 93-Einträge-Whitelist (Backend-Endpoint `GET /api/v1/suggestions/pool`). Strikte Validierung:
+
+- `useSuggestionPool()` lädt die Liste einmalig pro Session (1 h stale-time).
+- Submit-Button ist disabled solange die Eingabe nicht (case-insensitive) einem Pool-Eintrag entspricht.
+- Beim Submit wird auf die kanonische Schreibweise normalisiert (z. B. „quantum computing" → „Quantum Computing").
+- Autocomplete-Dropdown zeigt ausschließlich Pool-Einträge (keine DB-ngrams mehr — diese hatten früher unsaubere Patent-Titel als Vorschläge produziert).
+
+Hintergrund: Vor v3.6.7 konnten Tippfehler oder nicht-technologische Freitext-Eingaben („asdf", „Max Mustermann") das Backend durchlaufen und leere Analysen oder Fehler provozieren. Die Pool-Beschränkung schließt das strukturell aus.
+
 ### 6.2 Cache
 
 Datei: `frontend/src/lib/analysis-cache.ts`
@@ -251,8 +288,9 @@ Datei: `frontend/src/components/chat/ChatSidebar.tsx`
 Das LLM-Feature darf das Kerntool nie brechen. Drei Fail-Safes:
 
 1. **Kein API-Key gesetzt** → `llm-svc` startet mit `_NullProvider`, gibt leere Analyse zurück. Frontend zeigt Placeholder-Text.
-2. **LLM-Provider-Timeout** (>30 s default) → `router_analyze.py`/`router_chat.py` liefert HTTP 200 mit leerem Ergebnis statt 500er.
+2. **LLM-Provider-Timeout** (> `LLM_TIMEOUT_S`, Default 60 s seit v3.6.8) → `router_analyze.py`/`router_chat.py` liefert HTTP 200 mit leerem Ergebnis statt 500er.
 3. **retrieval-svc nicht erreichbar** → Chat läuft weiter, nur `context_documents` ist leer. LLM antwortet basierend auf `panel_context`.
+4. **Unbekannter `use_case_key`** (z. B. fehlender Prompt-Eintrag in `UC_PROMPTS`) → `llm-svc` gibt `INVALID_ARGUMENT` zurück, Orchestrator fängt, Frontend zeigt leeren Platzhalter.
 
 Alle drei Szenarien sind in den Integration-Tests abgedeckt.
 
@@ -320,7 +358,7 @@ docker compose logs orchestrator-svc | grep -E "chat_fehler|chat_timeout"
 | **Streaming-Antworten** | ❌ | Aktuell Request-Response. SSE/WebSocket für v4 vorgesehen |
 | **Multi-User-Isolation** | ⚠️ Basic-Auth teilt Cache | Für Produktiv-Mehr-User: pro-User-Cache-Keys |
 | **Tool-Calling** | ❌ | LLM kann aktuell keine UC-Services triggern (z. B. "Starte Radar für X") |
-| **Prompt-Injection-Schutz** | ⚠️ Eingabe-Längen-Limit (4000 chars) | Kein Input-Sanitizing gegen Jailbreaks. Relevant bei Multi-User. |
+| **Prompt-Injection-Schutz** | ⚠️ Eingabe-Längen-Limit (4000 chars) + Technologie-Pool-Whitelist (v3.6.7, 93 Einträge) | Chat-Message selbst hat kein Input-Sanitizing gegen Jailbreaks. `technology` ist dagegen strikt auf den kuratierten Pool begrenzt — beliebige Freitext-Technologien werden im Frontend abgelehnt. |
 | **Citation-Rückverlinkung** | ⚠️ Nur source_id | UI zeigt aktuell kein Link zu Originaldokument. v3.7-Feature |
 
 ---

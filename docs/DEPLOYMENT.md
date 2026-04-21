@@ -44,6 +44,11 @@ Folgende Werte müssen in `.env` eingetragen werden:
 | `EMBEDDING_PROVIDER` | nein (v3.6.0+) | `local` (im embedding-svc) oder `remote` (TEI-Host) | `local` |
 | `EMBEDDING_DEVICE` | nein (v3.6.0+) | `cpu` oder `cuda` | `cpu` |
 | `FAITHFULNESS_ENABLED` | nein (v3.6.0+) | Chat-Antwort-Überprüfung (Sufficiency + Faithfulness-Check); +2-5s Latenz | `false` |
+| `FAITHFULNESS_MODEL` | nein (v3.6.0+) | Modell für die Guard-Calls; Default gleicher Gemini-Key | `gemini-2.0-flash` |
+| `FAITHFULNESS_THRESHOLD` | nein (v3.6.0+) | Minimal akzeptable Kontext-Abdeckung | `PARTIAL` |
+| `LLM_MAX_TOKENS` | nein (v3.6.9+) | Max. Output-Tokens pro LLM-Call. Default 8192 (v3.6.8 war 4096 → UC8-Trunkierung) | `8192` |
+| `LLM_TIMEOUT_S` | nein (v3.6.8+) | Orchestrator-gRPC-Timeout zum llm-svc in Sekunden | `60` |
+| `LLM_LLM_TIMEOUT_S` | nein (v3.6.8+) | llm-svc-Timeout zum Upstream-LLM-API (Prefix `LLM_`) | `60` |
 
 > **Details zu LLM/Chat/RAG:** siehe [`docs/LLM.md`](./LLM.md) — komplette Architektur, Konfiguration, Incremental-Pre-Computation, Betrieb.
 
@@ -487,12 +492,20 @@ Nach dem Seed-Vorgang werden die Materialized Views automatisch aktualisiert. De
 Docker-Images werden über GitHub Actions automatisch gebaut und in der GitHub Container Registry veröffentlicht:
 
 - **Registry:** `ghcr.io/kingdakilla/ti-radar-*`
-- **Images:** 18 Docker-Images (17 Service-Images + 1 Datenbank-Image `ti-radar-db`)
-- **Trigger:** Versionstags (`v*`), z. B. `v3.0.0`
-- **Nutzung vorgefertigter Images:** Statt lokal zu bauen, können die Images direkt aus GHCR gezogen werden:
+- **Images:** **21 Docker-Images** (seit v3.6.1)
+  - 13 UC-Service-Images
+  - 4 Kern-Service-Images (db, orchestrator-svc, import-svc, export-svc)
+  - 3 LLM-Stack-Images (llm-svc, embedding-svc, retrieval-svc) — seit v3.6.1
+  - 1 Frontend-Image
+- **Trigger:** Versionstags (`v*`), z. B. `v3.6.9`
+- **Parallelität:** 21 Build-Jobs via `strategy.matrix` in `.github/workflows/docker.yml`
+- **Proto-Stubs:** `generate-protos`-Stage erzeugt gRPC-Stubs mit `protobuf<6` als Artifact, das von allen 21 Image-Builds konsumiert wird
+
+**Nutzung vorgefertigter Images:**
 
 ```bash
-docker pull ghcr.io/kingdakilla/ti-radar-orchestrator:latest
+docker pull ghcr.io/kingdakilla/ti-radar-orchestrator-svc:latest
+docker pull ghcr.io/kingdakilla/ti-radar-llm-svc:latest
 docker pull ghcr.io/kingdakilla/ti-radar-frontend:latest
 # ... analog für alle weiteren Services
 ```
@@ -575,6 +588,9 @@ Prometheus scraped automatisch den `/metrics`-Endpunkt des Orchestrators (OpenMe
 | `ti-radar-export` | 8020 | Export-Service |
 | `ti-radar-uc1` bis `ti-radar-uc12` | 50051 (intern) | UC-Services |
 | `ti-radar-uc-c` | 50051 (intern) | Publication-Service |
+| `ti-radar-llm` | 50070 (intern) | LLM-Service (v3.6.1+) — Multi-Provider-Gateway |
+| `ti-radar-embedding` | 50051 (intern, Dockerfile-Default 50080) | Embedding-Service (v3.6.1+) — sentence-transformers |
+| `ti-radar-retrieval` | 50051 (intern, Dockerfile-Default 50081) | Retrieval-Service (v3.6.1+) — Hybrid-Search + Reranker |
 
 ## Ressourcen-Limits
 
@@ -584,7 +600,12 @@ Prometheus scraped automatisch den `/metrics`-Endpunkt des Orchestrators (OpenMe
 | Import-Service | 2 GB | 2.0 |
 | CPC-Flow-Service | 1 GB | 1.0 |
 | Export-Service | 1 GB | 1.0 |
+| Embedding-Service (v3.6.1+) | 2 GB | 1.0 |
+| Retrieval-Service (v3.6.1+) | 2 GB | 1.0 |
+| LLM-Service (v3.6.1+) | 512 MB | 0.5 |
 | Alle anderen Services | 512 MB | 0.5 |
+
+**Hinweis zu Embedding/Retrieval:** Beide Services laden HuggingFace-Models zur Laufzeit (`intfloat/multilingual-e5-small` ~230 MB, `cross-encoder/ms-marco-MiniLM-L-6-v2` ~90 MB). Das benannte Volume `hf_cache` wird in beide Container unter `/app/.cache/huggingface` gemountet, damit Re-Downloads bei Container-Recreate vermieden werden. Bei Erstinstallation auf schwacher Bandbreite: ~3-5 Min Initial-Download pro Service.
 
 ## Troubleshooting
 
@@ -712,6 +733,77 @@ Die URL `https://api.gleif.org/api/v1/fuzzy-completions` liefert derzeit 404.
 Der Actor-Type-Service faengt den Fehler graceful ab und nutzt stale Cache
 als Fallback. Eine Anpassung auf den aktuellen GLEIF-API-Endpoint steht
 noch aus — LEI-Anreicherung ist waehrenddessen optional.
+
+### llm-svc: `google.protobuf.runtime_version.VersionError`
+
+Behoben in `v3.6.4`. Der llm-svc startete mit `gencode 6.31.1 runtime 5.29.6` (oder umgekehrt). Ursache: `google-generativeai` klemmt transitiv `protobuf<6`, aber die CI generierte Stubs mit protobuf 6.x ohne Pin.
+
+Seit v3.6.4 wird projektweit `protobuf>=5.29,<6` in allen 17 `pyproject.toml` (16 Services + shared) verwendet, und `docker.yml` pinnt `pip install grpcio-tools "protobuf<6"` in der `generate-protos`-Stage. Upgrade auf `v3.6.4+`:
+
+```bash
+docker compose pull llm-svc
+docker compose up -d --force-recreate llm-svc
+```
+
+### embedding-svc: `ImportError: cannot import name 'PgVectorRepository'`
+
+Behoben in `v3.6.3`. Stale Import in `services/embedding-svc/src/infrastructure/__init__.py` aus einem frühen Refactor. Die Klasse hiess nie `PgVectorRepository`, sondern immer `EmbeddingRepository` + `ChunkRepository`. Upgrade auf `v3.6.3+`.
+
+### embedding-svc/retrieval-svc: `PermissionError at /app/.cache`
+
+Behoben in `v3.6.5`. Der Container-User `svc` hat Home `/app`, HuggingFace legt Cache in `$HOME/.cache/huggingface` ab — aber `/app/.cache` existierte im Image nicht und `/app` gehörte root.
+
+Fix im Dockerfile: Verzeichnis vor `USER svc` anlegen + `chown svc:svc`. Das leere Named-Volume `hf_cache` übernimmt beim ersten Mount die Permissions. Upgrade auf `v3.6.5+`:
+
+```bash
+docker compose pull embedding-svc retrieval-svc
+docker compose up -d --force-recreate embedding-svc retrieval-svc
+```
+
+### retrieval-svc: `exited with code 137` (OOMKilled)
+
+Behoben durch `fix(deploy)` nach v3.6.5. Das initiale Memory-Limit von 1 GB reichte nicht — retrieval-svc lädt zwei HF-Models (CrossEncoder-Reranker + e5-small für lokale Query-Embeddings) plus torch/sentence-transformers-Runtime. Fix: `docker-compose.server.yml` setzt retrieval-svc auf 2 GB RAM / 1.0 CPU (analog embedding-svc). Reine Compose-Änderung, kein Image-Rebuild:
+
+```bash
+git pull
+docker compose up -d --force-recreate retrieval-svc
+```
+
+### embedding-svc/retrieval-svc: unreachable am Port 50051
+
+Dockerfile-Default für embedding-svc ist **50080**, für retrieval-svc **50081** — der Orchestrator erwartet beide unter **50051**. Ohne ENV-Override können die Services nicht erreicht werden.
+
+Seit `v3.6.1` setzt `docker-compose.server.yml`:
+
+```yaml
+embedding-svc:
+  environment:
+    EMBEDDING_SERVICE_PORT: "50051"
+retrieval-svc:
+  environment:
+    RETRIEVAL_SERVICE_PORT: "50051"
+```
+
+Bei lokalem Deployment (`docker-compose.yml`) analog ergänzen, falls fehlend.
+
+### UCc (Publication): KI-Analyse bleibt leer
+
+Behoben in `v3.6.9`. Der `use_case_key="publication"` fehlte im `UC_PROMPTS`-Dict in `services/llm-svc/src/prompts.py` — der Service quittierte mit gRPC-Status `INVALID_ARGUMENT`, Orchestrator fing und gab leeren `analysis_text` zurück. Fix: Publication-Prompt-Template ergänzt. Upgrade auf `v3.6.9+`.
+
+### UC8 (Temporal): KI-Analyse wird mittendrin abgeschnitten
+
+Behoben in `v3.6.9`. Globales `LLM_MAX_TOKENS=4096` war für UC8 zu knapp (drei dichte Absätze). Fix: Default auf 8192 angehoben in `services/llm-svc/src/config.py:21` und `docker-compose.{server,}.yml`. Upgrade auf `v3.6.9+` oder `.env` um `LLM_MAX_TOKENS=8192` ergänzen.
+
+### LLM-Timeouts zu knapp
+
+Seit `v3.6.8` beide Timeouts auf 60 s (vorher 30 s). Falls weiterhin `chat_timeout`-Warnings im Orchestrator-Log erscheinen, via `.env` erhöhen:
+
+```env
+LLM_TIMEOUT_S=90
+LLM_LLM_TIMEOUT_S=80
+```
+
+Regel: Orchestrator-Timeout ≥ llm-svc-Timeout + Puffer.
 
 ### OpenAIRE 403 Forbidden
 

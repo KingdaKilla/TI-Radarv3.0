@@ -306,53 +306,6 @@ export default function FundingDetail({ data }: FundingDetailProps) {
         </DetailChartSection>
       )}
 
-      {/* ── Sektion 4: Auto-Analyse ── */}
-      <DetailAnalysisSection>
-        <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
-          <p>
-            Insgesamt wurden <strong>{formatCurrency(data.total_funding)}</strong> für{" "}
-            <strong>{data.total_projects.toLocaleString("de-DE")}</strong> Projekte bewilligt
-            (Ø <strong>{formatCurrency(avgPerProject)}</strong> pro Projekt).
-            {data.avg_duration_months > 0 && (
-              <> Die durchschnittliche Projektdauer beträgt <strong>{data.avg_duration_months.toFixed(1)} Monate</strong>.</>
-            )}
-          </p>
-
-          {topProgram && (
-            <p>
-              Das dominierende Förderinstrument ist <strong>{topProgram.program}</strong> mit{" "}
-              <strong>{formatCurrency(topProgram.total_funding)}</strong> ({(topProgram.share * 100).toFixed(1)}% Anteil)
-              und <strong>{topProgram.project_count.toLocaleString("de-DE")}</strong> Projekten.
-              {data.by_program.length > 1 && (
-                <> Insgesamt verteilt sich die Förderung auf <strong>{data.by_program.length}</strong> Instrumente.</>
-              )}
-            </p>
-          )}
-
-          {data.cagr !== 0 && (
-            <p>
-              Die jährliche Wachstumsrate (CAGR) der Förderung beträgt{" "}
-              <strong className={data.cagr >= 0 ? "text-[var(--color-chart-growth)]" : "text-[var(--color-chart-decline)]"}>
-                {formatCAGR(data.cagr)}
-              </strong>
-              {data.cagr > 0
-                ? " — ein wachsendes Investitionsinteresse der EU."
-                : " — eine rückläufige Förderentwicklung."}
-            </p>
-          )}
-
-          {peakYear && (
-            <p>
-              Das stärkste Förderjahr war <strong>{peakYear.year}</strong> mit{" "}
-              <strong>{formatCurrency(peakYear.funding_eur)}</strong>
-              {peakYear.participant_count > 0 && (
-                <> und <strong>{peakYear.participant_count.toLocaleString("de-DE")}</strong> beteiligten Organisationen</>
-              )}.
-            </p>
-          )}
-        </div>
-      </DetailAnalysisSection>
-
       {/* ── Sektion 5: Top-Organisationen ── */}
       {data.top_organisations.length > 0 && (
         <DetailDataSection title="Top-Förderempfänger">

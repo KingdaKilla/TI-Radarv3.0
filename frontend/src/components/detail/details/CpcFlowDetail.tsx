@@ -100,49 +100,6 @@ export default function CpcFlowDetail({ data }: CpcFlowDetailProps) {
         </DetailChartSection>
       )}
 
-      {/* ── Sektion 3: Auto-Analyse ── */}
-      <DetailAnalysisSection>
-        <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
-          <p>
-            Die Analyse umfasst <strong>{data.nodes.length}</strong> CPC-Technologieklassen
-            mit <strong>{data.links.length}</strong> paarweisen Verbindungen.
-            {data.top_combinations.length > 0 && (
-              <> Davon wurden <strong>{data.top_combinations.length}</strong> relevante Kombinationen identifiziert.</>
-            )}
-          </p>
-
-          {topPair && topPair.jaccard > 0 && (
-            <p>
-              Die stärkste technologische Konvergenz besteht zwischen{" "}
-              <strong className="font-mono">{topPair.codes[0]}</strong> und{" "}
-              <strong className="font-mono">{topPair.codes[1]}</strong> mit einem
-              Jaccard-Index von <strong>{topPair.jaccard.toFixed(3)}</strong> ({jaccardLabel(topPair.jaccard)}).
-              {topPair.count > 0 && (
-                <> Diese Codes treten in <strong>{topPair.count.toLocaleString("de-DE")}</strong> Patenten gemeinsam auf.</>
-              )}
-            </p>
-          )}
-
-          {avgJaccard > 0 && (
-            <p>
-              Der durchschnittliche Jaccard-Index der Top-Kombinationen beträgt{" "}
-              <strong>{avgJaccard.toFixed(3)}</strong> — dies deutet auf{" "}
-              {avgJaccard >= 0.2
-                ? "eine ausgeprägte technologische Konvergenz hin."
-                : avgJaccard >= 0.05
-                  ? "moderate technologische Überschneidungen hin."
-                  : "eher spezialisierte, wenig überlappende Technologiefelder hin."}
-            </p>
-          )}
-
-          <p className="text-xs text-[var(--color-text-muted)]">
-            Methodik: Der Jaccard-Index misst die Ähnlichkeit zweier CPC-Code-Mengen als Verhältnis
-            von Schnittmenge zu Vereinigungsmenge (J = |A∩B| / |A∪B|). Werte nahe 1 zeigen starke
-            Ko-Klassifikation an, Werte nahe 0 bedeuten unabhängige Technologiefelder.
-          </p>
-        </div>
-      </DetailAnalysisSection>
-
       {/* ── Sektion 4: Vollständige Kombinationstabelle ── */}
       <DetailDataSection title="CPC-Kombinationen (vollständig)">
         {data.top_combinations.length > 0 ? (

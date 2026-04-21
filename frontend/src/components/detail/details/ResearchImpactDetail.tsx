@@ -194,45 +194,6 @@ export default function ResearchImpactDetail({ data }: ResearchImpactDetailProps
         </DetailChartSection>
       )}
 
-      {/* ── Sektion 3: Auto-Analyse ── */}
-      <DetailAnalysisSection>
-        <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
-          <p>
-            Für diese Technologie wurden <strong>{data.total_papers.toLocaleString("de-DE")}</strong> Publikationen
-            mit insgesamt <strong>{totalCitations.toLocaleString("de-DE")}</strong> Zitationen identifiziert
-            (Ø <strong>{data.avg_citations.toFixed(1)}</strong> Zitate pro Paper).
-            {hIndex > 0 && (
-              <> Der h-Index beträgt <strong>{hIndex}</strong> — d.h. mindestens {hIndex} Publikationen
-              wurden jeweils mindestens {hIndex}-mal zitiert (Hirsch 2005).</>
-            )}
-          </p>
-
-          {topInstitution && (
-            <p>
-              Die fuehrende Institution ist <strong>{topInstitution.institution}</strong> mit{" "}
-              <strong>{topInstitution.paper_count}</strong> EU-Projektbeteiligungen.
-              {data.top_institutions.length > 1 && (
-                <> Insgesamt sind <strong>{data.top_institutions.length}</strong> Institutionen in EU-Forschungsprojekten zu diesem Thema aktiv.</>
-              )}
-            </p>
-          )}
-
-          {peakYear && (
-            <p>
-              Das zitationsstärkste Jahr war <strong>{peakYear.year}</strong> mit{" "}
-              <strong>{peakYear.total_citations.toLocaleString("de-DE")}</strong> Zitationen
-              und <strong>{peakYear.publication_count.toLocaleString("de-DE")}</strong> Publikationen.
-            </p>
-          )}
-
-          <p className="text-xs text-[var(--color-text-muted)]">
-            Datenquellen: Semantic Scholar Academic Graph (Publikationen, Zitationen),
-            CORDIS EU Research Projects (Institutionen). Der h-Index nach Hirsch (2005)
-            misst die Forschungsproduktivitaet und den Zitationseinfluss eines Themenfeldes.
-          </p>
-        </div>
-      </DetailAnalysisSection>
-
       {/* ── Sektion 4: Top Institutionen-Tabelle ── */}
       {data.top_institutions.length > 0 && (
       <DetailDataSection title="Top Forschungsinstitutionen (CORDIS)">

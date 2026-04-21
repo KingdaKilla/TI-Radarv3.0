@@ -187,40 +187,6 @@ export default function TemporalDetail({ data }: TemporalDetailProps) {
         </DetailChartSection>
       )}
 
-      {/* ── Auto-Analyse ── */}
-      <DetailAnalysisSection>
-        <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
-          {startYear && endYear && (
-            <p>
-              Im Zeitraum <strong>{startYear}–{endYear}</strong> waren insgesamt{" "}
-              <strong>{totalNew.toLocaleString("de-DE")}</strong> neue Akteure eingetreten,
-              während <strong>{totalExited.toLocaleString("de-DE")}</strong> ausgeschieden sind.
-              Der Nettosaldo von{" "}
-              <strong className={net >= 0 ? "text-[var(--color-chart-growth)]" : "text-[var(--color-chart-decline)]"}>
-                {net >= 0 ? "+" : ""}{net.toLocaleString("de-DE")}
-              </strong>{" "}
-              {net > 0
-                ? "deutet auf ein wachsendes Technologiefeld hin."
-                : net < 0
-                  ? "zeigt eine schrumpfende Akteurslandschaft."
-                  : "zeigt eine stabile Akteurslandschaft."}
-            </p>
-          )}
-
-          {latestYear && (
-            <p>
-              Im letzten erfassten Jahr ({latestYear.year}) waren{" "}
-              <strong>{latestYear.total_active.toLocaleString("de-DE")}</strong> Akteure aktiv,
-              davon <strong>{latestYear.persistent_actors.toLocaleString("de-DE")}</strong> persistent
-              und <strong>{latestYear.new_entrants.toLocaleString("de-DE")}</strong> neu hinzugekommen.
-            </p>
-          )}
-
-          {/* Bug v3.4.10/α-F: Topic-Narrativ (aufkommende/abnehmende Themen)
-              entfernt — Backend-Feature ist nicht produktionsreif. */}
-        </div>
-      </DetailAnalysisSection>
-
       {/* ── Metriken-Erklärung ── */}
       <DetailDataSection title="Metriken-Erklärung">
         <div className="space-y-3 text-sm text-[var(--color-text-secondary)]">

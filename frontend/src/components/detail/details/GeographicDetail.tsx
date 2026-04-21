@@ -151,47 +151,6 @@ export default function GeographicDetail({ data }: GeographicDetailProps) {
         </ResponsiveContainer>
       </DetailChartSection>
 
-      {/* ── Sektion 3: Auto-Analyse ── */}
-      <DetailAnalysisSection>
-        <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
-          <p>
-            Die Technologie ist in <strong>{countries.length}</strong> Ländern vertreten,
-            mit insgesamt <strong>{totalPatents.toLocaleString("de-DE")}</strong> Patenten
-            und <strong>{totalProjects.toLocaleString("de-DE")}</strong> EU-Projekten.
-            {data.eu_share > 0 && (
-              <> Der Anteil grenzüberschreitender Kooperationen liegt bei{" "}
-              <strong>{(data.eu_share * 100).toFixed(1)}%</strong>.</>
-            )}
-          </p>
-
-          {sortedByTotal.length >= 3 && (
-            <p>
-              Die drei aktivsten Länder sind{" "}
-              <strong>{sortedByTotal[0].country_name}</strong>,{" "}
-              <strong>{sortedByTotal[1].country_name}</strong> und{" "}
-              <strong>{sortedByTotal[2].country_name}</strong> —
-              sie vereinen <strong>{top3Share.toFixed(1)}%</strong> der Gesamtaktivität.
-              {top3Share > 60
-                ? " Die geographische Konzentration ist hoch."
-                : top3Share > 40
-                  ? " Die Verteilung ist moderat konzentriert."
-                  : " Die Aktivität ist breit gestreut."}
-            </p>
-          )}
-
-          {coopPairs.length > 0 && (
-            <p>
-              Insgesamt wurden <strong>{coopPairs.length}</strong> bilaterale Kooperationspaare identifiziert.
-              {coopPairs[0] && (
-                <> Das stärkste Paar ist{" "}
-                <strong>{getCountryName(coopPairs[0].country_a)}</strong> – <strong>{getCountryName(coopPairs[0].country_b)}</strong>{" "}
-                mit <strong>{coopPairs[0].co_project_count.toLocaleString("de-DE")}</strong> gemeinsamen Projekten.</>
-              )}
-            </p>
-          )}
-        </div>
-      </DetailAnalysisSection>
-
       {/* ── Sektion 4: Kooperationspaare ── */}
       {coopPairs.length > 0 && (
         <DetailDataSection title="Bilaterale Kooperationen">

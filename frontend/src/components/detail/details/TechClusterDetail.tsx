@@ -161,47 +161,6 @@ export default function TechClusterDetail({ data }: TechClusterDetailProps) {
         </div>
       </div>
 
-      {/* ── Auto-Analyse ── */}
-      <DetailAnalysisSection>
-        <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
-          <p>
-            Die Community-Detection identifizierte <strong>{data.quality.num_clusters}</strong> Technologie-Cluster
-            mit einem Silhouette-Score von <strong>{data.quality.avg_silhouette.toFixed(3)}</strong>
-            {data.quality.avg_silhouette >= 0.5
-              ? " (gute Trennschärfe)."
-              : data.quality.avg_silhouette >= 0.25
-                ? " (moderate Trennschärfe)."
-                : " (schwache Trennschärfe — Cluster überlappen stark)."}
-            {data.quality.modularity > 0 && (
-              <> Die Modularität beträgt <strong>{data.quality.modularity.toFixed(3)}</strong>.</>
-            )}
-          </p>
-
-          {data.clusters.length > 0 && (() => {
-            const largest = data.clusters.reduce((b, c) => (c.patent_count > b.patent_count ? c : b), data.clusters[0]);
-            const fastest = data.clusters.reduce((b, c) => (c.cagr > b.cagr ? c : b), data.clusters[0]);
-            return (
-              <>
-                <p>
-                  Das größte Cluster ist <strong>{largest.label}</strong> mit{" "}
-                  <strong>{largest.patent_count.toLocaleString("de-DE")}</strong> Patenten
-                  und <strong>{largest.actor_count.toLocaleString("de-DE")}</strong> Akteuren.
-                </p>
-                {fastest.cagr > 0 && fastest.label !== largest.label && (
-                  <p>
-                    Das am schnellsten wachsende Cluster ist <strong>{fastest.label}</strong> mit
-                    einer CAGR von{" "}
-                    <strong className="text-[var(--color-chart-growth)]">
-                      {(fastest.cagr * 100).toFixed(1)}%
-                    </strong>.
-                  </p>
-                )}
-              </>
-            );
-          })()}
-        </div>
-      </DetailAnalysisSection>
-
       {/* Vollstaendige Cluster-Tabelle */}
       <DetailDataSection title="Cluster-Übersicht">
         <div className="overflow-x-auto">

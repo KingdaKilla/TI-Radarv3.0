@@ -133,52 +133,6 @@ export default function ActorTypeDetail({ data }: ActorTypeDetailProps) {
         <p><span className="font-semibold" style={{ color: CHART_COLORS.purple }}>PUB</span> — Öffentliche Einrichtungen und Behörden</p>
       </div>
 
-      {/* ── Auto-Analyse ── */}
-      <DetailAnalysisSection>
-        <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
-          <p>
-            Insgesamt wurden <strong>{data.total_classified_actors.toLocaleString("de-DE")}</strong> Akteure
-            klassifiziert (Abdeckung: <strong>{(data.classification_coverage * 100).toFixed(1)}%</strong>).
-            {data.sme_share > 0 && (
-              <> Der KMU-Anteil liegt bei <strong>{(data.sme_share * 100).toFixed(1)}%</strong>
-              {data.sme_share >= 0.5
-                ? " — KMU dominieren die Akteurslandschaft."
-                : data.sme_share >= 0.3
-                  ? " — ein signifikanter Anteil der Akteure sind KMU."
-                  : " — die Akteurslandschaft wird von größeren Organisationen geprägt."}
-              </>
-            )}
-          </p>
-
-          {data.type_breakdown.length > 0 && (() => {
-            const sorted = [...data.type_breakdown].sort((a, b) => b.actor_share - a.actor_share);
-            const dominant = sorted[0];
-            return (
-              <p>
-                Der häufigste Organisationstyp ist <strong>{dominant.label}</strong> mit{" "}
-                <strong>{dominant.actor_count.toLocaleString("de-DE")}</strong> Akteuren
-                ({(dominant.actor_share * 100).toFixed(1)}%).
-                {sorted.length >= 2 && (
-                  <> Es folgt <strong>{sorted[1].label}</strong> mit{" "}
-                  <strong>{sorted[1].actor_count.toLocaleString("de-DE")}</strong> Akteuren
-                  ({(sorted[1].actor_share * 100).toFixed(1)}%).</>
-                )}
-              </p>
-            );
-          })()}
-
-          {data.type_breakdown.some((t) => t.funding_eur > 0) && (() => {
-            const topFunded = [...data.type_breakdown].sort((a, b) => b.funding_eur - a.funding_eur)[0];
-            return (
-              <p>
-                Den größten Anteil an der Förderung erhält <strong>{topFunded.label}</strong> mit{" "}
-                <strong>{formatEur(topFunded.funding_eur)}</strong>.
-              </p>
-            );
-          })()}
-        </div>
-      </DetailAnalysisSection>
-
       {/* ── Vollstaendige Typ-Tabelle ── */}
       <DetailDataSection title="Aufschlüsselung nach Organisationstyp">
         <div className="overflow-x-auto">

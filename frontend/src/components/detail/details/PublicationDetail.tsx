@@ -187,57 +187,6 @@ export default function PublicationDetail({ data }: PublicationDetailProps) {
         </DetailChartSection>
       )}
 
-      {/* ── Auto-Analyse ── */}
-      <DetailAnalysisSection>
-        <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
-          <p>
-            Insgesamt wurden <strong>{data.total_publications.toLocaleString("de-DE")}</strong> Publikationen
-            aus <strong>{data.total_projects_with_pubs.toLocaleString("de-DE")}</strong> Projekten identifiziert.
-            Im Durchschnitt entstehen <strong>{data.publications_per_project.toFixed(1)}</strong> Publikationen
-            pro Projekt.
-            {data.doi_coverage >= 0.8
-              ? ` Die DOI-Abdeckung von ${(data.doi_coverage * 100).toFixed(1)}% ist hoch — die meisten Publikationen sind eindeutig referenzierbar.`
-              : data.doi_coverage >= 0.5
-                ? ` Die DOI-Abdeckung liegt bei ${(data.doi_coverage * 100).toFixed(1)}% — ein moderater Anteil der Publikationen ist eindeutig referenzierbar.`
-                : ` Die DOI-Abdeckung liegt bei nur ${(data.doi_coverage * 100).toFixed(1)}% — viele Publikationen haben keinen DOI-Identifier.`}
-          </p>
-
-          {data.pub_trend.length > 0 && (() => {
-            const peak = data.pub_trend.reduce((b, y) =>
-              y.publication_count > b.publication_count ? y : b, data.pub_trend[0]);
-            const latest = data.pub_trend[data.pub_trend.length - 1];
-            const earliest = data.pub_trend[0];
-            return (
-              <>
-                <p>
-                  Das publikationsstärkste Jahr war <strong>{peak.year}</strong> mit{" "}
-                  <strong>{peak.publication_count.toLocaleString("de-DE")}</strong> Publikationen.
-                </p>
-                {latest.year !== earliest.year && (
-                  <p>
-                    Im Vergleich: {earliest.year} gab es{" "}
-                    <strong>{earliest.publication_count.toLocaleString("de-DE")}</strong> Publikationen,
-                    im Jahr {latest.year} waren es{" "}
-                    <strong>{latest.publication_count.toLocaleString("de-DE")}</strong>.
-                  </p>
-                )}
-              </>
-            );
-          })()}
-
-          {data.top_projects.length > 0 && (() => {
-            const topEfficiency = data.top_projects[0];
-            return (
-              <p>
-                Das effizienteste Projekt ist <strong>{topEfficiency.project_acronym}</strong> ({topEfficiency.framework})
-                mit <strong>{topEfficiency.publications_per_million_eur.toFixed(1)}</strong> Publikationen
-                pro Mio. EUR Förderung ({topEfficiency.publication_count} Publikationen).
-              </p>
-            );
-          })()}
-        </div>
-      </DetailAnalysisSection>
-
       {/* ── Top-Publikationen Tabelle ── */}
       <DetailDataSection title="Top-Publikationen">
         <div className="overflow-x-auto">

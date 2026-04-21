@@ -138,61 +138,6 @@ export default function EuroSciVocDetail({ data }: EuroSciVocDetailProps) {
         </DetailChartSection>
       )}
 
-      {/* ── Auto-Analyse ── */}
-      <DetailAnalysisSection>
-        <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
-          <p>
-            Für diese Technologie wurden <strong>{data.interdisciplinarity.active_disciplines}</strong> aktive
-            Wissenschaftsdisziplinen identifiziert (EuroSciVoc-Taxonomie), verteilt auf{" "}
-            <strong>{data.interdisciplinarity.active_fields}</strong>{" "}
-            {data.interdisciplinarity.active_fields === 1 ? "Fachgebiet" : "Fachgebiete"}
-            {" "}(Level 1). Der Shannon-Index
-            von <strong>{data.interdisciplinarity.shannon_index.toFixed(2)}</strong>
-            {data.interdisciplinarity.shannon_index >= 2.5
-              ? " deutet auf eine hohe Interdisziplinarität hin — die Forschung verteilt sich gleichmäßig auf viele Felder."
-              : data.interdisciplinarity.shannon_index >= 1.5
-                ? " zeigt eine moderate Interdisziplinarität — einige Disziplinen dominieren, aber die Forschung ist breit aufgestellt."
-                : " weist auf eine geringe Interdisziplinarität hin — die Forschung konzentriert sich auf wenige Kernfelder."}
-          </p>
-
-          {data.fields_of_science.length > 0 && (() => {
-            const sorted = [...data.fields_of_science].sort((a, b) => b.share - a.share);
-            const top = sorted[0];
-            const fastest = [...data.fields_of_science].reduce((b, f) => (f.cagr > b.cagr ? f : b), data.fields_of_science[0]);
-            return (
-              <>
-                <p>
-                  Die dominierende Disziplin ist <strong>{top.label}</strong> mit
-                  einem Anteil von <strong>{(top.share * 100).toFixed(1)}%</strong>.
-                  {sorted.length >= 3 && (
-                    <> Zusammen mit <strong>{sorted[1].label}</strong> ({(sorted[1].share * 100).toFixed(1)}%)
-                    und <strong>{sorted[2].label}</strong> ({(sorted[2].share * 100).toFixed(1)}%)
-                    decken die drei größten Felder{" "}
-                    <strong>{((sorted[0].share + sorted[1].share + sorted[2].share) * 100).toFixed(1)}%</strong> ab.</>
-                  )}
-                </p>
-                {fastest.cagr > 0 && (
-                  <p>
-                    Das am schnellsten wachsende Feld ist <strong>{fastest.label}</strong> mit
-                    einer CAGR von{" "}
-                    <strong className="text-[var(--color-chart-growth)]">
-                      {(fastest.cagr * 100).toFixed(1)}%
-                    </strong>.
-                  </p>
-                )}
-              </>
-            );
-          })()}
-
-          {data.mapping_coverage < 1.0 && (
-            <p className="text-xs text-[var(--color-text-muted)]">
-              Hinweis: Die Mapping-Abdeckung beträgt {(data.mapping_coverage * 100).toFixed(1)}% —
-              nicht alle Projekte konnten einer EuroSciVoc-Disziplin zugeordnet werden.
-            </p>
-          )}
-        </div>
-      </DetailAnalysisSection>
-
       {/* ── Vollstaendige Felder-Tabelle ── */}
       <DetailDataSection title="Wissenschaftsfelder">
         <div className="overflow-x-auto">

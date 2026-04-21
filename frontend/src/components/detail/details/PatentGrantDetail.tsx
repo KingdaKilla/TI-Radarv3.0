@@ -183,59 +183,6 @@ export default function PatentGrantDetail({ data }: PatentGrantDetailProps) {
         </DetailChartSection>
       )}
 
-      {/* ── Auto-Analyse ── */}
-      <DetailAnalysisSection>
-        <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
-          <p>
-            Die Gesamterteilungsquote liegt bei{" "}
-            <strong>{(data.summary.grant_rate * 100).toFixed(1)}%</strong> —
-            von <strong>{data.summary.total_applications.toLocaleString("de-DE")}</strong> Anmeldungen
-            wurden <strong>{data.summary.total_grants.toLocaleString("de-DE")}</strong> erteilt.
-            {data.summary.grant_rate >= 0.6
-              ? " Dies entspricht einer überdurchschnittlich hohen Erteilungsquote."
-              : data.summary.grant_rate >= 0.3
-                ? " Dies liegt im typischen Bereich für Technologiepatente."
-                : " Dies deutet auf ein stark umkämpftes Patentumfeld hin."}
-          </p>
-
-          {data.summary.avg_time_to_grant_months > 0 && (
-            <p>
-              Die durchschnittliche Bearbeitungszeit beträgt{" "}
-              <strong>{data.summary.avg_time_to_grant_months.toFixed(1)} Monate</strong>
-              {data.summary.avg_time_to_grant_months > 48
-                ? " — dies ist vergleichsweise lang und kann auf komplexe Prüfungsverfahren hindeuten."
-                : data.summary.avg_time_to_grant_months > 24
-                  ? " — ein typischer Wert für europäische Patentverfahren."
-                  : " — vergleichsweise kurz für Patentverfahren."}
-            </p>
-          )}
-
-          {data.year_trend.length > 0 && (() => {
-            const peakApp = data.year_trend.reduce((b, y) =>
-              y.application_count > b.application_count ? y : b, data.year_trend[0]);
-            const latest = data.year_trend[data.year_trend.length - 1];
-            const earliest = data.year_trend[0];
-            return (
-              <>
-                <p>
-                  Das anmeldungsstärkste Jahr war <strong>{peakApp.year}</strong> mit{" "}
-                  <strong>{peakApp.application_count.toLocaleString("de-DE")}</strong> Anmeldungen
-                  (Quote: {(peakApp.grant_rate * 100).toFixed(1)}%).
-                </p>
-                {latest.year !== earliest.year && (
-                  <p>
-                    Im Vergleich: {earliest.year} gab es{" "}
-                    <strong>{earliest.application_count.toLocaleString("de-DE")}</strong> Anmeldungen,
-                    im Jahr {latest.year} waren es{" "}
-                    <strong>{latest.application_count.toLocaleString("de-DE")}</strong>.
-                  </p>
-                )}
-              </>
-            );
-          })()}
-        </div>
-      </DetailAnalysisSection>
-
       {/* ── Vollstaendige Jahrestrend-Tabelle ── */}
       <DetailDataSection title="Erteilungstrend nach Jahr">
         <div className="overflow-x-auto">

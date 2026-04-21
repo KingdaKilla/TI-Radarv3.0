@@ -244,41 +244,6 @@ export default function LandscapeDetail({ data, dataCompleteYear }: LandscapeDet
       </div>
 
       {/* --- #5: Berechnete Analyse-Insights --- */}
-      <DetailAnalysisSection>
-        <div className="space-y-2 text-sm text-[var(--color-text-secondary)]">
-          <p>
-            Die Gesamtaktivität verteilt sich auf{" "}
-            <strong>{patShare}%</strong> Patente,{" "}
-            <strong>{projShare}%</strong> Projekte
-            {hasPub && <> und <strong>{pubShare}%</strong> Publikationen</>}.
-          </p>
-          {peakYear && (
-            <p>
-              Das aktivste Jahr war <strong>{peakYear.year}</strong> mit{" "}
-              {(peakYear.patents + peakYear.projects + peakYear.publications).toLocaleString("de-DE")} Aktivitäten insgesamt.
-            </p>
-          )}
-          <p>
-            Der CAGR für Patente beträgt{" "}
-            <strong className={data.cagr_patents >= 0 ? "text-[var(--color-chart-growth)]" : "text-[var(--color-chart-decline)]"}>
-              {formatCAGR(data.cagr_patents)}
-            </strong>
-            , für Projekte{" "}
-            <strong className={data.cagr_projects >= 0 ? "text-[var(--color-chart-growth)]" : "text-[var(--color-chart-decline)]"}>
-              {formatCAGR(data.cagr_projects)}
-            </strong>
-            {hasPub && (
-              <>
-                {" "}und für Publikationen{" "}
-                <strong className={pubCagr >= 0 ? "text-[var(--color-chart-growth)]" : "text-[var(--color-chart-decline)]"}>
-                  {formatCAGR(pubCagr)}
-                </strong>
-              </>
-            )}.
-          </p>
-        </div>
-      </DetailAnalysisSection>
-
       {/* --- #7: Vollstaendige Zeitreihen-Tabelle --- */}
       <DetailDataSection title="Zeitreihe (vollständig)">
         <div className="overflow-x-auto">

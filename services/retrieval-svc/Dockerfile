@@ -44,7 +44,13 @@ COPY --from=builder /app/shared /app/shared
 
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    HF_HOME=/app/.cache/huggingface
+
+# HF/Transformers-Cache-Dir vorbereiten (svc:svc-Ownership, damit
+# CrossEncoder-Reranker-Downloads beim ersten Start funktionieren -
+# auch wenn ein leeres Named-Volume hierhin gemountet wird).
+RUN mkdir -p /app/.cache/huggingface && chown -R svc:svc /app/.cache
 
 EXPOSE 50081
 EXPOSE 9098

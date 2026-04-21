@@ -44,7 +44,13 @@ COPY --from=builder /app/src /app/src
 
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    HF_HOME=/app/.cache/huggingface
+
+# HF/Transformers-Cache-Dir vorbereiten (svc:svc-Ownership, damit
+# HuggingFace-Downloads beim ersten Start funktionieren - auch wenn
+# ein leeres Named-Volume hierhin gemountet wird).
+RUN mkdir -p /app/.cache/huggingface && chown -R svc:svc /app/.cache
 
 EXPOSE 50080 9100
 

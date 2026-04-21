@@ -289,7 +289,7 @@ services:
       EMBEDDING_DEVICE: ${EMBEDDING_DEVICE:-cpu}
       EMBEDDING_DATABASE_URL: postgresql://${POSTGRES_USER:-tip_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ti_radar}
     volumes:
-      - hf_cache:/home/svc/.cache/huggingface
+      - hf_cache:/app/.cache/huggingface
     depends_on:
       db:
         condition: service_healthy
@@ -318,7 +318,7 @@ services:
       RETRIEVAL_DATABASE_URL: postgresql://${POSTGRES_USER:-tip_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ti_radar}
       RETRIEVAL_EMBEDDING_ADDRESS: embedding-svc:50051
     volumes:
-      - hf_cache:/home/svc/.cache/huggingface
+      - hf_cache:/app/.cache/huggingface
     depends_on:
       db:
         condition: service_healthy

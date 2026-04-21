@@ -1,9 +1,9 @@
 """Infrastructure-Adapter fuer Embedding-Service."""
 
 from src.infrastructure.chunker import RecursiveChunker
-from src.infrastructure.repository import PgVectorRepository
+from src.infrastructure.repository import ChunkRepository, EmbeddingRepository
 
-__all__ = ["RecursiveChunker", "PgVectorRepository"]
+__all__ = ["ChunkRepository", "EmbeddingRepository", "RecursiveChunker"]
 
 # Optional Adapter (benoetigen externe Abhaengigkeiten)
 try:

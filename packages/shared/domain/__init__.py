@@ -8,6 +8,12 @@ Re-exports key items for convenient access:
 
 from __future__ import annotations
 
+# --- Actor / Publication / Patent master-definitions (Bugs CRIT-1/3/4) ---
+from shared.domain.actor_definitions import (
+    ActorScope,
+    canonical_actor_label,
+)
+
 # --- Analysis text generation ---
 from shared.domain.analysis_text import (
     generate_competitive_text,
@@ -72,29 +78,6 @@ from shared.domain.metrics import (
     yoy_growth,
 )
 
-# --- Actor / Publication / Patent master-definitions (Bugs CRIT-1/3/4) ---
-from shared.domain.actor_definitions import (
-    ActorScope,
-    canonical_actor_label,
-)
-from shared.domain.patent_definitions import (
-    APPLICATION_KIND_CODES,
-    GRANT_KIND_CODES,
-    PatentScope,
-    canonical_patent_label,
-)
-from shared.domain.publication_definitions import (
-    PublicationScope,
-    canonical_publication_label,
-)
-
-# --- Year completeness (Bugs MAJ-7 / MAJ-8) ---
-from shared.domain.year_completeness import (
-    clip_to_complete_years,
-    is_year_complete,
-    last_complete_year,
-)
-
 # --- Domain models ---
 from shared.domain.models import (
     ApiAlert,
@@ -108,6 +91,16 @@ from shared.domain.models import (
     ResearchImpactPanel,
     TechClusterPanel,
     TemporalPanel,
+)
+from shared.domain.patent_definitions import (
+    APPLICATION_KIND_CODES,
+    GRANT_KIND_CODES,
+    PatentScope,
+    canonical_patent_label,
+)
+from shared.domain.publication_definitions import (
+    PublicationScope,
+    canonical_publication_label,
 )
 
 # --- Research metrics ---
@@ -143,6 +136,13 @@ from shared.domain.temporal_metrics import (
     _compute_actor_timeline,
     _compute_programme_evolution,
     _compute_technology_breadth,
+)
+
+# --- Year completeness (Bugs MAJ-7 / MAJ-8) ---
+from shared.domain.year_completeness import (
+    clip_to_complete_years,
+    is_year_complete,
+    last_complete_year,
 )
 
 __all__ = [

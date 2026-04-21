@@ -351,7 +351,7 @@ def merge_country_data(
     """
 
     # Bekannte Aliase auf ISO 3166-1 alpha-2 normalisieren
-    _COUNTRY_ALIASES: dict[str, str] = {
+    country_aliases: dict[str, str] = {
         "UK": "GB",  # CORDIS nutzt UK, EPO nutzt GB
         "EL": "GR",  # CORDIS nutzt EL fuer Griechenland
     }
@@ -361,7 +361,7 @@ def merge_country_data(
 
     def _normalize(code: str) -> str:
         code = code.strip().upper()
-        return _COUNTRY_ALIASES.get(code, code)
+        return country_aliases.get(code, code)
 
     data: dict[str, dict[str, int]] = {}
 

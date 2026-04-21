@@ -50,8 +50,8 @@ export default function ResearchImpactPanel({
       // Bug v3.4.9/N4: Konfidenz reflektiert Stichprobengröße — Semantic Scholar
       // liefert max. 200 Top-Autoren. Konfidenz ≈ min(1.0, total_papers/200).
       confidence={
-        data?.total_publications !== undefined
-          ? Math.min(1.0, data.total_publications / 200)
+        data?.total_papers !== undefined
+          ? Math.min(1.0, data.total_papers / 200)
           : undefined
       }
     >

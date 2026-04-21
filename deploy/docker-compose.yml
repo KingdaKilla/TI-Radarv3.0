@@ -360,7 +360,7 @@ services:
       LLM_ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       LLM_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       LLM_MODEL_NAME: ${LLM_MODEL_NAME:-gemini-2.0-flash}
-      LLM_MAX_TOKENS: "4096"
+      LLM_MAX_TOKENS: "8192"
       LLM_TEMPERATURE: "0.3"
       # v3.6.0: Faithfulness-Guard opt-in. Default false; wenn true,
       # wird der benötigte API-Key automatisch geprüft (Fail-open).

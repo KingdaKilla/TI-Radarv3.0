@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     gemini_api_key: str = ""
     model_name: str = "gemini-2.0-flash"
-    max_tokens: int = 4096
+    max_tokens: int = 8192
     temperature: float = 0.3
 
     # --- gRPC Server ---

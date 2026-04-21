@@ -182,6 +182,20 @@ Erstelle eine differenzierte Analyse in 2-3 Absaetzen basierend auf den konkrete
 **Innovationsreife:** Was sagen die Erteilungsmuster ueber die technologische Reife aus? Eine stabile hohe Grant Rate bei steigenden Anmeldungen signalisiert ein gesundes Innovationsfeld. Welche Handlungsempfehlung ergibt sich?
 
 Nenne durchgehend konkrete Quoten, Zahlen und Zeitraeume aus den Daten. Antworte auf Deutsch.""",
+
+    # UC-C — Publikationsanalyse (Publication Analytics)
+    "publication": """Analysiere die Publikationsdaten aus CORDIS-Projekten fuer "{technology}":
+{data}
+
+Erstelle eine differenzierte Analyse in 2-3 Absaetzen basierend auf den konkreten Datenpunkten:
+
+**Publikationsaufkommen:** Wie viele Publikationen wurden gefunden und wie verteilen sie sich zeitlich? Nenne die konkrete Gesamtzahl und markante Jahre (z.B. Aktivitaetsspitzen). Wachsen die Publikationszahlen oder stagnieren sie?
+
+**Publikationstypen und Open Access:** Wie ist die Verteilung zwischen Journal Articles, Conference Proceedings, Book Chapters und anderen Typen? Wie hoch ist der Open-Access-Anteil und was sagt das ueber die Zugaenglichkeit der Forschung in diesem Feld aus?
+
+**Fuehrende Journals und thematische Schwerpunkte:** Welche Journals oder Venues dominieren? Gibt es einen klaren thematischen Fokus oder eine breite Streuung ueber viele Publikationsorgane? Was bedeutet die Verteilung fuer die wissenschaftliche Reife und das Kommunikationsverhalten im Feld?
+
+Nenne durchgehend konkrete Zahlen, Anteile und Journal-Namen aus den Daten. Antworte auf Deutsch.""",
 }
 
 # ---------------------------------------------------------------------------

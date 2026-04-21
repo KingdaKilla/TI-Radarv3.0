@@ -7,6 +7,8 @@ Der Orchestrator stellt eine REST/JSON-API auf Port 8000 bereit. Alle Analyse-En
 | Methode | Pfad | Beschreibung |
 |---|---|---|
 | `POST` | `/api/v1/radar` | Komplette Radar-Analyse (alle 13 UC-Services parallel) |
+| `POST` | `/api/v1/analyze-panel` | **v3.5.0:** LLM-Analyse eines einzelnen Panels |
+| `POST` | `/api/v1/chat` | **v3.6.0:** RAG-Chat (semantische Suche + LLM-Antwort) |
 | `GET` | `/api/v1/suggestions` | Autocomplete-Vorschlaege fuer das Suchfeld |
 | `GET` | `/health` | Health Check (shallow oder deep) |
 | `GET` | `/metrics` | Prometheus-Metriken (OpenMetrics-Format) |
@@ -599,3 +601,100 @@ Der Export-Service cached Analyseergebnisse in `export_schema.analysis_cache`:
   "detail": "Rate limit exceeded. Max 100 requests per 60 seconds."
 }
 ```
+
+---
+
+## POST /api/v1/analyze-panel
+
+**v3.5.0** — LLM-generierte textuelle Analyse eines einzelnen UC-Panels. Forwardet per gRPC an den `llm-svc`. Graceful Degradation: Bei fehlendem API-Key oder LLM-Timeout wird HTTP 200 mit leerem `analysis_text` zurückgegeben.
+
+### Request
+
+```http
+POST /api/v1/analyze-panel HTTP/1.1
+Content-Type: application/json
+X-API-Key: <optional>
+
+{
+  "technology": "mRNA",
+  "use_case_key": "landscape",
+  "panel_data": { /* vollständige Panel-Response wie aus /radar */ },
+  "language": "de"
+}
+```
+
+| Feld | Typ | Pflicht | Beschreibung |
+|---|---|---|---|
+| `technology` | string | ja | 1–200 Zeichen |
+| `use_case_key` | string | ja | z. B. `landscape`, `maturity`, `competitive` |
+| `panel_data` | object | ja | Panel-Response aus `/radar` |
+| `language` | string | nein | `de` (Default) oder `en` |
+
+### Response (200)
+
+```json
+{
+  "analysis_text": "### Technologie-Landschaft mRNA\n\nDer europäische Patent-Korpus umfasst **742 Anmeldungen** ...",
+  "model_used": "gemini-2.0-flash",
+  "key_findings": [
+    "1709 Patente EU-weit, dominiert von DE (39 %) und FR (21 %)",
+    "CAGR Patente +71 % seit 2016 — stark wachsend"
+  ],
+  "confidence": 0.0,
+  "processing_time_ms": 2840
+}
+```
+
+- `analysis_text` ist Markdown. Das Frontend rendert `**fett**`, Zeilenumbrüche, Listen.
+- Leeres `analysis_text` + `model_used: "none"` signalisiert Graceful Degradation.
+
+---
+
+## POST /api/v1/chat
+
+**v3.6.0** — Interaktiver RAG-Chat. Retrieval via `retrieval-svc` (Top-K über `patents` + `projects` + `papers`), Antwort via `llm-svc.Chat`. Wenn `retrieval-svc` nicht erreichbar ist oder Embeddings leer, läuft der Chat ohne Kontext-Dokumente weiter.
+
+### Request
+
+```http
+POST /api/v1/chat HTTP/1.1
+Content-Type: application/json
+X-API-Key: <optional>
+
+{
+  "technology": "Quantum Computing",
+  "message": "Welche Institute forschen in Europa an Quantenfehler­korrektur?",
+  "history": [
+    {"role": "user", "content": "Wie ist der Reifegrad der Technologie?"},
+    {"role": "assistant", "content": "Quantum Computing befindet sich in der Wachstumsphase ..."}
+  ],
+  "panel_context": { /* optional: aktuelles Panel als Kontext */ }
+}
+```
+
+| Feld | Typ | Pflicht | Beschreibung |
+|---|---|---|---|
+| `technology` | string | ja | 1–200 Zeichen |
+| `message` | string | ja | 1–4000 Zeichen (aktuelle User-Frage) |
+| `history` | array<{role, content}> | nein | Frühere Chat-Turns für Kontext |
+| `panel_context` | object | nein | Aktuell angezeigtes Panel, hilft bei Kontext-Fragen |
+
+### Response (200)
+
+```json
+{
+  "answer": "Mehrere europäische Institute sind in der Quanten­fehlerkorrektur aktiv:\n\n- **TU Delft** (NL) — QuTech-Konsortium ...",
+  "sources": ["patent:EP3456789", "project:101089076", "paper:10.1038/nature.2023.xyz"],
+  "key_findings": [
+    "TU Delft und Saarland-Konsortium führen bei Patent-Volumen",
+    "HORIZON-Förderung in Q1 2025: €89 M über 12 Konsortien"
+  ],
+  "model_used": "gemini-2.0-flash",
+  "processing_time_ms": 3420
+}
+```
+
+- `sources` enthält die vom Retrieval gefundenen Dokumente (Format: `<type>:<id>`).
+- Bei Fehler: `"answer": "Entschuldigung, der Chat ist momentan nicht verfügbar."` + Status 200 (für UI-Stabilität).
+
+**Details zu Architektur, Konfiguration und Betrieb:** [`docs/LLM.md`](./LLM.md).

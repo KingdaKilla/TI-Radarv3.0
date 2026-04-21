@@ -2,7 +2,9 @@
 
 ## Systemübersicht
 
-TI-Radar ist als Microservice-Architektur mit 16 Python-Services + 1 Next.js-Frontend (17 Services gesamt) aufgebaut. Das Next.js-Frontend kommuniziert über REST/JSON mit einem FastAPI-Orchestrator, der Anfragen parallel via gRPC an 13 spezialisierte Use-Case-Services (UC1-UC12 + UC-C Publication) verteilt. Alle Services greifen auf eine gemeinsame PostgreSQL-17-Datenbank zu.
+TI-Radar ist als Microservice-Architektur mit **19 Python-Services** + 1 Next.js-Frontend aufgebaut. Das Next.js-Frontend kommuniziert über REST/JSON mit einem FastAPI-Orchestrator, der Anfragen parallel via gRPC an 13 spezialisierte Use-Case-Services (UC1-UC12 + UC-C Publication) verteilt. Seit v3.5.0 steht eine LLM-gestützte Panel-Analyse bereit; seit v3.6.0 zusätzlich ein RAG-Chat mit semantischer Suche über die Patent-/Projekt-/Paper-Korpora. Alle Services greifen auf eine gemeinsame PostgreSQL-17-Datenbank mit `pgvector`-Extension zu.
+
+**Hinweis:** Details zur LLM-Integration siehe [`docs/LLM.md`](./LLM.md).
 
 ```mermaid
 graph TB
@@ -35,6 +37,12 @@ graph TB
         Pub["publication-svc<br/>Publikationskette"]
     end
 
+    subgraph "LLM-Services (v3.5.0+)"
+        LLM["llm-svc<br/>Gemini/Claude/OpenAI/Ollama<br/>Port 50070"]
+        EMB["embedding-svc<br/>multilingual-e5-small (384d)<br/>Port 50051"]
+        RET["retrieval-svc<br/>Hybrid-Search (pgvector + tsvector)<br/>Incremental-Embedding<br/>Port 50051"]
+    end
+
     subgraph "Datenbank"
         PG["PostgreSQL 17<br/>pgvector + pg_trgm<br/>6 Schemas, 9 Mat. Views"]
     end
@@ -58,6 +66,12 @@ graph TB
     Orchestrator -->|gRPC| UC11
     Orchestrator -->|gRPC| UC12
     Orchestrator -->|gRPC| Pub
+
+    Orchestrator -->|"gRPC<br/>AnalyzePanel / Chat"| LLM
+    Orchestrator -->|"gRPC<br/>Retrieve"| RET
+    RET --> PG
+    RET -. "UPDATE embedding<br/>(Incremental)" .-> PG
+    EMB --> PG
 
     UC1 --> PG
     UC2 --> PG

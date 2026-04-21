@@ -36,6 +36,16 @@ Folgende Werte müssen in `.env` eingetragen werden:
 | `GLEIF_ENABLED` | nein | GLEIF LEI Lookup im Actor-Type-Service | `true` |
 | `TI_RADAR_ADMIN_KEY` | nein | Admin-Key fuer Import-Endpunkte (leer = kein Auth) | |
 | `GRAFANA_ADMIN_PASSWORD` | nein | Grafana-Passwort (nur mit Monitoring-Profil) | `admin` |
+| `GEMINI_API_KEY` | nein (v3.5.0+) | Google-Gemini-API-Key für LLM-Features; ohne Key läuft das Tool, zeigt aber keine Panel-Analysen | `AIzaSy...` |
+| `LLM_PROVIDER` | nein (v3.5.0+) | LLM-Backend: `gemini` (Default) / `anthropic` / `openai` / `ollama` | `gemini` |
+| `LLM_MODEL_NAME` | nein (v3.5.0+) | Modell-ID; Default passt zu Gemini | `gemini-2.0-flash` |
+| `ANTHROPIC_API_KEY` | nein | Nur wenn `LLM_PROVIDER=anthropic` | `sk-ant-...` |
+| `OPENAI_API_KEY` | nein | Nur wenn `LLM_PROVIDER=openai` | `sk-...` |
+| `EMBEDDING_PROVIDER` | nein (v3.6.0+) | `local` (im embedding-svc) oder `remote` (TEI-Host) | `local` |
+| `EMBEDDING_DEVICE` | nein (v3.6.0+) | `cpu` oder `cuda` | `cpu` |
+| `FAITHFULNESS_ENABLED` | nein (v3.6.0+) | Chat-Antwort-Überprüfung (Sufficiency + Faithfulness-Check); +2-5s Latenz | `false` |
+
+> **Details zu LLM/Chat/RAG:** siehe [`docs/LLM.md`](./LLM.md) — komplette Architektur, Konfiguration, Incremental-Pre-Computation, Betrieb.
 
 ### 3. Stack starten
 

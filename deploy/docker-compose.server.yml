@@ -71,6 +71,9 @@ services:
       UC_PATENT_GRANT_ADDRESS: patent-grant-svc:50051
       UC_EUROSCIVOC_ADDRESS: euroscivoc-svc:50051
       UC_PUBLICATION_ADDRESS: publication-svc:50051
+      # LLM-Stack (v3.5.0 / v3.6.0)
+      LLM_ADDRESS: llm-svc:50070
+      RETRIEVAL_ADDRESS: retrieval-svc:50051
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
     restart: unless-stopped
     deploy:
@@ -243,6 +246,93 @@ services:
       - backend
       - frontend
 
+  # ==================== LLM-Service (v3.5.0) ====================
+  # Stateless gRPC-Microservice (Port 50070) fuer textuelle KI-Analyse.
+  # Kein DB-Zugriff. Default-Provider: Gemini 2.0 Flash (GEMINI_API_KEY noetig).
+  llm-svc:
+    image: ghcr.io/${GHCR_OWNER:-kingdakilla}/ti-radar-llm-svc:${IMAGE_TAG:-latest}
+    container_name: ti-radar-llm
+    environment:
+      LLM_LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
+      LLM_GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      LLM_ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LLM_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_MODEL_NAME: ${LLM_MODEL_NAME:-gemini-2.0-flash}
+      LLM_MAX_TOKENS: "4096"
+      LLM_TEMPERATURE: "0.3"
+      LLM_FAITHFULNESS_ENABLED: ${FAITHFULNESS_ENABLED:-false}
+      LLM_FAITHFULNESS_MODEL: ${FAITHFULNESS_MODEL:-gemini-2.0-flash}
+      LLM_SUFFICIENCY_THRESHOLD: ${FAITHFULNESS_THRESHOLD:-PARTIAL}
+      LLM_SERVICE_PORT: "50070"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    networks:
+      - backend
+
+  # ==================== Embedding-Service (v3.6.0) ====================
+  # Erzeugt vector(384)-Embeddings via sentence-transformers
+  # (intfloat/multilingual-e5-small). Port 50051 (explizit ueberschrieben,
+  # Default im Image ist 50080). HF-Cache-Volume vermeidet Re-Download
+  # (~230 MB) bei Container-Recreate.
+  embedding-svc:
+    image: ghcr.io/${GHCR_OWNER:-kingdakilla}/ti-radar-embedding-svc:${IMAGE_TAG:-latest}
+    container_name: ti-radar-embedding
+    environment:
+      EMBEDDING_SERVICE_PORT: "50051"
+      EMBEDDING_EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-local}
+      EMBEDDING_EMBEDDING_MODEL: "intfloat/multilingual-e5-small"
+      EMBEDDING_EMBEDDING_DIMENSIONS: "384"
+      EMBEDDING_DEVICE: ${EMBEDDING_DEVICE:-cpu}
+      EMBEDDING_DATABASE_URL: postgresql://${POSTGRES_USER:-tip_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ti_radar}
+    volumes:
+      - hf_cache:/home/svc/.cache/huggingface
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "1.0"
+    networks:
+      - backend
+
+  # ==================== Retrieval-Service (v3.6.0) ====================
+  # Semantische Suche ueber pgvector + Cross-Encoder-Reranking.
+  # Port 50051 (explizit ueberschrieben, Default im Image ist 50081).
+  # Nutzt embedding-svc fuer Query-Embeddings.
+  retrieval-svc:
+    image: ghcr.io/${GHCR_OWNER:-kingdakilla}/ti-radar-retrieval-svc:${IMAGE_TAG:-latest}
+    container_name: ti-radar-retrieval
+    environment:
+      RETRIEVAL_SERVICE_PORT: "50051"
+      RETRIEVAL_TOP_K: "10"
+      RETRIEVAL_SIMILARITY_THRESHOLD: "0.3"
+      RETRIEVAL_EMBEDDING_MODEL: "intfloat/multilingual-e5-small"
+      RETRIEVAL_EMBEDDING_DIMENSIONS: "384"
+      RETRIEVAL_DATABASE_URL: postgresql://${POSTGRES_USER:-tip_admin}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-ti_radar}
+      RETRIEVAL_EMBEDDING_ADDRESS: embedding-svc:50051
+    volumes:
+      - hf_cache:/home/svc/.cache/huggingface
+    depends_on:
+      db:
+        condition: service_healthy
+      embedding-svc:
+        condition: service_started
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "0.5"
+    networks:
+      - backend
+
   # ==================== Frontend ====================
   frontend:
     image: ghcr.io/${GHCR_OWNER:-kingdakilla}/ti-radar-frontend:${IMAGE_TAG:-latest}
@@ -265,6 +355,7 @@ services:
 
 volumes:
   pgdata:
+  hf_cache:
 
 networks:
   backend:

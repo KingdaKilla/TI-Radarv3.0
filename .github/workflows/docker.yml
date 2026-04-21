@@ -114,6 +114,19 @@ jobs:
             dockerfile: services/export-svc/Dockerfile
             context: .
             build-args: ""
+          # LLM-Stack (v3.5.0 / v3.6.0)
+          - service: llm-svc
+            dockerfile: services/llm-svc/Dockerfile
+            context: .
+            build-args: ""
+          - service: embedding-svc
+            dockerfile: services/embedding-svc/Dockerfile
+            context: .
+            build-args: ""
+          - service: retrieval-svc
+            dockerfile: services/retrieval-svc/Dockerfile
+            context: .
+            build-args: ""
           # Frontend
           - service: frontend
             dockerfile: frontend/Dockerfile

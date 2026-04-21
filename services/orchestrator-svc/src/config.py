@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     # per gRPC dorthin. Bei leerem Default bzw. gesetzter ENV `LLM_ADDRESS`
     # wird der Service aktiv; sonst liefert der Endpoint leeres Ergebnis.
     llm_address: str = "llm-svc:50070"
-    llm_timeout_s: float = 30.0
+    llm_timeout_s: float = 60.0
 
     # --- Retrieval-Service (v3.6.0) ---
     # gRPC-Adresse des retrieval-svc. Chat-Endpoint ruft vor dem LLM-Call

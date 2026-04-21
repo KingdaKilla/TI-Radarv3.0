@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     ollama_timeout_s: float = 120.0
 
     # --- Timeouts ---
-    llm_timeout_s: float = 30.0
+    llm_timeout_s: float = 60.0
 
     # --- Sprache ---
     default_language: str = "de"
